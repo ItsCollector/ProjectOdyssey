@@ -37,7 +37,7 @@ namespace ProjectOdyssey
                 return (JudgementType.Bad, NoteState.Holding);
             }
 
-            Debug.Fail($"Unreachable JudgeTail state: direction={inputDirection}, noteState={noteState}");
+            Debug.Fail($"Unreachable JudgeTail state: direction={inputDirection}, noteState={noteState}\nYou royally fucked up the placement of this function or you missed a case dumbass.");
             return (JudgementType.Miss, NoteState.Resolved); // Fallback for unexpected state
         }
 
