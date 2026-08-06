@@ -10,6 +10,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="ProjectOdyssey.Tests\**" />
+    <EmbeddedResource Remove="ProjectOdyssey.Tests\**" />
+    <None Remove="ProjectOdyssey.Tests\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="OpenTK" Version="4.9.4" />
   </ItemGroup>
 
