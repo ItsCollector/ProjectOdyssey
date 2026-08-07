@@ -128,7 +128,7 @@ namespace ProjectOdyssey.Tests
                 noteState: NoteState.ReleasedEarly);
 
             Assert.Equal(JudgementType.Bad, judgement);
-            Assert.Equal(NoteState.Holding, state);
+            Assert.Equal(NoteState.Recovering, state);
         }
 
         [Fact]
@@ -152,21 +152,35 @@ namespace ProjectOdyssey.Tests
             Assert.Equal(NoteState.ReleasedEarly, finalState);
         }
 
-        // ----------------------------------------------------------------
         // TryResolveOverheldNote
-        // ----------------------------------------------------------------
 
         [Fact]
-        public void TryResolveOverheldNote_StillWithinWindow_ReturnsFalse()
+        public void TryResolveOverheldNote_ReleasedEarlyPastThreshold_ReturnsTrue()
         {
             bool resolved = JudgementEngine.TryResolveOverheldNote(
-                noteState: NoteState.Holding,
+                noteState: NoteState.ReleasedEarly,
                 tailTime: 2000,
-                now: 2199, // 199ms past tail, still within the 200ms threshold
-                result: out var judgement);
+                now: 100000,
+                result: out var judgement,
+                newState: out var finalState);
+
+            Assert.True(resolved);
+            Assert.Equal(JudgementType.Miss, judgement);
+            Assert.Equal(NoteState.Resolved, finalState);
+        }
+
+        [Fact]
+        public void TryResolveOverheldNote_AlreadyResolved_NeverTriggersRegardlessOfTime()
+        {
+            // Resolved notes are done — this should genuinely never fire again.
+            bool resolved = JudgementEngine.TryResolveOverheldNote(
+                noteState: NoteState.Resolved,
+                tailTime: 2000,
+                now: 100000,
+                result: out _,
+                newState: out _);
 
             Assert.False(resolved);
-            Assert.Equal(default(JudgementType), judgement);
         }
 
         [Fact]
@@ -178,7 +192,8 @@ namespace ProjectOdyssey.Tests
                 noteState: NoteState.Holding,
                 tailTime: 2000,
                 now: 2200,
-                result: out _);
+                result: out _,
+                newState: out _);
 
             Assert.False(resolved);
         }
@@ -190,54 +205,15 @@ namespace ProjectOdyssey.Tests
                 noteState: NoteState.Holding,
                 tailTime: 2000,
                 now: 2201,
-                result: out var judgement);
+                result: out var judgement,
+                newState: out var finalState);
 
             Assert.True(resolved);
             Assert.Equal(JudgementType.Miss, judgement);
-        }
-
-        [Theory]
-        [InlineData(NoteState.ReleasedEarly)]
-        [InlineData(NoteState.Resolved)]
-        public void TryResolveOverheldNote_NotHolding_NeverTriggersRegardlessOfTime(NoteState noteState)
-        {
-            // Even far past the threshold, a note that isn't actively Holding
-            // should never be resolved by this method.
-            bool resolved = JudgementEngine.TryResolveOverheldNote(
-                noteState: noteState,
-                tailTime: 2000,
-                now: 100000,
-                result: out _);
-
-            Assert.False(resolved);
+            Assert.Equal(NoteState.Resolved, finalState);
         }
 
         // Integration-style: a full LN lifecycle through the state machine
-
-        [Fact]
-        public void FullLifecycle_EarlyRelease_Repress_ThenCorrectRelease()
-        {
-            var state = NoteState.Holding;
-            JudgementType judgement;
-
-            // Player lets go way too early
-            (judgement, state) = JudgementEngine.JudgeTail(1700, 2000, InputDirection.Up, state);
-            Assert.Equal(NoteState.ReleasedEarly, state);
-            Assert.Equal(JudgementType.Miss, judgement);
-
-            // Player notices and represses
-            (judgement, state) = JudgementEngine.JudgeTail(1750, 2000, InputDirection.Down, state);
-            Assert.Equal(NoteState.Holding, state);
-            Assert.Equal(JudgementType.Bad, judgement);
-
-            // Player holds through and releases correctly at the tail
-            (judgement, state) = JudgementEngine.JudgeTail(2005, 2000, InputDirection.Up, state);
-            Assert.Equal(NoteState.Resolved, state);
-            Assert.Equal(JudgementType.Marvellous, judgement);
-            // Note: this overwrites the earlier "Bad" from the repress —
-            // confirm this is the intended final-judgement behavior, since
-            // it means the repress judgement is discarded, not combined.
-        }
 
         [Fact]
         public void FullLifecycle_HeldPastTailWithNoRelease_ResolvesViaOverholdCheck()
@@ -246,10 +222,118 @@ namespace ProjectOdyssey.Tests
 
             // No key-up event ever fires — simulate the per-tick check instead.
             bool resolved = JudgementEngine.TryResolveOverheldNote(
-                state, tailTime: 2000, now: 2500, out var judgement);
+                noteState: state, 
+                tailTime: 2000, 
+                now: 2500, 
+                result: out var judgement,
+                newState: out var finalState);
 
             Assert.True(resolved);
             Assert.Equal(JudgementType.Miss, judgement);
+            Assert.Equal(NoteState.Resolved, finalState);
         }
+
+        // Release early -> repress -> release early again ->
+        // repress again -> correct release at the tail.
+        // Two mid-LN releases, one correct final release -> should still
+        // be capped at Bad, not upgraded by the well-timed final release.
+        [Fact]
+        public void DoubleEarlyRelease_ThenCorrectFinalRelease_LocksToBad()
+        {
+            var state = NoteState.Holding;
+            JudgementType judgement;
+
+            // First early release
+            (judgement, state) = JudgementEngine.JudgeTail(1500, 2000, InputDirection.Up, state);
+            Assert.Equal(NoteState.ReleasedEarly, state);
+            Assert.Equal(JudgementType.Miss, judgement);
+
+            // First repress -> enters Recovering, capped at Bad
+            (judgement, state) = JudgementEngine.JudgeTail(1650, 2000, InputDirection.Down, state);
+            Assert.Equal(NoteState.Recovering, state);
+            Assert.Equal(JudgementType.Bad, judgement);
+
+            // Second early release, this time from Recovering -> back to ReleasedEarly
+            (judgement, state) = JudgementEngine.JudgeTail(1700, 2000, InputDirection.Up, state);
+            Assert.Equal(NoteState.ReleasedEarly, state);
+            Assert.Equal(JudgementType.Miss, judgement);
+
+            // Second repress -> Recovering again, still capped at Bad
+            (judgement, state) = JudgementEngine.JudgeTail(1750, 2000, InputDirection.Down, state);
+            Assert.Equal(NoteState.Recovering, state);
+            Assert.Equal(JudgementType.Bad, judgement);
+
+            // Correct, well-timed final release at the tail -- should NOT
+            // upgrade past Bad despite hitting the tail exactly.
+            (judgement, state) = JudgementEngine.JudgeTail(2000, 2000, InputDirection.Up, state);
+            Assert.Equal(NoteState.Resolved, state);
+            Assert.Equal(JudgementType.Bad, judgement);
+        }
+
+        // Release early -> repress -> hold straight through,
+        // never releasing at all -> overhold timeout should fire a Miss,
+        // not leave the note unresolved.
+        [Fact]
+        public void EarlyRelease_Repress_ThenHeldPastTailWithNoRelease_ResolvesMissViaOverholdCheck()
+        {
+            var state = NoteState.Holding;
+            JudgementType judgement;
+
+            (judgement, state) = JudgementEngine.JudgeTail(1700, 2000, InputDirection.Up, state);
+            Assert.Equal(NoteState.ReleasedEarly, state);
+
+            (judgement, state) = JudgementEngine.JudgeTail(1750, 2000, InputDirection.Down, state);
+            Assert.Equal(NoteState.Recovering, state);
+            Assert.Equal(JudgementType.Bad, judgement);
+
+            // No further key event ever fires -- simulate the per-tick
+            // overhold check instead, well past the tail + tolerance.
+            bool resolved = JudgementEngine.TryResolveOverheldNote(
+                noteState: state,
+                tailTime: 2000,
+                now: 2500,
+                result: out var overheldJudgement,
+                newState: out var finalState);
+
+            Assert.True(resolved);
+            Assert.Equal(JudgementType.Miss, overheldJudgement);
+            Assert.Equal(NoteState.Resolved, finalState);
+        }
+
+        // Release early -> repress -> release early again ->
+        // never reholds -> the grace window after the second early
+        // release should expire into a Miss, not silently hang.
+        [Fact]
+        public void EarlyRelease_Repress_SecondEarlyRelease_NeverRepressedAgain_ResolvesMiss()
+        {
+            var state = NoteState.Holding;
+            JudgementType judgement;
+
+            (judgement, state) = JudgementEngine.JudgeTail(1500, 2000, InputDirection.Up, state);
+            Assert.Equal(NoteState.ReleasedEarly, state);
+
+            (judgement, state) = JudgementEngine.JudgeTail(1650, 2000, InputDirection.Down, state);
+            Assert.Equal(NoteState.Recovering, state);
+
+            (judgement, state) = JudgementEngine.JudgeTail(1750, 2000, InputDirection.Up, state);
+            Assert.Equal(NoteState.ReleasedEarly, state);
+            Assert.Equal(JudgementType.Miss, judgement);
+
+            // Player never represses again. Nothing further calls JudgeTail,
+            // since there's no more key event. This state needs to be
+            // resolved by time passing, same as the overhold case, but
+            // from ReleasedEarly rather than Holding/Recovering.
+            bool resolved = JudgementEngine.TryResolveOverheldNote(
+                noteState: state,
+                tailTime: 2000,
+                now: 2500,
+                result: out var finalJudgement,
+                newState: out var finalState);
+
+            Assert.True(resolved);
+            Assert.Equal(JudgementType.Miss, finalJudgement);
+            Assert.Equal(NoteState.Resolved, finalState);
+        }
+
     }
 }

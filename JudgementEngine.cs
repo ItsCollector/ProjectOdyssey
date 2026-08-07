@@ -30,26 +30,46 @@ namespace ProjectOdyssey
                     return (MapDeltaToJudgement(Math.Abs(signedDelta)), NoteState.Resolved);
                 }
             }
-
-            // Second chance - reholding long note to award a 'bad' - can be cancelled if released too early again
+            // Repress after early release — enter recovery, capped outcome
             else if (inputDirection == InputDirection.Down && noteState == NoteState.ReleasedEarly)
             {
-                return (JudgementType.Bad, NoteState.Holding);
+                return (JudgementType.Bad, NoteState.Recovering);
+            }
+            // Released again while recovering — early release from recovery goes back to ReleasedEarly,
+            // eligible for another repress, but the eventual cap stays Bad either way
+            else if (inputDirection == InputDirection.Up && noteState == NoteState.Recovering)
+            {
+                if (signedDelta < earlyReleaseToleranceMs)
+                {
+                    return (JudgementType.Miss, NoteState.ReleasedEarly);
+                }
+                else
+                {
+                    return (JudgementType.Bad, NoteState.Resolved); // locked, regardless of how well-timed
+                }
+            }
+            else if (inputDirection == InputDirection.Up && noteState == NoteState.ReleasedEarly)
+            {
+                // Duplicate/bounced release event — no new information
+                return (JudgementType.Miss, NoteState.ReleasedEarly);
             }
 
             Debug.Fail($"Unreachable JudgeTail state: direction={inputDirection}, noteState={noteState}\nYou royally fucked up the placement of this function or you missed a case dumbass.");
             return (JudgementType.Miss, NoteState.Resolved); // Fallback for unexpected state
         }
 
-        // Resolve overheld notes that have exceeded the tail time + 200ms threshold
-        public static bool TryResolveOverheldNote(NoteState noteState, long tailTime, long now, out JudgementType result)
+        // Resolve overheld notes or non-held nones that have exceeded the tail time + 200ms threshold
+        public static bool TryResolveOverheldNote(NoteState noteState, long tailTime, long now, out JudgementType result, out NoteState newState)
         {
-            if (noteState == NoteState.Holding && now > tailTime + missWindowMs)
+            if ((noteState == NoteState.Holding || noteState == NoteState.Recovering || noteState == NoteState.ReleasedEarly) && now > tailTime + missWindowMs)
             {
                 result = JudgementType.Miss;
+                newState = NoteState.Resolved;
                 return true;
             }
+
             result = default;
+            newState = noteState; // unchanged
             return false;
         }
 

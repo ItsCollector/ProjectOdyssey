@@ -24,6 +24,7 @@
         WaitingForHead,
         Holding,
         ReleasedEarly,
+        Recovering,
         Resolved
     }
 
