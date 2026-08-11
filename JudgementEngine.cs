@@ -12,59 +12,59 @@ namespace ProjectOdyssey
             => MapDeltaToJudgement(Math.Abs(inputTimestamp - nearestNoteTime));
 
         // Judge the tail of Long Notes
-        public static (JudgementType, NoteState) JudgeTail(long inputTimestamp, long nearestNoteTime, InputDirection inputDirection, NoteState noteState)
+        public static (JudgementType, LongNoteHoldState) JudgeTail(long inputTimestamp, long nearestNoteTime, InputDirection inputDirection, LongNoteHoldState noteState)
         {
             long signedDelta = inputTimestamp - nearestNoteTime; // negative = early, positive = late
 
             // Key is released while the note is still being held
-            if (inputDirection == InputDirection.Up && noteState == NoteState.Holding)
+            if (inputDirection == InputDirection.Up && noteState == LongNoteHoldState.Holding)
             {
                 // released during LN body outside of early threshold
                 if (signedDelta < earlyReleaseToleranceMs)
                 {
-                    return (JudgementType.Miss, NoteState.ReleasedEarly);
+                    return (JudgementType.Miss, LongNoteHoldState.ReleasedEarly);
                 }
                 // released within the normal judgeable tail window 
                 else
                 {
-                    return (MapDeltaToJudgement(Math.Abs(signedDelta)), NoteState.Resolved);
+                    return (MapDeltaToJudgement(Math.Abs(signedDelta)), LongNoteHoldState.Resolved);
                 }
             }
             // Repress after early release — enter recovery, capped outcome
-            else if (inputDirection == InputDirection.Down && noteState == NoteState.ReleasedEarly)
+            else if (inputDirection == InputDirection.Down && noteState == LongNoteHoldState.ReleasedEarly)
             {
-                return (JudgementType.Bad, NoteState.Recovering);
+                return (JudgementType.Bad, LongNoteHoldState.Recovering);
             }
             // Released again while recovering — early release from recovery goes back to ReleasedEarly,
             // eligible for another repress, but the eventual cap stays Bad either way
-            else if (inputDirection == InputDirection.Up && noteState == NoteState.Recovering)
+            else if (inputDirection == InputDirection.Up && noteState == LongNoteHoldState.Recovering)
             {
                 if (signedDelta < earlyReleaseToleranceMs)
                 {
-                    return (JudgementType.Miss, NoteState.ReleasedEarly);
+                    return (JudgementType.Miss, LongNoteHoldState.ReleasedEarly);
                 }
                 else
                 {
-                    return (JudgementType.Bad, NoteState.Resolved); // locked, regardless of how well-timed
+                    return (JudgementType.Bad, LongNoteHoldState.Resolved); // locked, regardless of how well-timed
                 }
             }
-            else if (inputDirection == InputDirection.Up && noteState == NoteState.ReleasedEarly)
+            else if (inputDirection == InputDirection.Up && noteState == LongNoteHoldState.ReleasedEarly)
             {
                 // Duplicate/bounced release event — no new information
-                return (JudgementType.Miss, NoteState.ReleasedEarly);
+                return (JudgementType.Miss, LongNoteHoldState.ReleasedEarly);
             }
 
             Debug.Fail($"Unreachable JudgeTail state: direction={inputDirection}, noteState={noteState}\nYou royally fucked up the placement of this function or you missed a case dumbass.");
-            return (JudgementType.Miss, NoteState.Resolved); // Fallback for unexpected state
+            return (JudgementType.Miss, LongNoteHoldState.Resolved); // Fallback for unexpected state
         }
 
         // Resolve overheld notes or non-held nones that have exceeded the tail time + 200ms threshold
-        public static bool TryResolveOverheldNote(NoteState noteState, long tailTime, long now, out JudgementType result, out NoteState newState)
+        public static bool TryResolveOverheldNote(LongNoteHoldState noteState, long tailTime, long now, out JudgementType result, out LongNoteHoldState newState)
         {
-            if ((noteState == NoteState.Holding || noteState == NoteState.Recovering || noteState == NoteState.ReleasedEarly) && now > tailTime + missWindowMs)
+            if ((noteState == LongNoteHoldState.Holding || noteState == LongNoteHoldState.Recovering || noteState == LongNoteHoldState.ReleasedEarly) && now > tailTime + missWindowMs)
             {
                 result = JudgementType.Miss;
-                newState = NoteState.Resolved;
+                newState = LongNoteHoldState.Resolved;
                 return true;
             }
 

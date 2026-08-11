@@ -16,10 +16,11 @@
     {
         public Judgement? head;
         public Judgement? tail;
-        public NoteState state;
+        public LongNoteHoldState holdState;
+        public bool isResolved => holdState == LongNoteHoldState.Resolved;
     }
 
-    public enum NoteState
+    public enum LongNoteHoldState
     {
         WaitingForHead,
         Holding,
