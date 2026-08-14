@@ -7,8 +7,11 @@ namespace ProjectOdyssey
 {
     public class MainWindow : GameWindow
     {
+        private Orchestrator? orchestrator;
         private Win32KeyInputListener inputListener = new Win32KeyInputListener();
         private InputHistory inputHistory = new InputHistory();
+
+        private bool isRunning = true; // temporary for testing
 
         public MainWindow(int width, int height, string title, bool vsync = true)
             : base(
@@ -27,27 +30,25 @@ namespace ProjectOdyssey
         protected unsafe override void OnLoad()
         {
             base.OnLoad();
-
             GL.ClearColor(0.051f, 0.051f, 0.051f, 1.0f);
             GL.Enable(EnableCap.Blend);
             GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
 
             inputListener.Initialise((IntPtr)WindowPtr, WndProcHook);
+            inputListener.OnInputEvent += inputHistory.RecordInputEvent;
 
-            inputListener.OnInputEvent += (inputEvent) =>
-            {
-                inputHistory.RecordInputEvent(inputEvent);
-            };
+            StartGameplay();
+        }
+
+        private void StartGameplay()
+        {
+            orchestrator = new Orchestrator(inputHistory);
+            orchestrator.Start(); 
         }
 
         protected override void OnUpdateFrame(FrameEventArgs args)
         {
             base.OnUpdateFrame(args);
-
-            if (inputHistory.TryGetNextEvent(out InputEvent inputEvent))
-            {
-                Console.WriteLine($"[Input] VKey={inputEvent.VKey}, IsPressed={inputEvent.IsPressed}, TimeStamp={inputEvent.TimeStamp}");
-            }
         }
 
         protected override void OnRenderFrame(FrameEventArgs args)
@@ -61,6 +62,11 @@ namespace ProjectOdyssey
         {
             base.OnUnload();
             inputListener.Dispose((IntPtr)WindowPtr);
+
+            if (orchestrator != null)
+            {
+                orchestrator.Stop();
+            }
         }
 
         protected override void OnFramebufferResize(FramebufferResizeEventArgs args)
