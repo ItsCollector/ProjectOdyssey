@@ -5,7 +5,7 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <PublishAot>true</PublishAot>
+    <PublishAot>false</PublishAot>
     <InvariantGlobalization>true</InvariantGlobalization>
 	<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
@@ -14,10 +14,17 @@
     <Compile Remove="ProjectOdyssey.Tests\**" />
     <EmbeddedResource Remove="ProjectOdyssey.Tests\**" />
     <None Remove="ProjectOdyssey.Tests\**" />
+	<None Include="test charts\**" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="OpenTK" Version="4.9.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="test charts\Ibuki Kido &amp; Erii Yamazaki - pupa (TV Size) (MapleSyrup-) [Metamorphosis].osu">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

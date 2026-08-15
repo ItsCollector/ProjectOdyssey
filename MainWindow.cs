@@ -2,6 +2,7 @@
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
+using System.Text.Json;
 
 namespace ProjectOdyssey
 {
@@ -10,8 +11,6 @@ namespace ProjectOdyssey
         private Orchestrator? orchestrator;
         private Win32KeyInputListener inputListener = new Win32KeyInputListener();
         private InputHistory inputHistory = new InputHistory();
-
-        private bool isRunning = true; // temporary for testing
 
         public MainWindow(int width, int height, string title, bool vsync = true)
             : base(
@@ -37,7 +36,38 @@ namespace ProjectOdyssey
             inputListener.Initialise((IntPtr)WindowPtr, WndProcHook);
             inputListener.OnInputEvent += inputHistory.RecordInputEvent;
 
-            StartGameplay();
+            string fileName = "Ibuki Kido & Erii Yamazaki - pupa (TV Size) (MapleSyrup-) [Metamorphosis].osu";
+            string link = Path.Combine(AppContext.BaseDirectory, "test charts", fileName);
+
+            string cacheDir = Path.Combine(AppContext.BaseDirectory, "charts");
+            string cachePath = Path.Combine(cacheDir, Path.ChangeExtension(fileName, ".json"));
+            Directory.CreateDirectory(cacheDir);
+
+            var result = ChartImporter.Import(link);
+            
+            if (result.isSuccess)
+            {
+                var chart = result.value;
+
+                // Cache
+                string json = JsonSerializer.Serialize(chart);
+                File.WriteAllText(cachePath, json);
+
+                // Load
+                ChartData? cached = JsonSerializer.Deserialize<ChartData>(File.ReadAllText(cachePath));
+
+                cached.DisplayInfo();
+                
+                (int rcCount, int lnCount) = ChartImporter.CountNoteObjects(cached);
+
+                Console.WriteLine("RC : LN - " + rcCount + " : " + lnCount);    
+            }
+            else
+            {
+                Console.WriteLine(result.error);
+            }
+
+            //StartGameplay();
         }
 
         private void StartGameplay()
