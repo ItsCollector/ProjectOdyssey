@@ -5,10 +5,12 @@ namespace ProjectOdyssey
     public class InputHistory
     {
         private ConcurrentQueue<InputEvent> events = new();
-        
-        public void RecordInputEvent(InputEvent inputEvent) 
+        private HashSet<ushort> keysDown;
+
+        public void RecordInputEvent(InputEvent inputEvent, HashSet<ushort> keysDown) 
         {
             events.Enqueue(inputEvent);
+            this.keysDown = keysDown;
         }
 
         public bool TryGetNextEvent(out InputEvent inputEvent)

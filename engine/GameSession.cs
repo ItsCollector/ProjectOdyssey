@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using OpenTK.Mathematics;
+using System.Diagnostics;
 using System.Threading;
 
 namespace ProjectOdyssey
@@ -10,12 +11,12 @@ namespace ProjectOdyssey
         private InputHistory inputHistory;
         private volatile bool isRunning;
 
-        private float approachTime = 420;
+        private float approachTime = 420; // arbitrary values that should be moved to a config / skinning later
         private float spawnPositionY = -30;
         private float hitPositionY = 1000;
 
-        private Note[][]? notesByColumn;
-        private int[]? columnCursors;
+        private Note[][]? notesByColumn; // pass these into the function later chart loading is being implemented, and remove nullable
+        private int[]? columnCursors; // construct cursors passed on the number of columns in the chart, and remove nullable
 
         public GameSession(InputHistory inputHistory)
         {
@@ -33,7 +34,7 @@ namespace ProjectOdyssey
         public void Stop()
         {
             isRunning = false;
-            gameplayThread?.Join(); 
+            gameplayThread?.Join();
         }
 
         public void Run()
@@ -43,16 +44,23 @@ namespace ProjectOdyssey
             double lastTime = stopwatch.Elapsed.TotalSeconds;
             const double targetDelta = 0.001; // 1000Hz tick rate
 
-            while (isRunning) 
+            while (isRunning)
             {
                 double currentTime = stopwatch.Elapsed.TotalSeconds;
 
                 if (currentTime - lastTime >= targetDelta)
                 {
-                    if (inputHistory.TryGetNextEvent(out InputEvent inputEvent))
+                    float now = (float)gameClock.CurrentSongTimeMs;
+
+                    while (inputHistory.TryGetNextEvent(out InputEvent inputEvent))
                     {
-                        Console.WriteLine($"[Input] VKey={inputEvent.VKey}, IsPressed={inputEvent.IsPressed}, TimeStamp={inputEvent.TimeStamp}");
+                        float inputSongTimeMs = (float)gameClock.ToSongTimeMs(inputEvent.TimeStamp);
+                        Console.WriteLine($"[Input] VKey={inputEvent.VKey}, IsPressed={inputEvent.IsPressed}, TimeStamp={inputSongTimeMs}");
+                        //JudgeNotes(inputEvent);
                     }
+
+                    //HandleUnjudgedNotes(now);
+                    UpdateNotePositions(now);
 
                     lastTime = currentTime;
                 }
@@ -63,9 +71,51 @@ namespace ProjectOdyssey
             }
         }
 
-        public void JudgeNotes()
+        // Judge one note
+        public void JudgeNote(InputEvent inputEvent)
         {
+            int column = VkeyToColumn7k(inputEvent.VKey);
+            int cursor = columnCursors[column];
 
+            Note note = notesByColumn[column][cursor];
+            InputDirection direction = inputEvent.IsPressed ? InputDirection.Down : InputDirection.Up;
+
+            if (note.noteType == NoteType.Tap)
+            {
+                if (direction != InputDirection.Down) return; // taps only judge on press
+
+                JudgementType judgement = JudgementEngine.JudgeHead(inputEvent.TimeStamp, note.startTime);
+                note.noteState = NoteState.Resolved;
+                columnCursors[column]++;
+
+                // TODO: record judgement (score/combo)
+                return;
+            }
+
+            if (note.noteType == NoteType.Long)
+            {
+                if (note.noteState == NoteState.Waiting)
+                {
+                    if (direction != InputDirection.Down) return; // ignore stray release before head
+
+                    JudgementType headJudgement = JudgementEngine.JudgeHead(inputEvent.TimeStamp, note.startTime);
+                    note.noteState = NoteState.Holding;
+
+                    // TODO: record head judgement
+                    return;
+                }
+
+                (JudgementType tailJudgement, NoteState newState) =
+                    JudgementEngine.JudgeTail(inputEvent.TimeStamp, note.endTime, direction, note.noteState);
+
+                note.noteState = newState;
+
+                if (newState == NoteState.Resolved)
+                {
+                    // TODO: record tail judgement
+                    columnCursors[column]++;
+                }
+            }
         }
 
         /*  Some key documentation so I don't get confused when trying to map out the logic. 
@@ -96,8 +146,86 @@ namespace ProjectOdyssey
 
                     float timeUntilHit = note.startTime - now;
                     float timeUntilEnd = note.endTime - now;
+
+                    if (note.noteType == NoteType.Tap)
+                    {
+                        float tHead = 1f - (timeUntilHit / approachTime);
+                        note.headPosY = MathHelper.Lerp(spawnPositionY, hitPositionY, tHead);
+                    }
+                    if (note.noteType == NoteType.Long)
+                    {
+                        float tHead = 1f - (timeUntilHit / approachTime);
+                        float tTail = 1f - (timeUntilEnd / approachTime);
+
+                        // Prevents LN positions overshooting the judgement line
+                        tHead = Math.Clamp(tHead, 0f, 1f);
+                        tTail = Math.Clamp(tTail, 0f, 1f);
+
+                        note.headPosY = MathHelper.Lerp(spawnPositionY, hitPositionY, tHead);
+                        note.tailPosY = MathHelper.Lerp(spawnPositionY, hitPositionY, tTail);
+                    }
                 }
             }
+        }
+
+        // This function is specifically for handling notes that the cursor sees but haven't been judged within their windows
+        public void HandleUnjudgedNotes(float now)
+        {
+            for (int i = 0; i < notesByColumn.Length; i++)
+            {
+                Note note = notesByColumn[i][columnCursors[i]];
+
+                if (note.noteState == NoteState.Resolved) // maybe move into judgement block
+                {
+                    columnCursors[i]++;
+                    continue;
+                }
+
+                float timeUntilHit = note.startTime - now;
+                float timeUntilEnd = note.endTime - now;
+
+                if (note.noteType == NoteType.Tap && timeUntilHit > 200)
+                {
+                    // TODO: record as a Miss 
+                    note.noteState = NoteState.Resolved;
+                    columnCursors[i]++;
+                    continue;
+                }
+
+                if (note.noteType == NoteType.Long && timeUntilHit > 200)
+                {
+                    // TODO: record as a Miss
+                    note.noteState = NoteState.ReleasedEarly;
+                    continue;
+                }
+
+                if (note.noteType == NoteType.Long && (note.noteState == NoteState.Holding || note.noteState == NoteState.Recovering || note.noteState == NoteState.ReleasedEarly))
+                {
+                    if (JudgementEngine.TryResolveOverheldNote(note.noteState, note.endTime, now, out var result, out var newState))
+                    {
+                        note.noteState = newState;
+                        columnCursors[i]++;
+
+                        // TODO: record `result` as a Miss
+                        continue;
+                    }
+                }
+            }
+        }
+
+        private int VkeyToColumn7k(ushort key)
+        {
+            return key switch
+            {
+                83 => 0, // S
+                68 => 1, // D
+                70 => 2, // F
+                32 => 3, // Space
+                74 => 4, // J
+                75 => 5, // K
+                76 => 6, // L
+                _ => throw new ArgumentException($"Invalid key code: {key}")
+            };
         }
     }
 }

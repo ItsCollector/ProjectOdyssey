@@ -1,4 +1,5 @@
 ﻿using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 
 namespace ProjectOdyssey
@@ -12,7 +13,7 @@ namespace ProjectOdyssey
         private const int RI_KEY_BREAK = 0x0001;
 
         private HashSet<ushort> keysDown = new HashSet<ushort>(); // keys currently held down
-        public event Action<InputEvent>? OnInputEvent;
+        public event Action<InputEvent, HashSet<ushort>>? OnInputEvent;
 
         //Hooks into the Windows Message Loop to intercept Raw Input.
         public void Initialise(nint glfwHandle, Win32RawInputMethods.WndProc hookDelegate)
@@ -100,10 +101,10 @@ namespace ProjectOdyssey
                 {
                     VKey = key,
                     IsPressed = isPressed,
-                    TimeStamp = 0f,
+                    TimeStamp = Stopwatch.GetTimestamp(),
                 };
 
-                OnInputEvent?.Invoke(inputEvent);
+                OnInputEvent?.Invoke(inputEvent, keysDown);
             }
         }
 

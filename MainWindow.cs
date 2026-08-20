@@ -71,7 +71,7 @@ namespace ProjectOdyssey
                 Console.WriteLine(result.error);
             }
 
-            //StartGameplay();
+            StartGameplay();
         }
 
         private void StartGameplay()

@@ -5,6 +5,6 @@
     {
         public ushort VKey;
         public bool IsPressed;
-        public float TimeStamp;
+        public long TimeStamp;
     }
 }
