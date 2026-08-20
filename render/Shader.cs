@@ -21,7 +21,7 @@ namespace ProjectOdyssey
         private static int CompileShader(ShaderType shaderType, string shaderPath)
         {
             int shader = GL.CreateShader(shaderType);
-            GL.ShaderSource(shader, shaderPath);
+            GL.ShaderSource(shader, File.ReadAllText(shaderPath));
             GL.CompileShader(shader);
 
             GL.GetShader(shader, ShaderParameter.CompileStatus, out int success);
@@ -39,7 +39,7 @@ namespace ProjectOdyssey
             int program = GL.CreateProgram();
             GL.AttachShader(program, vertexShader);
             GL.AttachShader(program, fragmentShader);
-            GL.CompileShader(program);
+            GL.LinkProgram(program);
 
             GL.GetProgram(program, GetProgramParameterName.LinkStatus, out int success);
 
@@ -70,6 +70,12 @@ namespace ProjectOdyssey
         {
             int location = GL.GetUniformLocation(handle, name);
             GL.Uniform2(location, x, y);
+        }
+
+        public void SetVector4(string name, Vector4 value)
+        {
+            int location = GL.GetUniformLocation(handle, name);
+            GL.Uniform4(location, value);
         }
 
         public void Use()

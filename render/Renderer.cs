@@ -15,6 +15,8 @@ namespace ProjectOdyssey
         {
             SetupMesh();
             shader = new Shader("shader/shader.vert", "shader/shader.frag");
+
+            Resize(1920, 1080); 
         }
 
         private void SetupMesh()
@@ -61,19 +63,29 @@ namespace ProjectOdyssey
             shader.SetMatrix4("projection", projection);
             shader.SetInt("uTexture", 0); 
             shader.SetInt("uUseTexture", 0);
+            shader.SetVector4("uColor", new Vector4(1.0f, 1.0f, 1.0f, 1.0f));
 
             GL.ActiveTexture(TextureUnit.Texture0);
         }
 
-        public void Draw(Texture texture, float xPosition, float yPosition, float width = -1, float height = -1)
+        public void Draw(Texture? texture, float xPosition, float yPosition, float width = -1, float height = -1)
         {
-            float textureWidth = (width == -1) ? texture.width : width;
-            float textureHeight = (height == -1) ? texture.height : height;
+            if (texture == null)
+            {
+                shader.SetVector2("uPosition", xPosition, yPosition);
+                shader.SetVector2("uSize", width, height);
+            }
+            else
+            {
+                // If width/height aren't provided, use texture defaults
+                float w = (width == -1) ? texture.width : width;
+                float h = (height == -1) ? texture.height : height;
 
-            GL.BindTexture(TextureTarget.Texture2D, texture.handle);
+                GL.BindTexture(TextureTarget.Texture2D, texture.handle);
 
-            shader.SetVector2("uPosition", xPosition, yPosition);
-            shader.SetVector2("uSize", textureWidth, textureHeight);
+                shader.SetVector2("uPosition", xPosition, yPosition);
+                shader.SetVector2("uSize", w, h);
+            }
 
             GL.DrawElements(PrimitiveType.Triangles, 6, DrawElementsType.UnsignedInt, 0);
         }

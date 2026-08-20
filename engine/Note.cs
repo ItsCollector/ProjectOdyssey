@@ -5,8 +5,8 @@
         public NoteType noteType { get; set; }
         public NoteState noteState { get; set; }
         public byte column { get; set; }
-        public double startTime { get; set; }
-        public double endTime { get; set; }
+        public float startTime { get; set; }
+        public float endTime { get; set; }
         public float headPosY { get; set; }
         public float tailPosY { get; set; }
     }

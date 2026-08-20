@@ -8,7 +8,8 @@ namespace ProjectOdyssey
 {
     public class MainWindow : GameWindow
     {
-        private Orchestrator? orchestrator;
+        private GameSession? session;
+        private IGameScreen? currentScreen; // change to song select menu later
         private Win32KeyInputListener inputListener = new Win32KeyInputListener();
         private InputHistory inputHistory = new InputHistory();
 
@@ -30,11 +31,14 @@ namespace ProjectOdyssey
         {
             base.OnLoad();
             GL.ClearColor(0.051f, 0.051f, 0.051f, 1.0f);
+            GL.Viewport(0, 0, ClientSize.X, ClientSize.Y);
             GL.Enable(EnableCap.Blend);
             GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
 
             inputListener.Initialise((IntPtr)WindowPtr, WndProcHook);
             inputListener.OnInputEvent += inputHistory.RecordInputEvent;
+
+            TransitionTo(new GameplayScreen());
 
             string fileName = "Ibuki Kido & Erii Yamazaki - pupa (TV Size) (MapleSyrup-) [Metamorphosis].osu";
             string link = Path.Combine(AppContext.BaseDirectory, "test charts", fileName);
@@ -72,8 +76,8 @@ namespace ProjectOdyssey
 
         private void StartGameplay()
         {
-            orchestrator = new Orchestrator(inputHistory);
-            orchestrator.Start(); 
+            session = new GameSession(inputHistory);
+            session.Start(); 
         }
 
         protected override void OnUpdateFrame(FrameEventArgs args)
@@ -85,17 +89,22 @@ namespace ProjectOdyssey
         {
             base.OnRenderFrame(args);
             GL.Clear(ClearBufferMask.ColorBufferBit);
+
+            currentScreen?.Render();
+
             SwapBuffers();
         }
 
         protected unsafe override void OnUnload()
         {
             base.OnUnload();
+
+            currentScreen?.Dispose();
             inputListener.Dispose((IntPtr)WindowPtr);
 
-            if (orchestrator != null)
+            if (session != null)
             {
-                orchestrator.Stop();
+                session.Stop();
             }
         }
 
@@ -113,6 +122,11 @@ namespace ProjectOdyssey
             }
 
             return inputListener.CallNextWindowProc(hWnd, msg, wParam, lParam);
+        }
+
+        private void TransitionTo(IGameScreen newScreen)
+        {
+            currentScreen = newScreen;
         }
     }
 }
