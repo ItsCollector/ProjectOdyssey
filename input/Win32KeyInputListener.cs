@@ -15,6 +15,17 @@ namespace ProjectOdyssey
         private HashSet<ushort> keysDown = new HashSet<ushort>(); // keys currently held down
         public event Action<InputEvent, HashSet<ushort>>? OnInputEvent;
 
+        public HashSet<ushort> binds = new HashSet<ushort>
+        {
+            83, // S
+            68, // D
+            70, // F
+            32, // Space
+            74, // J
+            75, // K
+            76, // L
+        };
+
         //Hooks into the Windows Message Loop to intercept Raw Input.
         public void Initialise(nint glfwHandle, Win32RawInputMethods.WndProc hookDelegate)
         {
@@ -84,11 +95,18 @@ namespace ProjectOdyssey
                 bool isPressed = (kb.Flags & RI_KEY_BREAK) == 0;
                 ushort key = kb.VKey;
 
+                if (binds.Contains(key) == false)
+                {
+                    return;
+                }
+
                 if (isPressed)
                 {
                     // Prevents key repeat spam from generating extra input events
                     if (keysDown.Contains(key))
+                    {
                         return;
+                    }
 
                     keysDown.Add(key);
                 }

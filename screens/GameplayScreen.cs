@@ -1,40 +1,37 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using ProjectOdyssey;
 
-namespace ProjectOdyssey
+public class GameplayScreen : IGameScreen
 {
-    public class GameplayScreen : IGameScreen
+    private GameSession session;
+    private GameplayRenderer gameplayRenderer;
+    private ChartData chartData;
+
+    public GameplayScreen(ChartData chartData, InputHistory inputHistory)
     {
-        private GameSession session;
-        private GameplayRenderer gameplayRenderer;
+        this.chartData = chartData;
+        session = new GameSession(inputHistory);
+        gameplayRenderer = new GameplayRenderer();
+    }
 
-        public GameplayScreen()
-        {
-            session = new GameSession(new InputHistory());
-            gameplayRenderer = new GameplayRenderer();
-            gameplayRenderer.Intitialise();
-            session.Start();
-        }
+    public void Initalise()
+    {
+        gameplayRenderer.Intitialise();
+        gameplayRenderer.LoadTextures();
 
-        public void Initalise()
-        {
-            // Load chart and UI assets later 
-            gameplayRenderer.Intitialise();
-            session.Start();
-        }
+        for (int i = 0; i < chartData.notesByColumn.Length; i++)
+            Console.WriteLine($"Column {i}: {chartData.notesByColumn[i].Length} notes");
 
-        public void Render()
-        {
-            gameplayRenderer.Draw(null, 200, 200, 100, 50);
-        }
+        session.Start(chartData);
+    }
 
-        public void Dispose()
-        {
-            session.Stop();
-            gameplayRenderer.Dispose();
-        }
+    public void Render()
+    {
+        gameplayRenderer.DrawGameplay(session.notesByColumn, session.columnCursors);
+    }
+
+    public void Dispose()
+    {
+        session.Stop();
+        gameplayRenderer.Dispose();
     }
 }

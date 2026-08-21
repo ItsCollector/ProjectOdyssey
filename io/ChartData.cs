@@ -1,6 +1,4 @@
-﻿using System.Runtime.CompilerServices;
-
-namespace ProjectOdyssey
+﻿namespace ProjectOdyssey
 {
     public class ChartData
     {
