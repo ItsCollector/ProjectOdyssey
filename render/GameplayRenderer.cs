@@ -1,32 +1,73 @@
-﻿namespace ProjectOdyssey
+﻿using OpenTK.Graphics.OpenGL4;
+using OpenTK.Mathematics;
+
+namespace ProjectOdyssey
 {
     public class GameplayRenderer : Renderer
     {
-        // Active Gameplay Textures
-        public Dictionary<string, Texture> textures = new Dictionary<string, Texture>();
-
         // Gameplay Column Positions
-        private int startX = 720;
-        private const int noteWidth = 80;
-        private const int noteHeight = 50;
-        private const int headOffset = noteHeight / 2;
+        private int columnStartX;
+        private int columnSpacing = 0;
+        private int noteWidth = 80;
+        private int noteHeight = 50;
+        private int headOffset;
 
         private float[] colX = new float[7];
-        private bool notesOverflowPastJudgementLine = true;
+        private bool notesOverflowPastJudgementLine = false;
 
         // Judgement Line Position
-        public int hitY = 1000;
+        public int hitPositionX;
+        public int hitPositionY = 1000;
+        public int hitPositionWidth;
+        public int hitPositionHeight = 50;
 
-        public void LoadTextures()
+        private Texture[] tapNoteTextures = new Texture[7];
+        private Texture[] lnHeadTextures = new Texture[7];
+        private Texture lnBodyTexture;
+        private Texture lnTailTexture;
+        private Texture judgementLineTexture;
+        private Texture receptorUpTexture;
+        private Texture receptorDownTexture;
+
+        public GameplayRenderer(GameplaySkinConfig skinConfig)
         {
-            // take a list of textures and load each one
+            this.noteWidth = skinConfig.NoteWidth;
+            this.noteHeight = skinConfig.NoteHeight;
+            this.hitPositionX = skinConfig.HitPositionX;
+            this.hitPositionY = skinConfig.HitPositionY;
+            this.columnSpacing = skinConfig.ColumnSpacing;
+
+            this.hitPositionWidth = noteWidth * 7;
+            this.headOffset = noteHeight / 2;
+            this.columnStartX = hitPositionX - (hitPositionWidth / 2);
 
             CalculateColumnPositions();
-            Resize(1920, 1080);
+        }
+
+        public void LoadSkinTextures(SkinAssets assets)
+        {
+            // one Texture object loaded per distinct file, then assigned/repeated per column
+            Texture[] tapVariants = assets.TapNotePaths.Select(LoadTexture).ToArray();
+            Texture[] lnHeadVariants = assets.LnHeadPaths.Select(LoadTexture).ToArray();
+
+            for (int i = 0; i < 7; i++)
+            {
+                tapNoteTextures[i] = tapVariants[i % tapVariants.Length];
+                lnHeadTextures[i] = lnHeadVariants[i % lnHeadVariants.Length];
+            }
+
+            lnBodyTexture = LoadTexture(assets.LnBodyPath);
+            lnTailTexture = LoadTexture(assets.LnTailPath);
+            judgementLineTexture = LoadTexture(assets.JudgementLinePath);
+            receptorUpTexture = LoadTexture(assets.ReceptorUpPath);
+            receptorDownTexture = LoadTexture(assets.ReceptorDownPath);
         }
 
         public void DrawGameplay(Note[][] notesByColumn, int[] columnCursors)
         {
+            Draw(judgementLineTexture, hitPositionX, hitPositionY, hitPositionWidth, hitPositionHeight); // judgement line
+            //Draw(receptorUpTexture, hitPositionX - headOffset, hitPositionY, noteHeight, noteHeight);
+
             for (int i = 0; i < notesByColumn.Length; i++)
             {
                 for (int j = 0; j < (notesByColumn[i].Length - columnCursors[i]); j++)
@@ -38,22 +79,27 @@
                         break;
                     }
 
-                    if (!notesOverflowPastJudgementLine && note.tailPosY >= hitY)
+                    if (!notesOverflowPastJudgementLine)
                     {
-                        continue;
+                        if (note.noteType == NoteType.Tap && note.headPosY >= hitPositionY) continue;
+                        if (note.noteType == NoteType.Long && note.tailPosY >= hitPositionY) continue;
                     }
 
                     float x = colX[i];
 
                     if (note.noteType == NoteType.Tap)
                     {
-                        Draw(null, x, note.headPosY - headOffset, noteWidth, noteHeight);
+                        Draw(tapNoteTextures[i], x, note.headPosY - headOffset, noteWidth, noteHeight);
                     }
                     else
                     {
-                        float bodyHeight = note.headPosY - note.tailPosY;
-                        float bodyPosY = (note.headPosY + note.tailPosY) / 2f;
-                        Draw(null, x, bodyPosY, noteWidth, bodyHeight);
+                        float headCenterY = note.headPosY - headOffset;
+
+                        float bodyHeight = headCenterY - note.tailPosY;
+                        float bodyPosY = (headCenterY + note.tailPosY) / 2f;
+
+                        Draw(lnBodyTexture, x, bodyPosY, noteWidth, bodyHeight);
+                        Draw(lnHeadTextures[i], x, headCenterY, noteWidth, noteHeight);
                     }
                 }
             }
@@ -63,11 +109,9 @@
         {
             for (int i = 0; i <= 6; i++)
             {
-                colX[i] = startX + noteWidth * i + noteWidth / 2f;
+                colX[i] = columnStartX + noteWidth * i + noteWidth / 2f;
                 Console.WriteLine($"colX[{i}] = {colX[i]}");
             }
-
-            
         }
     }
 }

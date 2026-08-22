@@ -38,8 +38,8 @@ namespace ProjectOdyssey
             inputListener.Initialise((IntPtr)WindowPtr, WndProcHook);
             inputListener.OnInputEvent += inputHistory.RecordInputEvent;
 
-            //string fileName = "Ibuki Kido & Erii Yamazaki - pupa (TV Size) (MapleSyrup-) [Metamorphosis].osu";
-            string fileName = "SHIKI - Pure Ruby (-NoName-) [Black Another].osu";
+            string fileName = "Ibuki Kido & Erii Yamazaki - pupa (TV Size) (MapleSyrup-) [Metamorphosis].osu";
+            //string fileName = "SHIKI - Pure Ruby (-NoName-) [Black Another].osu";
             string link = Path.Combine(AppContext.BaseDirectory, "test charts", fileName);
             var result = ChartImporter.Import(link);
 

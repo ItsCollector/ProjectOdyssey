@@ -1,37 +1,67 @@
-﻿using ProjectOdyssey;
-
-public class GameplayScreen : IGameScreen
+﻿namespace ProjectOdyssey
 {
-    private GameSession session;
-    private GameplayRenderer gameplayRenderer;
-    private ChartData chartData;
-
-    public GameplayScreen(ChartData chartData, InputHistory inputHistory)
+    public class GameplayScreen : IGameScreen
     {
-        this.chartData = chartData;
-        session = new GameSession(inputHistory);
-        gameplayRenderer = new GameplayRenderer();
-    }
+        private GameSession session;
+        private GameplayRenderer gameplayRenderer;
+        private ChartData chartData;
+        private GameplaySkinConfig skinConfig;
+        private SkinAssets skinAssets;
 
-    public void Initalise()
-    {
-        gameplayRenderer.Intitialise();
-        gameplayRenderer.LoadTextures();
+        public GameplayScreen(ChartData chartData, InputHistory inputHistory)
+        {
+            this.chartData = chartData;
+            session = new GameSession(inputHistory);
 
-        for (int i = 0; i < chartData.notesByColumn.Length; i++)
-            Console.WriteLine($"Column {i}: {chartData.notesByColumn[i].Length} notes");
+            string skinDirectory = Path.Combine(AppContext.BaseDirectory, "skins/Skin 1");
+            LoadSkin(skinDirectory);
 
-        session.Start(chartData);
-    }
+            gameplayRenderer = new GameplayRenderer(skinConfig);
+        }
 
-    public void Render()
-    {
-        gameplayRenderer.DrawGameplay(session.notesByColumn, session.columnCursors);
-    }
+        private void LoadSkin(string skinDirectory)
+        {
+            var filesResult = GameplaySkinParser.GetFiles(skinDirectory);
+            if (!filesResult.isSuccess)
+            {
+                Console.WriteLine($"[Skin] {filesResult.error}");
+                return;
+            }
 
-    public void Dispose()
-    {
-        session.Stop();
-        gameplayRenderer.Dispose();
+            var configResult = GameplaySkinParser.ParseSkinConfig(filesResult.value);
+            if (!configResult.isSuccess)
+            {
+                Console.WriteLine($"[Skin] {configResult.error}");
+                return;
+            }
+
+            var assetsResult = GameplaySkinParser.DiscoverAssets(filesResult.value);
+            if (!assetsResult.isSuccess)
+            {
+                Console.WriteLine($"[Skin] {assetsResult.error}");
+                return;
+            }
+
+            skinConfig = configResult.value;
+            skinAssets = assetsResult.value;
+        }
+
+        public void Initalise()
+        {
+            gameplayRenderer.Intitialise();
+            gameplayRenderer.LoadSkinTextures(skinAssets);
+            session.Start(chartData);
+        }
+
+        public void Render()
+        {
+            gameplayRenderer.DrawGameplay(session.notesByColumn, session.columnCursors);
+        }
+
+        public void Dispose()
+        {
+            session.Stop();
+            gameplayRenderer.Dispose();
+        }
     }
 }

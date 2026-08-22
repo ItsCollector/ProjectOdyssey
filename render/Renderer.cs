@@ -1,5 +1,6 @@
 ﻿using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
+using StbImageSharp;
 
 namespace ProjectOdyssey
 {
@@ -68,20 +69,86 @@ namespace ProjectOdyssey
             GL.ActiveTexture(TextureUnit.Texture0);
         }
 
+        // Creates Texture object based on image file at given path
+        public Texture LoadTexture(string path)
+        {
+            int texHandle = GL.GenTexture();
+            GL.BindTexture(TextureTarget.Texture2D, texHandle);
+
+            using var stream = File.OpenRead(path);
+            var image = ImageResult.FromStream(stream, ColorComponents.RedGreenBlueAlpha);
+
+            GL.TexImage2D(
+                TextureTarget.Texture2D,
+                0,
+                PixelInternalFormat.Rgba,
+                image.Width,
+                image.Height,
+                0,
+                PixelFormat.Rgba,
+                PixelType.UnsignedByte,
+                image.Data
+            );
+
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
+
+            return new Texture(texHandle, image.Width, image.Height, path);
+        }
+
+        // Loads multiple textures from a list of paths, returning a list of Texture objects
+        public List<Texture> LoadTextures(string[] paths)
+        {
+            List<Texture> textures = new List<Texture>();
+
+            foreach (string path in paths)
+            {
+                int texHandle = GL.GenTexture();
+                GL.BindTexture(TextureTarget.Texture2D, texHandle);
+
+                using var stream = File.OpenRead(path);
+                var image = ImageResult.FromStream(stream, ColorComponents.RedGreenBlueAlpha);
+
+                GL.TexImage2D(
+                    TextureTarget.Texture2D,
+                    0,
+                    PixelInternalFormat.Rgba,
+                    image.Width,
+                    image.Height,
+                    0,
+                    PixelFormat.Rgba,
+                    PixelType.UnsignedByte,
+                    image.Data
+                );
+
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
+
+                textures.Add(new Texture(texHandle, image.Width, image.Height, path));
+            }
+
+            return textures;
+        }
+
         public void Draw(Texture? texture, float xPosition, float yPosition, float width = -1, float height = -1)
         {
             if (texture == null)
             {
+                shader.SetInt("uUseTexture", 0);
                 shader.SetVector2("uPosition", xPosition, yPosition);
                 shader.SetVector2("uSize", width, height);
             }
             else
             {
-                // If width/height aren't provided, use texture defaults
                 float w = (width == -1) ? texture.width : width;
                 float h = (height == -1) ? texture.height : height;
 
                 GL.BindTexture(TextureTarget.Texture2D, texture.handle);
+                shader.SetInt("uUseTexture", 1);
 
                 shader.SetVector2("uPosition", xPosition, yPosition);
                 shader.SetVector2("uSize", w, h);

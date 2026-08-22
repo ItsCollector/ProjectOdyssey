@@ -15,7 +15,7 @@ namespace ProjectOdyssey
         private float spawnPositionY = -30;
         private float hitPositionY = 1000;
 
-        private bool notesOverflowPastJudgementLine = true;
+        private bool notesOverflowPastJudgementLine = false;
 
         public Note[][]? notesByColumn { get; set; } // pass these into the function later chart loading is being implemented, and remove nullable
         public int[]? columnCursors { get; set; } // construct cursors passed on the number of columns in the chart, and remove nullable
