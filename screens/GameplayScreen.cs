@@ -11,45 +11,10 @@
         public GameplayScreen(ChartData chartData, InputHistory inputHistory)
         {
             this.chartData = chartData;
-            session = new GameSession(inputHistory);
-
-            string skinDirectory = Path.Combine(AppContext.BaseDirectory, "skins/Skin 1");
-            LoadSkin(skinDirectory);
-
-            gameplayRenderer = new GameplayRenderer(skinConfig);
-        }
-
-        private void LoadSkin(string skinDirectory)
-        {
-            var filesResult = GameplaySkinParser.GetFiles(skinDirectory);
-            if (!filesResult.isSuccess)
-            {
-                Console.WriteLine($"[Skin] {filesResult.error}");
-                return;
-            }
-
-            var configResult = GameplaySkinParser.ParseSkinConfig(filesResult.value);
-            if (!configResult.isSuccess)
-            {
-                Console.WriteLine($"[Skin] {configResult.error}");
-                return;
-            }
-
-            var assetsResult = GameplaySkinParser.DiscoverAssets(filesResult.value);
-            if (!assetsResult.isSuccess)
-            {
-                Console.WriteLine($"[Skin] {assetsResult.error}");
-                return;
-            }
-
-            skinConfig = configResult.value;
-            skinAssets = assetsResult.value;
-        }
-
-        public void Initalise()
-        {
+            (skinConfig, skinAssets) = GameplaySkinParser.LoadSkin().value;
+            session = new GameSession(inputHistory, chartData);
+            gameplayRenderer = new GameplayRenderer(skinConfig, skinAssets);
             gameplayRenderer.Intitialise();
-            gameplayRenderer.LoadSkinTextures(skinAssets);
             session.Start(chartData);
         }
 

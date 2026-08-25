@@ -29,26 +29,22 @@ namespace ProjectOdyssey
         private Texture receptorUpTexture;
         private Texture receptorDownTexture;
 
-        public GameplayRenderer(GameplaySkinConfig skinConfig)
+        public GameplayRenderer(GameplaySkinConfig skinConfig, SkinAssets skinAssets)
         {
-            this.noteWidth = skinConfig.NoteWidth;
-            this.noteHeight = skinConfig.NoteHeight;
-            this.hitPositionX = skinConfig.HitPositionX;
-            this.hitPositionY = skinConfig.HitPositionY;
-            this.columnSpacing = skinConfig.ColumnSpacing;
+            noteWidth = skinConfig.NoteWidth;
+            noteHeight = skinConfig.NoteHeight;
+            hitPositionX = skinConfig.HitPositionX;
+            hitPositionY = skinConfig.HitPositionY;
+            columnSpacing = skinConfig.ColumnSpacing;
 
-            this.hitPositionWidth = noteWidth * 7;
-            this.headOffset = noteHeight / 2;
-            this.columnStartX = hitPositionX - (hitPositionWidth / 2);
+            hitPositionWidth = noteWidth * 7;
+            headOffset = noteHeight / 2;
+            columnStartX = hitPositionX - (hitPositionWidth / 2);
 
             CalculateColumnPositions();
-        }
 
-        public void LoadSkinTextures(SkinAssets assets)
-        {
-            // one Texture object loaded per distinct file, then assigned/repeated per column
-            Texture[] tapVariants = assets.TapNotePaths.Select(LoadTexture).ToArray();
-            Texture[] lnHeadVariants = assets.LnHeadPaths.Select(LoadTexture).ToArray();
+            Texture[] tapVariants = skinAssets.TapNotePaths.Select(LoadTexture).ToArray();
+            Texture[] lnHeadVariants = skinAssets.LnHeadPaths.Select(LoadTexture).ToArray();
 
             for (int i = 0; i < 7; i++)
             {
@@ -56,11 +52,11 @@ namespace ProjectOdyssey
                 lnHeadTextures[i] = lnHeadVariants[i % lnHeadVariants.Length];
             }
 
-            lnBodyTexture = LoadTexture(assets.LnBodyPath);
-            lnTailTexture = LoadTexture(assets.LnTailPath);
-            judgementLineTexture = LoadTexture(assets.JudgementLinePath);
-            receptorUpTexture = LoadTexture(assets.ReceptorUpPath);
-            receptorDownTexture = LoadTexture(assets.ReceptorDownPath);
+            lnBodyTexture = LoadTexture(skinAssets.LnBodyPath);
+            lnTailTexture = LoadTexture(skinAssets.LnTailPath);
+            judgementLineTexture = LoadTexture(skinAssets.JudgementLinePath);
+            receptorUpTexture = LoadTexture(skinAssets.ReceptorUpPath);
+            receptorDownTexture = LoadTexture(skinAssets.ReceptorDownPath);
         }
 
         public void DrawGameplay(Note[][] notesByColumn, int[] columnCursors)
@@ -107,9 +103,9 @@ namespace ProjectOdyssey
 
         public void CalculateColumnPositions()
         {
-            for (int i = 0; i <= 6; i++)
+            for (int i = 0; i < 7; i++)
             {
-                colX[i] = columnStartX + noteWidth * i + noteWidth / 2f;
+                colX[i] = columnStartX + (noteWidth + columnSpacing) * i + noteWidth / 2f;
                 Console.WriteLine($"colX[{i}] = {colX[i]}");
             }
         }

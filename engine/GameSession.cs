@@ -17,19 +17,18 @@ namespace ProjectOdyssey
 
         private bool notesOverflowPastJudgementLine = false;
 
-        public Note[][]? notesByColumn { get; set; } // pass these into the function later chart loading is being implemented, and remove nullable
-        public int[]? columnCursors { get; set; } // construct cursors passed on the number of columns in the chart, and remove nullable
+        public Note[][] notesByColumn { get; set; } // pass these into the function later chart loading is being implemented, and remove nullable
+        public int[] columnCursors { get; set; } // construct cursors passed on the number of columns in the chart, and remove nullable
 
-        public GameSession(InputHistory inputHistory)
+        public GameSession(InputHistory inputHistory, ChartData chartData)
         {
             this.inputHistory = inputHistory;
+            this.notesByColumn = chartData.notesByColumn;
+            columnCursors = new int[this.notesByColumn.Length];
         }
 
         public void Start(ChartData chartData)
         {
-            notesByColumn = chartData.notesByColumn;
-            columnCursors = new int[notesByColumn.Length];
-
             isRunning = true;
             gameplayThread = new Thread(Run);
             gameplayThread.IsBackground = true;

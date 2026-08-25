@@ -1,21 +1,31 @@
-﻿namespace ProjectOdyssey
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+
+namespace ProjectOdyssey
 {
     public static class ChartImporter
     {
         public static Result<ChartData> Import(string filePath)
         {
-            ChartData chartData = new ChartData();
+            string audioFileName = string.Empty;
+            string title = string.Empty;
+            string artist = string.Empty;
+            string noter = string.Empty;
+            string diffName = string.Empty;
+            byte keyCount = 0;
+            bool keyCountSet = false;
+
             IEnumerable<string> lines;
             bool inNotes = false;
 
-            // attempt to read lines of inputted file
             try
             {
                 lines = File.ReadLines(filePath);
             }
-            catch (Exception ex) 
+            catch (Exception ex)
             {
-                // exit on failure
                 return Result<ChartData>.Err($"Error reading file: {ex.Message}");
             }
 
@@ -23,42 +33,6 @@
 
             foreach (string line in lines)
             {
-                // Metadata 
-                if (line.StartsWith("AudioFilename:"))
-                {
-                    chartData.audioFileName = ExtractValue(line);
-                }
-                if (line.StartsWith("Mode:"))
-                {
-                    int mode = Int32.Parse(ExtractValue(line));
-
-                    // Skip non-mania charts
-                    if (mode != 3)
-                    {
-                        return Result<ChartData>.Err("Unsupported mode");
-                    }
-                }
-                if (line.StartsWith("Title:"))
-                {
-                    chartData.title = ExtractValue(line);
-                }
-                if (line.StartsWith("Artist:"))
-                {
-                    chartData.artist = ExtractValue(line);
-                }
-                if (line.StartsWith("Creator:"))
-                {
-                    chartData.noter = ExtractValue(line);
-                }
-                if (line.StartsWith("Version:"))
-                {
-                    chartData.diffName = ExtractValue(line);
-                }
-                if (line.StartsWith("CircleSize:"))
-                {
-                    chartData.keyCount = Byte.Parse(ExtractValue(line));
-                }
-
                 if (line.StartsWith("[HitObjects]"))
                 {
                     inNotes = true;
@@ -69,39 +43,79 @@
                 {
                     if (string.IsNullOrWhiteSpace(line) || line.StartsWith("["))
                     {
-                        Console.WriteLine($"[Debug] Exiting HitObjects section. Triggering line: '{line}'");
                         inNotes = false;
                     }
                     else
                     {
-                        notes.Add(ParseNote(line, chartData.keyCount));
-                        continue;
+                        if (!keyCountSet)
+                        {
+                            return Result<ChartData>.Err("HitObjects encountered before CircleSize was set");
+                        }
+                        notes.Add(ParseNote(line, keyCount));
                     }
+                    continue;
+                }
+
+                // Metadata
+                if (line.StartsWith("AudioFilename:"))
+                {
+                    audioFileName = ExtractValue(line);
+                }
+                else if (line.StartsWith("Mode:"))
+                {
+                    int mode = int.Parse(ExtractValue(line));
+                    if (mode != 3)
+                    {
+                        return Result<ChartData>.Err("Unsupported mode");
+                    }
+                }
+                else if (line.StartsWith("Title:"))
+                {
+                    title = ExtractValue(line);
+                }
+                else if (line.StartsWith("Artist:"))
+                {
+                    artist = ExtractValue(line);
+                }
+                else if (line.StartsWith("Creator:"))
+                {
+                    noter = ExtractValue(line);
+                }
+                else if (line.StartsWith("Version:"))
+                {
+                    diffName = ExtractValue(line);
+                }
+                else if (line.StartsWith("CircleSize:"))
+                {
+                    keyCount = byte.Parse(ExtractValue(line));
+                    keyCountSet = true;
                 }
             }
 
-            var grouped = new List<Note>[chartData.keyCount];
+            if (!keyCountSet)
+            {
+                return Result<ChartData>.Err("CircleSize was never specified");
+            }
 
-            // Initialise lists for each column
-            for (int i = 0; i < chartData.keyCount; i++)
+            var grouped = new List<Note>[keyCount];
+            for (int i = 0; i < keyCount; i++)
             {
                 grouped[i] = new List<Note>();
             }
 
-            // Distribute notes into their respective columns
             foreach (var note in notes)
             {
                 grouped[note.column].Add(note);
             }
 
-            // Sort notes in each column by start time and convert to array
-            chartData.notesByColumn = new Note[chartData.keyCount][];
-            for (int i = 0; i < chartData.keyCount; i++)
+            var notesByColumn = new Note[keyCount][];
+            for (int i = 0; i < keyCount; i++)
             {
-                grouped[i].Sort((a, b) => a.startTime.CompareTo(b.startTime)); // ensure time order per column
-                chartData.notesByColumn[i] = grouped[i].ToArray();
+                grouped[i].Sort((a, b) => a.startTime.CompareTo(b.startTime));
+                notesByColumn[i] = grouped[i].ToArray();
             }
 
+            var chartData = new ChartData(audioFileName, title, artist, noter, diffName, keyCount, notesByColumn);
             return Result<ChartData>.Ok(chartData);
         }
 
@@ -113,7 +127,9 @@
             int type = int.Parse(parts[3]);
             int endTime = time;
 
-            if (type == 128)
+            bool isLongNote = (type & 128) != 0;
+
+            if (isLongNote)
             {
                 var lnParts = parts[5].Split(':');
                 endTime = int.Parse(lnParts[0]);
@@ -121,7 +137,7 @@
 
             return new Note
             {
-                noteType = type == 128 ? NoteType.Long : NoteType.Tap,
+                noteType = isLongNote ? NoteType.Long : NoteType.Tap,
                 noteState = NoteState.Waiting,
                 column = (byte)(x * keyCount / 512),
                 startTime = time,
@@ -139,7 +155,6 @@
             foreach (var column in chartData.notesByColumn)
             {
                 if (column == null) continue;
-
                 tapCount += column.Count(n => n.noteType == NoteType.Tap);
                 longCount += column.Count(n => n.noteType == NoteType.Long);
             }
@@ -147,6 +162,10 @@
             return (tapCount, longCount);
         }
 
-        public static string ExtractValue(string line) => line.Split(':')[1].Trim();
+        public static string ExtractValue(string line)
+        {
+            int colonIndex = line.IndexOf(':');
+            return colonIndex < 0 ? string.Empty : line[(colonIndex + 1)..].Trim();
+        }
     }
 }

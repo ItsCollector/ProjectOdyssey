@@ -2,6 +2,7 @@
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
+using ProjectOdyssey.io;
 using System.Text.Json;
 
 namespace ProjectOdyssey
@@ -38,26 +39,12 @@ namespace ProjectOdyssey
             inputListener.Initialise((IntPtr)WindowPtr, WndProcHook);
             inputListener.OnInputEvent += inputHistory.RecordInputEvent;
 
-            string fileName = "Ibuki Kido & Erii Yamazaki - pupa (TV Size) (MapleSyrup-) [Metamorphosis].osu";
+            string fileName = "Ibuki Kido & Erii Yamazaki - pupa (TV Size) (MapleSyrup-) [Metamorphosis].json";
             //string fileName = "SHIKI - Pure Ruby (-NoName-) [Black Another].osu";
-            string link = Path.Combine(AppContext.BaseDirectory, "test charts", fileName);
-            var result = ChartImporter.Import(link);
 
-            if (result.isSuccess)
-            {
-                TransitionTo(new GameplayScreen(result.value, inputHistory));
-                currentScreen?.Initalise();
-            }
-            else
-            {
-                Console.WriteLine(result.error);
-            }
-        }
+            ChartData chartData = ChartLoader.LoadChart(fileName);
 
-        private void StartGameplay(ChartData chartData)
-        {
-            session = new GameSession(inputHistory);
-            session.Start(chartData); 
+            TransitionTo(new GameplayScreen(chartData, inputHistory));
         }
 
         protected override void OnUpdateFrame(FrameEventArgs args)
