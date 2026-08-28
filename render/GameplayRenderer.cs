@@ -8,9 +8,8 @@ namespace ProjectOdyssey
         // Gameplay Column Positions
         private int columnStartX;
         private int columnSpacing = 0;
-        private int noteWidth = 80;
-        private int noteHeight = 50;
-        private int headOffset;
+        private int noteWidth = 80;     
+        private int headOffset;         
 
         private float[] colX = new float[7];
         private bool notesOverflowPastJudgementLine = false;
@@ -32,13 +31,12 @@ namespace ProjectOdyssey
         public GameplayRenderer(GameplaySkinConfig skinConfig, SkinAssets skinAssets)
         {
             noteWidth = skinConfig.NoteWidth;
-            noteHeight = skinConfig.NoteHeight;
             hitPositionX = skinConfig.HitPositionX;
             hitPositionY = skinConfig.HitPositionY;
             columnSpacing = skinConfig.ColumnSpacing;
 
             hitPositionWidth = noteWidth * 7;
-            headOffset = noteHeight / 2;
+            headOffset = noteWidth / 2;
             columnStartX = hitPositionX - (hitPositionWidth / 2);
 
             CalculateColumnPositions();
@@ -59,10 +57,17 @@ namespace ProjectOdyssey
             receptorDownTexture = LoadTexture(skinAssets.ReceptorDownPath);
         }
 
+        /*  Something to return to later, the note height value is unused because I use a circle skin and the images are square.
+         *  I haven't decided fully whether skins will specify height and use them, or add an offset value to 
+         *  indicate that the bottom of the image is not the bottom of the note visually. */
+
+        /* If overflow past judgement line is enabled, long notes don't take into consideration 
+         * if the corresponding button is being held down, which would indicate to anchor the long note
+         * head to the judgement line. The full behaviour of this hasn't been decided yet. */
+
         public void DrawGameplay(Note[][] notesByColumn, int[] columnCursors)
         {
-            Draw(judgementLineTexture, hitPositionX, hitPositionY, hitPositionWidth, hitPositionHeight); // judgement line
-            //Draw(receptorUpTexture, hitPositionX - headOffset, hitPositionY, noteHeight, noteHeight);
+            Draw(judgementLineTexture, hitPositionX, hitPositionY, hitPositionWidth, hitPositionHeight);
 
             for (int i = 0; i < notesByColumn.Length; i++)
             {
@@ -70,32 +75,32 @@ namespace ProjectOdyssey
                 {
                     Note note = notesByColumn[i][j + columnCursors[i]];
 
-                    if (note.headPosY <= 0) // stop drawing if note is not positioned on the screen
-                    {
-                        break;
-                    }
+                    if (note.headPosY <= 0) break;
 
                     if (!notesOverflowPastJudgementLine)
                     {
                         if (note.noteType == NoteType.Tap && note.headPosY >= hitPositionY) continue;
-                        if (note.noteType == NoteType.Long && note.tailPosY >= hitPositionY) continue;
+                        if (note.noteType == NoteType.Long && (note.tailPosY + noteWidth) >= hitPositionY) continue;
                     }
 
                     float x = colX[i];
 
                     if (note.noteType == NoteType.Tap)
                     {
-                        Draw(tapNoteTextures[i], x, note.headPosY - headOffset, noteWidth, noteHeight);
+                        Draw(tapNoteTextures[i], x, note.headPosY - headOffset, noteWidth, noteWidth);
                     }
                     else
                     {
                         float headCenterY = note.headPosY - headOffset;
+                        float tailCenterY = note.tailPosY + headOffset;
+                        float tailBottomEdge = note.tailPosY + noteWidth;
 
-                        float bodyHeight = headCenterY - note.tailPosY;
-                        float bodyPosY = (headCenterY + note.tailPosY) / 2f;
+                        float bodyHeight = headCenterY - tailBottomEdge;
+                        float bodyPosY = (headCenterY + tailBottomEdge) / 2f;
 
-                        Draw(lnBodyTexture, x, bodyPosY, noteWidth, bodyHeight);
-                        Draw(lnHeadTextures[i], x, headCenterY, noteWidth, noteHeight);
+                        Draw(lnBodyTexture, x, bodyPosY, noteWidth, Math.Max(bodyHeight, 0f));
+                        DrawClippedBelow(lnTailTexture, x, tailCenterY, noteWidth, noteWidth, headCenterY);
+                        Draw(lnHeadTextures[i], x, headCenterY, noteWidth, noteWidth);
                     }
                 }
             }
@@ -106,7 +111,6 @@ namespace ProjectOdyssey
             for (int i = 0; i < 7; i++)
             {
                 colX[i] = columnStartX + (noteWidth + columnSpacing) * i + noteWidth / 2f;
-                Console.WriteLine($"colX[{i}] = {colX[i]}");
             }
         }
     }

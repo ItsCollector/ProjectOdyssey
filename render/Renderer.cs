@@ -11,6 +11,8 @@ namespace ProjectOdyssey
         private int ebo;
         private Shader shader;
         private Matrix4 projection;
+        private int viewportWidth = 1920;
+        private int viewportHeight = 1080;
 
         public Renderer()
         {
@@ -155,6 +157,34 @@ namespace ProjectOdyssey
             }
 
             GL.DrawElements(PrimitiveType.Triangles, 6, DrawElementsType.UnsignedInt, 0);
+        }
+
+        public void DrawClippedBelow(Texture texture, float x, float y, float width, float height, float clipBelowScreenY)
+        {
+            GL.Enable(EnableCap.ScissorTest);
+
+            const float logicalWidth = 1920f;
+            const float logicalHeight = 1080f;
+
+            float scaleX = viewportWidth / logicalWidth;
+            float scaleY = viewportHeight / logicalHeight;
+
+            int scissorBottomY = (int)Math.Max(0, viewportHeight - (clipBelowScreenY * scaleY));
+            int scissorHeight = Math.Max(0, viewportHeight - scissorBottomY);
+            int scissorX = (int)((x - width / 2) * scaleX);
+            int scissorWidth = Math.Max(0, (int)(width * scaleX) + 1);
+
+            GL.Scissor(scissorX, scissorBottomY, scissorWidth, scissorHeight);
+
+            Draw(texture, x, y, width, height);
+
+            GL.Disable(EnableCap.ScissorTest);
+        }
+
+        public void UpdateViewportSize(int width, int height)
+        {
+            viewportWidth = width;
+            viewportHeight = height;
         }
 
         public void Resize(int width, int height)

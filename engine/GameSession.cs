@@ -12,7 +12,7 @@ namespace ProjectOdyssey
         private volatile bool isRunning;
 
         private float approachTime = 420; // arbitrary values that should be moved to a config / skinning later
-        private float spawnPositionY = -30;
+        private float spawnPositionY = -100;
         private float hitPositionY = 1000;
 
         private bool notesOverflowPastJudgementLine = false;
@@ -153,16 +153,7 @@ namespace ProjectOdyssey
                     if (note.noteType == NoteType.Tap)
                     {
                         float tHead = 1f - (timeUntilHit / approachTime);
-
-                        if (notesOverflowPastJudgementLine)
-                        {
-                            tHead = Math.Max(tHead, 0f);
-                        }
-                        else
-                        {
-                            tHead = Math.Clamp(tHead, 0f, 1f);
-                        }
-
+                        tHead = notesOverflowPastJudgementLine ? tHead : Math.Min(tHead, 1f);
                         note.headPosY = MathHelper.Lerp(spawnPositionY, hitPositionY, tHead);
                     }
                     if (note.noteType == NoteType.Long)
@@ -170,16 +161,8 @@ namespace ProjectOdyssey
                         float tHead = 1f - (timeUntilHit / approachTime);
                         float tTail = 1f - (timeUntilEnd / approachTime);
 
-                        if (notesOverflowPastJudgementLine)
-                        {
-                            tHead = Math.Max(tHead, 0f);
-                            tTail = Math.Max(tTail, 0f);
-                        }
-                        else
-                        {
-                            tHead = Math.Clamp(tHead, 0f, 1f);
-                            tTail = Math.Clamp(tTail, 0f, 1f);
-                        }
+                        tHead = notesOverflowPastJudgementLine ? tHead : Math.Min(tHead, 1f);
+                        tTail = notesOverflowPastJudgementLine ? tTail : Math.Min(tTail, 1f);
 
                         note.headPosY = MathHelper.Lerp(spawnPositionY, hitPositionY, tHead);
                         note.tailPosY = MathHelper.Lerp(spawnPositionY, hitPositionY, tTail);

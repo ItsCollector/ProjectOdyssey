@@ -45,6 +45,8 @@ namespace ProjectOdyssey
             ChartData chartData = ChartLoader.LoadChart(fileName);
 
             TransitionTo(new GameplayScreen(chartData, inputHistory));
+            (currentScreen as GameplayScreen)?.UpdateViewportSize(ClientSize.X, ClientSize.Y);
+            Console.WriteLine($"ClientSize = {ClientSize.X} x {ClientSize.Y}");
         }
 
         protected override void OnUpdateFrame(FrameEventArgs args)
@@ -79,6 +81,7 @@ namespace ProjectOdyssey
         {
             base.OnFramebufferResize(args);
             GL.Viewport(0, 0, args.Width, args.Height);
+            (currentScreen as GameplayScreen)?.UpdateViewportSize(args.Width, args.Height);
         }
 
         private IntPtr WndProcHook(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam)

@@ -20,7 +20,12 @@
 
         public void Render()
         {
-            gameplayRenderer.DrawGameplay(session.notesByColumn, session.columnCursors);
+             gameplayRenderer.DrawGameplay(session.notesByColumn, session.columnCursors);
+        }
+
+        public void UpdateViewportSize(int width, int height)
+        {
+            gameplayRenderer.UpdateViewportSize(width, height);
         }
 
         public void Dispose()
