@@ -12,7 +12,7 @@ namespace ProjectOdyssey
         private int headOffset;         
 
         private float[] colX = new float[7];
-        private bool notesOverflowPastJudgementLine = false;
+        private bool notesOverflowPastJudgementLine = true;
 
         // Judgement Line Position
         public int hitPositionX;

@@ -1,4 +1,5 @@
-﻿using OpenTK.Mathematics;
+﻿using OpenTK.Graphics.ES11;
+using OpenTK.Mathematics;
 using System.Diagnostics;
 using System.Threading;
 
@@ -15,7 +16,7 @@ namespace ProjectOdyssey
         private float spawnPositionY = -100;
         private float hitPositionY = 1000;
 
-        private bool notesOverflowPastJudgementLine = false;
+        private bool notesOverflowPastJudgementLine = true;
 
         public Note[][] notesByColumn { get; set; } // pass these into the function later chart loading is being implemented, and remove nullable
         public int[] columnCursors { get; set; } // construct cursors passed on the number of columns in the chart, and remove nullable
@@ -59,7 +60,7 @@ namespace ProjectOdyssey
                     while (inputHistory.TryGetNextEvent(out InputEvent inputEvent))
                     {
                         float inputSongTimeMs = (float)gameClock.ToSongTimeMs(inputEvent.TimeStamp);
-                        JudgeNotes(inputEvent);
+                        JudgeNotes(inputEvent, inputSongTimeMs);
                     }
 
                     HandleUnjudgedNotes(now);
@@ -75,23 +76,25 @@ namespace ProjectOdyssey
         }
 
         // Judge one note
-        public void JudgeNotes(InputEvent inputEvent)
+        public void JudgeNotes(InputEvent inputEvent, float inputSongTimeMs)
         {
             int column = VkeyToColumn7k(inputEvent.VKey);
             int cursor = columnCursors[column];
+
+            if (cursor >= notesByColumn[column].Length) return;
 
             Note note = notesByColumn[column][cursor];
             InputDirection direction = inputEvent.IsPressed ? InputDirection.Down : InputDirection.Up;
 
             if (note.noteType == NoteType.Tap)
             {
-                if (direction != InputDirection.Down) return; // taps only judge on press
+                if (direction != InputDirection.Down) return;
 
-                JudgementType judgement = JudgementEngine.JudgeHead(inputEvent.TimeStamp, note.startTime);
+                JudgementType judgement = JudgementEngine.JudgeHead(inputSongTimeMs, note.startTime);
                 note.noteState = NoteState.Resolved;
                 columnCursors[column]++;
 
-                // TODO: record judgement (score/combo)
+                Console.WriteLine($"[JUDGEMENT] Vkey: {column} Position: Tap Note | Note ST: {note.startTime} Note ET: {note.endTime} | Direction: {direction} | Judge: {judgement}");
                 return;
             }
 
@@ -99,25 +102,26 @@ namespace ProjectOdyssey
             {
                 if (note.noteState == NoteState.Waiting)
                 {
-                    if (direction != InputDirection.Down) return; // ignore stray release before head
+                    if (direction != InputDirection.Down) return;
 
-                    JudgementType headJudgement = JudgementEngine.JudgeHead(inputEvent.TimeStamp, note.startTime);
+                    JudgementType headJudgement = JudgementEngine.JudgeHead(inputSongTimeMs, note.startTime);
                     note.noteState = NoteState.Holding;
 
-                    // TODO: record head judgement
+                    Console.WriteLine($"[JUDGEMENT] Vkey: {column} Position: Tap Note | Note ST: {note.startTime} Note ET: {note.endTime} | Direction: {direction} | Judge: {headJudgement}");
                     return;
                 }
 
                 (JudgementType tailJudgement, NoteState newState) =
-                    JudgementEngine.JudgeTail(inputEvent.TimeStamp, note.endTime, direction, note.noteState);
+                    JudgementEngine.JudgeTail(inputSongTimeMs, note.endTime, direction, note.noteState);
 
                 note.noteState = newState;
 
                 if (newState == NoteState.Resolved)
                 {
-                    // TODO: record tail judgement
                     columnCursors[column]++;
                 }
+
+                Console.WriteLine($"[JUDGEMENT] Vkey: {column} Position: Tap Note | Note ST: {note.startTime} Note ET: {note.endTime} | Direction: {direction} | Judge: {tailJudgement}");
             }
         }
 
