@@ -67,7 +67,12 @@ namespace ProjectOdyssey
 
         public void DrawGameplay(Note[][] notesByColumn, int[] columnCursors)
         {
-            Draw(judgementLineTexture, hitPositionX, hitPositionY, hitPositionWidth, hitPositionHeight);
+            //Draw(judgementLineTexture, hitPositionX, hitPositionY, hitPositionWidth, hitPositionHeight);
+
+            for (int i = 0; i < notesByColumn.Length; i++)
+            {
+                Draw(receptorDownTexture, columnStartX + (noteWidth * i) + (noteWidth / 2), hitPositionY - headOffset, noteWidth, noteWidth);
+            }
 
             for (int i = 0; i < notesByColumn.Length; i++)
             {
