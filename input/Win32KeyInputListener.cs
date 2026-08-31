@@ -13,7 +13,7 @@ namespace ProjectOdyssey
         private const int RI_KEY_BREAK = 0x0001;
 
         private HashSet<ushort> keysDown = new HashSet<ushort>(); // keys currently held down
-        public event Action<InputEvent, HashSet<ushort>>? OnInputEvent;
+        public event Action<InputEvent>? OnInputEvent;
 
         public HashSet<ushort> binds = new HashSet<ushort>
         {
@@ -122,7 +122,7 @@ namespace ProjectOdyssey
                     TimeStamp = Stopwatch.GetTimestamp(),
                 };
 
-                OnInputEvent?.Invoke(inputEvent, keysDown);
+                OnInputEvent?.Invoke(inputEvent);
             }
         }
 

@@ -24,8 +24,8 @@ namespace ProjectOdyssey
                     APIVersion = new Version(4, 1)
                 })
         {
-            //WindowState = WindowState.Maximized;
-            WindowState = WindowState.Fullscreen;
+            WindowState = WindowState.Maximized;
+            //WindowState = WindowState.Fullscreen;
             Context.SwapInterval = vsync ? 1 : 0;
         }
 
@@ -41,12 +41,13 @@ namespace ProjectOdyssey
             inputListener.OnInputEvent += inputHistory.RecordInputEvent;
 
             //string fileName = "Ibuki Kido & Erii Yamazaki - pupa (TV Size) (MapleSyrup-) [Metamorphosis].json";
-            string fileName = "Lime - Pixel Planet (-NoName-) [Advanced].osu";
+            //string fileName = "Lime - Pixel Planet (-NoName-) [Advanced].osu";
+            string fileName = "test_single_long_note.json";
 
-            //ChartData chartData = ChartLoader.LoadChart(fileName);
-            var result = ChartImporter.Import(Path.Combine(AppContext.BaseDirectory, "test charts", fileName));
+            ChartData chartData = ChartLoader.LoadChart(fileName);
+            //var result = ChartImporter.Import(Path.Combine(AppContext.BaseDirectory, "test charts", fileName));
 
-            TransitionTo(new GameplayScreen(result.value, inputHistory));
+            TransitionTo(new GameplayScreen(chartData, inputHistory));
             (currentScreen as GameplayScreen)?.UpdateViewportSize(ClientSize.X, ClientSize.Y);
             Console.WriteLine($"ClientSize = {ClientSize.X} x {ClientSize.Y}");
         }

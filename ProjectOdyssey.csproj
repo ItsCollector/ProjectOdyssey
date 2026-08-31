@@ -80,6 +80,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="charts\test_single_long_note.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="shader\shader.frag">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
@@ -134,6 +137,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="charts\" />
     <Folder Include="skins\Skin 1\" />
   </ItemGroup>
 

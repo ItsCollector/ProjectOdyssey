@@ -1,5 +1,6 @@
 ﻿using OpenTK.Graphics.ES11;
 using OpenTK.Mathematics;
+using System.Data.Common;
 using System.Diagnostics;
 using System.Threading;
 
@@ -17,6 +18,7 @@ namespace ProjectOdyssey
         private float hitPositionY = 1000;
 
         private bool notesOverflowPastJudgementLine = true;
+        private float ghostTapThreshold = 200;
 
         public Note[][] notesByColumn { get; set; } // pass these into the function later chart loading is being implemented, and remove nullable
         public int[] columnCursors { get; set; } // construct cursors passed on the number of columns in the chart, and remove nullable
@@ -85,16 +87,17 @@ namespace ProjectOdyssey
 
             Note note = notesByColumn[column][cursor];
             InputDirection direction = inputEvent.IsPressed ? InputDirection.Down : InputDirection.Up;
-
+ 
             if (note.noteType == NoteType.Tap)
             {
                 if (direction != InputDirection.Down) return;
+                if (Math.Abs(inputSongTimeMs - note.startTime) > ghostTapThreshold) return;
 
                 JudgementType judgement = JudgementEngine.JudgeHead(inputSongTimeMs, note.startTime);
                 note.noteState = NoteState.Resolved;
                 columnCursors[column]++;
 
-                Console.WriteLine($"[JUDGEMENT] Vkey: {column} Position: Tap Note | Note ST: {note.startTime} Note ET: {note.endTime} | Direction: {direction} | Judge: {judgement}");
+                Console.WriteLine($"[JUDGEMENT] Vkey: {column + 1} Position: Tap Note | Note ST: {note.startTime} Note ET: {note.endTime} | Direction: {direction} | Judge: {judgement}");
                 return;
             }
 
@@ -103,11 +106,12 @@ namespace ProjectOdyssey
                 if (note.noteState == NoteState.Waiting)
                 {
                     if (direction != InputDirection.Down) return;
+                    if (Math.Abs(inputSongTimeMs - note.startTime) > ghostTapThreshold) return;
 
                     JudgementType headJudgement = JudgementEngine.JudgeHead(inputSongTimeMs, note.startTime);
                     note.noteState = NoteState.Holding;
 
-                    Console.WriteLine($"[JUDGEMENT] Vkey: {column} Position: Tap Note | Note ST: {note.startTime} Note ET: {note.endTime} | Direction: {direction} | Judge: {headJudgement}");
+                    Console.WriteLine($"[JUDGEMENT] Vkey: {column + 1} Position: Long Note | Note ST: {note.startTime} Note ET: {note.endTime} | Direction: {direction} | Judge: {headJudgement}");
                     return;
                 }
 
@@ -121,7 +125,7 @@ namespace ProjectOdyssey
                     columnCursors[column]++;
                 }
 
-                Console.WriteLine($"[JUDGEMENT] Vkey: {column} Position: Tap Note | Note ST: {note.startTime} Note ET: {note.endTime} | Direction: {direction} | Judge: {tailJudgement}");
+                Console.WriteLine($"[JUDGEMENT] Vkey: {column + 1} Position: Long Note | Note ST: {note.startTime} Note ET: {note.endTime} | Direction: {direction} | Judge: {tailJudgement}");
             }
         }
 
@@ -195,6 +199,7 @@ namespace ProjectOdyssey
 
                 if (note.noteType == NoteType.Tap && timeUntilHit < -JudgementEngine.missWindowMs)
                 {
+                    Console.WriteLine($"[JUDGEMENT] Vkey: {note.column + 1} Position: Tap Note | Note ST: {note.startTime} Note ET: {note.endTime} | Judge: Miss");
                     note.noteState = NoteState.Resolved;
                     columnCursors[i]++;
                     continue;
@@ -203,6 +208,7 @@ namespace ProjectOdyssey
                 if (note.noteType == NoteType.Long && note.noteState == NoteState.Waiting && timeUntilHit < -JudgementEngine.missWindowMs)
                 {
                     // TODO: record as a Miss
+                    Console.WriteLine($"[JUDGEMENT] Vkey: {note.column + 1} Position: Long Note | Note ST: {note.startTime} Note ET: {note.endTime} | Judge: Miss");
                     note.noteState = NoteState.ReleasedEarly;
                     continue;
                 }
@@ -215,6 +221,7 @@ namespace ProjectOdyssey
                         columnCursors[i]++;
 
                         // TODO: record `result` as a Miss
+                        Console.WriteLine($"[JUDGEMENT] Vkey: {note.column + 1} Position: Long Note | Note ST: {note.startTime} Note ET: {note.endTime} | Judge: Miss");
                         continue;
                     }
                 }

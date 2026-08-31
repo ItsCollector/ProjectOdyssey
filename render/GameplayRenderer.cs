@@ -96,7 +96,10 @@ namespace ProjectOdyssey
                     }
                     else
                     {
-                        float headCenterY = note.headPosY - headOffset;
+                        bool anchorHead = notesOverflowPastJudgementLine && note.noteState == NoteState.Holding;
+                        float effectiveHeadPosY = anchorHead ? Math.Min(note.headPosY, hitPositionY) : note.headPosY;
+
+                        float headCenterY = effectiveHeadPosY - headOffset;
                         float tailCenterY = note.tailPosY + headOffset;
                         float tailBottomEdge = note.tailPosY + noteWidth;
 
