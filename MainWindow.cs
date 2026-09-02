@@ -45,7 +45,7 @@ namespace ProjectOdyssey
             string fileName = "test_single_long_note.json";
 
             ChartData chartData = ChartLoader.LoadChart(fileName);
-            //var result = ChartImporter.Import(Path.Combine(AppContext.BaseDirectory, "test charts", fileName));
+            //var result = ChartImporter.Import(Path.Combine(AppContext.BaseDirectory, "Test charts", fileName));
 
             TransitionTo(new GameplayScreen(chartData, inputHistory));
             (currentScreen as GameplayScreen)?.UpdateViewportSize(ClientSize.X, ClientSize.Y);

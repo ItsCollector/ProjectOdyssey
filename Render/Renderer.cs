@@ -17,7 +17,7 @@ namespace ProjectOdyssey
         public Renderer()
         {
             SetupMesh();
-            shader = new Shader("shader/shader.vert", "shader/shader.frag");
+            shader = new Shader("Render/Shaders/shader.vert", "Render/Shaders/shader.frag");
 
             Resize(1920, 1080); 
         }

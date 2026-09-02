@@ -14,7 +14,7 @@
     <Compile Remove="ProjectOdyssey.Tests\**" />
     <EmbeddedResource Remove="ProjectOdyssey.Tests\**" />
     <None Remove="ProjectOdyssey.Tests\**" />
-	<None Include="test charts\**" CopyToOutputDirectory="PreserveNewest" />
+	<None Include="Test charts\**" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>
@@ -23,122 +23,129 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Update="engine\EventBus.cs">
+    <Compile Update="GameClock.cs">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Compile>
-    <Compile Update="engine\GameClock.cs">
+    <Compile Update="GameSession.cs">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Compile>
-    <Compile Update="engine\GameSession.cs">
+    <Compile Update="Judgement.cs">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Compile>
-    <Compile Update="engine\Judgement.cs">
+    <Compile Update="JudgementEngine.cs">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Compile>
-    <Compile Update="engine\JudgementEngine.cs">
+    <Compile Update="Note.cs">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Compile>
-    <Compile Update="engine\Note.cs">
+    <Compile Update="Result.cs">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Compile>
-    <Compile Update="engine\Result.cs">
+    <Compile Update="InputEvent.cs">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Compile>
-    <Compile Update="input\InputEvent.cs">
+    <Compile Update="InputHistory.cs">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Compile>
-    <Compile Update="input\InputHistory.cs">
+    <Compile Update="RawInputStructs.cs">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Compile>
-    <Compile Update="input\RawInputStructs.cs">
+    <Compile Update="Win32KeyInputListener.cs">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Compile>
-    <Compile Update="input\Win32KeyInputListener.cs">
+    <Compile Update="Win32RawInputMethods.cs">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Compile>
-    <Compile Update="input\Win32RawInputMethods.cs">
+    <Compile Update="GameplayRenderer.cs">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Compile>
-    <Compile Update="render\GameplayRenderer.cs">
+    <Compile Update="Renderer.cs">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Compile>
-    <Compile Update="render\Renderer.cs">
+    <Compile Update="Shader.cs">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Compile>
-    <Compile Update="render\Shader.cs">
+    <Compile Update="Texture.cs">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Compile>
-    <Compile Update="render\Texture.cs">
+    <Compile Update="GameplayScreen.cs">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Compile>
-    <Compile Update="screens\GameplayScreen.cs">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-    </Compile>
-    <Compile Update="screens\IGameScreen.cs">
+    <Compile Update="IGameScreen.cs">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Compile>
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="charts\test_single_long_note.json">
+    <None Update="Charts\test_single_long_note.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="shader\shader.frag">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="shader\shader.vert">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="skins\Skin 1\config.json">
+    <None Update="Render\Shaders\shader.frag">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="skins\Skin 1\judgement_line.png">
+    <None Update="Render\Shaders\shader.vert">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="shader.frag">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="skins\Skin 1\ln_body.png">
+    <None Update="shader.vert">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="skins\Skin 1\ln_head_1.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    <None Update="Skins\Skin 1\config.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="skins\Skin 1\ln_head_2.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    <None Update="Skins\Skin 1\judgement_line.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="skins\Skin 1\ln_head_3.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    <None Update="Skins\Skin 1\ln_body.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="skins\Skin 1\ln_head_4.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    <None Update="Skins\Skin 1\ln_head_1.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="skins\Skin 1\ln_head_5.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    <None Update="Skins\Skin 1\ln_head_2.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="skins\Skin 1\ln_head_6.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    <None Update="Skins\Skin 1\ln_head_3.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="skins\Skin 1\ln_head_7.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    <None Update="Skins\Skin 1\ln_head_4.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="skins\Skin 1\ln_tail.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    <None Update="Skins\Skin 1\ln_head_5.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="skins\Skin 1\receptor_down.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    <None Update="Skins\Skin 1\ln_head_6.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="skins\Skin 1\receptor_up.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    <None Update="Skins\Skin 1\ln_head_7.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="skins\Skin 1\tap_note_1.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    <None Update="Skins\Skin 1\ln_tail.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="test charts\Ibuki Kido &amp; Erii Yamazaki - pupa (TV Size) (MapleSyrup-) [Metamorphosis].osu">
+    <None Update="Skins\Skin 1\receptor_down.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Skins\Skin 1\receptor_up.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Skins\Skin 1\tap_note_1.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Test charts\Ibuki Kido &amp; Erii Yamazaki - pupa (TV Size) (MapleSyrup-) [Metamorphosis].osu">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="charts\" />
-    <Folder Include="skins\Skin 1\" />
+    <Folder Include="Charts\" />
+    <Folder Include="Engine\" />
+    <Folder Include="Input\" />
+    <Folder Include="IO\" />
+    <Folder Include="Screens\" />
+    <Folder Include="Skinning\" />
   </ItemGroup>
 
 </Project>
