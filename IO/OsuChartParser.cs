@@ -1,8 +1,11 @@
 ﻿namespace ProjectOdyssey
 {
-    public static class ChartImporter
+    public static class OsuChartParser
     {
-        public static Result<ChartData> Import(string filePath)
+        // Generic entry point: parse a .osu file at an already-known absolute
+        // path. Used directly for test charts / non-osu-library imports, and
+        // internally by ImportFromOsuLibrary once the path is resolved.
+        public static Result<ChartData> OsuToChartData(string filePath)
         {
             string audioFileName = string.Empty;
             string title = string.Empty;
@@ -51,7 +54,6 @@
                     continue;
                 }
 
-                // Metadata
                 if (line.StartsWith("AudioFilename:"))
                 {
                     audioFileName = ExtractValue(line);
@@ -92,6 +94,14 @@
                 return Result<ChartData>.Err("CircleSize was never specified");
             }
 
+            string osuFolder = Path.GetDirectoryName(filePath) ?? string.Empty;
+            string resolvedAudioPath = Path.Combine(osuFolder, audioFileName);
+
+            if (!File.Exists(resolvedAudioPath))
+            {
+                return Result<ChartData>.Err($"Audio file not found: {resolvedAudioPath}");
+            }
+
             var grouped = new List<Note>[keyCount];
             for (int i = 0; i < keyCount; i++)
             {
@@ -110,7 +120,7 @@
                 notesByColumn[i] = grouped[i].ToArray();
             }
 
-            var chartData = new ChartData(audioFileName, title, artist, noter, diffName, keyCount, notesByColumn);
+            var chartData = new ChartData(resolvedAudioPath, title, artist, noter, diffName, keyCount, notesByColumn);
             return Result<ChartData>.Ok(chartData);
         }
 

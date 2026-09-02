@@ -42,7 +42,7 @@ namespace ProjectOdyssey
             //string fileName = "Lime - Pixel Planet (-NoName-) [Advanced].osu";
             string fileName = "test_single_long_note.json";
 
-            ChartData chartData = ChartLoader.LoadChart(fileName);
+            ChartData chartData = ChartFileReader.LoadChart(fileName);
             //var result = ChartImporter.Import(Path.Combine(AppContext.BaseDirectory, "Test charts", fileName));
 
             TransitionTo(new GameplayScreen(chartData, inputHistory));
