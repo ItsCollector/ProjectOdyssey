@@ -1,7 +1,4 @@
-﻿using OpenTK.Graphics.OpenGL4;
-using OpenTK.Mathematics;
-
-namespace ProjectOdyssey
+﻿namespace ProjectOdyssey
 {
     public class GameplayRenderer : Renderer
     {

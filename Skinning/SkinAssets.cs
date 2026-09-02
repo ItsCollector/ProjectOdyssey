@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace ProjectOdyssey
+﻿namespace ProjectOdyssey
 {
     // Holds the resolved file paths for every skin component, once discovery succeeds.
     public class SkinAssets

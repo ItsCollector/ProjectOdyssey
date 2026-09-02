@@ -1,7 +1,4 @@
-﻿using OpenTK.Graphics.OpenGL4;
-using OpenTK.Mathematics;
-
-namespace ProjectOdyssey.render
+﻿namespace ProjectOdyssey.render
 {
     public class HudRenderer : Renderer
     {

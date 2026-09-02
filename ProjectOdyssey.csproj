@@ -140,6 +140,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Audio\" />
     <Folder Include="Charts\" />
     <Folder Include="Engine\" />
     <Folder Include="Input\" />

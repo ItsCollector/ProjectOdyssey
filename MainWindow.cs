@@ -2,8 +2,6 @@
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
-using ProjectOdyssey.io;
-using System.Text.Json;
 
 namespace ProjectOdyssey
 {

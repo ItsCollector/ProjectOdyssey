@@ -1,8 +1,5 @@
-﻿using OpenTK.Graphics.ES11;
-using OpenTK.Mathematics;
-using System.Data.Common;
+﻿using OpenTK.Mathematics;
 using System.Diagnostics;
-using System.Threading;
 
 namespace ProjectOdyssey
 {

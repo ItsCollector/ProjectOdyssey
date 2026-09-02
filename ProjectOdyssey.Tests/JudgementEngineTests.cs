@@ -1,7 +1,4 @@
-﻿using Xunit;
-using ProjectOdyssey;
-
-namespace ProjectOdyssey.Tests
+﻿namespace ProjectOdyssey.Tests
 {
     public class JudgementEngineTests
     {

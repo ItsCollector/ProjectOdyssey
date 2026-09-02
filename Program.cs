@@ -1,6 +1,4 @@
-﻿using OpenTK.Windowing.GraphicsLibraryFramework;
-
-namespace ProjectOdyssey
+﻿namespace ProjectOdyssey
 {
     internal class Program
     {
