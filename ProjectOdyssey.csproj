@@ -90,7 +90,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="skins\Skin 1\config.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="skins\Skin 1\judgement_line.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

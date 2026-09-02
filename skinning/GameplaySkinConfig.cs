@@ -7,5 +7,12 @@
         public int HitPositionX { get; set; }
         public int HitPositionY { get; set; }
         public int ColumnSpacing { get; set; }
+        public TargetType TargetType { get; set; }
+    }
+
+    public enum TargetType
+    {
+        Line,
+        Receptor
     }
 }

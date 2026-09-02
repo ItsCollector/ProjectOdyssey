@@ -20,6 +20,7 @@ namespace ProjectOdyssey
         public int hitPositionWidth;
         public int hitPositionHeight = 50;
 
+        // Textures
         private Texture[] tapNoteTextures = new Texture[7];
         private Texture[] lnHeadTextures = new Texture[7];
         private Texture lnBodyTexture;
@@ -28,12 +29,16 @@ namespace ProjectOdyssey
         private Texture receptorUpTexture;
         private Texture receptorDownTexture;
 
+        // Other
+        private TargetType targetType;
+
         public GameplayRenderer(GameplaySkinConfig skinConfig, SkinAssets skinAssets)
         {
             noteWidth = skinConfig.NoteWidth;
             hitPositionX = skinConfig.HitPositionX;
             hitPositionY = skinConfig.HitPositionY;
             columnSpacing = skinConfig.ColumnSpacing;
+            targetType = skinConfig.TargetType;
 
             hitPositionWidth = noteWidth * 7;
             headOffset = noteWidth / 2;
@@ -61,17 +66,18 @@ namespace ProjectOdyssey
          *  I haven't decided fully whether skins will specify height and use them, or add an offset value to 
          *  indicate that the bottom of the image is not the bottom of the note visually. */
 
-        /* If overflow past judgement line is enabled, long notes don't take into consideration 
-         * if the corresponding button is being held down, which would indicate to anchor the long note
-         * head to the judgement line. The full behaviour of this hasn't been decided yet. */
-
         public void DrawGameplay(Note[][] notesByColumn, int[] columnCursors)
         {
-            //Draw(judgementLineTexture, hitPositionX, hitPositionY, hitPositionWidth, hitPositionHeight);
-
-            for (int i = 0; i < notesByColumn.Length; i++)
+            if (targetType == TargetType.Line)
             {
-                Draw(receptorDownTexture, columnStartX + (noteWidth * i) + (noteWidth / 2), hitPositionY - headOffset, noteWidth, noteWidth);
+                Draw(judgementLineTexture, hitPositionX, hitPositionY, hitPositionWidth, hitPositionHeight);
+            }
+            else
+            {
+                for (int i = 0; i < notesByColumn.Length; i++)
+                {
+                    Draw(receptorDownTexture, columnStartX + (noteWidth * i) + (noteWidth / 2), hitPositionY - headOffset, noteWidth, noteWidth);
+                }
             }
 
             for (int i = 0; i < notesByColumn.Length; i++)
