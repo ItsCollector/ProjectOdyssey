@@ -2,6 +2,7 @@
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
+using ProjectOdyssey.Screens;
 
 namespace ProjectOdyssey
 {
@@ -40,13 +41,17 @@ namespace ProjectOdyssey
 
             //string fileName = "Ibuki Kido & Erii Yamazaki - pupa (TV Size) (MapleSyrup-) [Metamorphosis].json";
             //string fileName = "Lime - Pixel Planet (-NoName-) [Advanced].osu";
-            string fileName = "test_single_long_note.json";
+            //string fileName = "test_single_long_note.json";
 
-            ChartData chartData = ChartFileReader.LoadChart(fileName);
+            //ChartData chartData = ChartFileReader.LoadChart(fileName);
             //var result = ChartImporter.Import(Path.Combine(AppContext.BaseDirectory, "Test charts", fileName));
 
-            TransitionTo(new GameplayScreen(chartData, inputHistory));
-            (currentScreen as GameplayScreen)?.UpdateViewportSize(ClientSize.X, ClientSize.Y);
+            //TransitionTo(new GameplayScreen(chartData, inputHistory));
+            //(currentScreen as GameplayScreen)?.UpdateViewportSize(ClientSize.X, ClientSize.Y);
+
+            TransitionTo(new ChartManagerScreen());
+            (currentScreen as ChartManagerScreen)?.UpdateViewportSize(ClientSize.X, ClientSize.Y);
+
             Console.WriteLine($"ClientSize = {ClientSize.X} x {ClientSize.Y}");
         }
 

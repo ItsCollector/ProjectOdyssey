@@ -5,7 +5,7 @@
         // Generic entry point: parse a .osu file at an already-known absolute
         // path. Used directly for test charts / non-osu-library imports, and
         // internally by ImportFromOsuLibrary once the path is resolved.
-        public static Result<ChartData> OsuToChartData(string filePath)
+        public static Result<(ChartData chartData, string resolvedAudioPath)> OsuToChartData(string filePath)
         {
             string audioFileName = string.Empty;
             string title = string.Empty;
@@ -24,7 +24,7 @@
             }
             catch (Exception ex)
             {
-                return Result<ChartData>.Err($"Error reading file: {ex.Message}");
+                return Result<(ChartData chartData, string resolvedAudioPath)>.Err($"Error reading file: {ex.Message}");
             }
 
             var notes = new List<Note>();
@@ -47,7 +47,7 @@
                     {
                         if (!keyCountSet)
                         {
-                            return Result<ChartData>.Err("HitObjects encountered before CircleSize was set");
+                            return Result<(ChartData chartData, string resolvedAudioPath)>.Err("HitObjects encountered before CircleSize was set");
                         }
                         notes.Add(ParseNote(line, keyCount));
                     }
@@ -63,7 +63,7 @@
                     int mode = int.Parse(ExtractValue(line));
                     if (mode != 3)
                     {
-                        return Result<ChartData>.Err("Unsupported mode");
+                        return Result<(ChartData chartData, string resolvedAudioPath)>.Err("Unsupported mode");
                     }
                 }
                 else if (line.StartsWith("Title:"))
@@ -91,7 +91,7 @@
 
             if (!keyCountSet)
             {
-                return Result<ChartData>.Err("CircleSize was never specified");
+                return Result<(ChartData chartData, string resolvedAudioPath)>.Err("CircleSize was never specified");
             }
 
             string osuFolder = Path.GetDirectoryName(filePath) ?? string.Empty;
@@ -99,7 +99,7 @@
 
             if (!File.Exists(resolvedAudioPath))
             {
-                return Result<ChartData>.Err($"Audio file not found: {resolvedAudioPath}");
+                return Result<(ChartData chartData, string resolvedAudioPath)>.Err($"Audio file not found: {resolvedAudioPath}");
             }
 
             var grouped = new List<Note>[keyCount];
@@ -120,8 +120,8 @@
                 notesByColumn[i] = grouped[i].ToArray();
             }
 
-            var chartData = new ChartData(resolvedAudioPath, title, artist, noter, diffName, keyCount, notesByColumn);
-            return Result<ChartData>.Ok(chartData);
+            var chartData = new ChartData(title, artist, noter, diffName, keyCount, notesByColumn);
+            return Result<(ChartData chartData, string resolvedAudioPath)>.Ok((chartData, resolvedAudioPath));
         }
 
         public static Note ParseNote(string line, byte keyCount)

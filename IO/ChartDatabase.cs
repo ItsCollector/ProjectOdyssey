@@ -57,8 +57,6 @@ namespace ProjectOdyssey
             return connection;
         }
 
-        
-
         public List<ChartRecord> GetAllCharts()
         {
             var charts = new List<ChartRecord>();
@@ -79,15 +77,120 @@ namespace ProjectOdyssey
                     ChartId = reader.GetInt32(0),
                     SongId = reader.GetInt32(1),
                     FilePath = reader.GetString(2),
-                    DiffName = reader.GetString(4),
-                    Noter = reader.GetString(5),
-                    KeyCount = reader.GetInt32(6),
-                    FileLastWriteUtc = reader.GetInt64(7)
+                    DiffName = reader.GetString(3),
+                    Noter = reader.GetString(4),
+                    KeyCount = reader.GetInt32(5),
+                    FileLastWriteUtc = reader.GetInt64(6)
                 });
             }
 
             return charts;
         }
+
+        public int InsertChartSet(ChartSet set)
+        {
+            using var connection = OpenConnection();
+            using var command = connection.CreateCommand();
+            command.CommandText =
+            @"
+                INSERT INTO ChartSets (FolderPath, Source)
+                VALUES ($folderPath, $source);
+                SELECT last_insert_rowid();
+            ";
+            command.Parameters.AddWithValue("$folderPath", set.FolderPath);
+            command.Parameters.AddWithValue("$source", set.Source);
+
+            return Convert.ToInt32(command.ExecuteScalar());
+        }
+
+        public int InsertChart(ChartRecord chart)
+        {
+            using var connection = OpenConnection();
+            using var command = connection.CreateCommand();
+            command.CommandText =
+            @"
+                INSERT INTO Charts (SongId, FilePath, DiffName, Noter, KeyCount, FileLastWriteUtc)
+                VALUES ($songId, $filePath, $diffName, $noter, $keyCount, $fileLastWriteUtc);
+                SELECT last_insert_rowid();
+            ";
+            command.Parameters.AddWithValue("$songId", chart.SongId);
+            command.Parameters.AddWithValue("$filePath", chart.FilePath);
+            command.Parameters.AddWithValue("$diffName", chart.DiffName);
+            command.Parameters.AddWithValue("$noter", chart.Noter);
+            command.Parameters.AddWithValue("$keyCount", chart.KeyCount);
+            command.Parameters.AddWithValue("$fileLastWriteUtc", chart.FileLastWriteUtc);
+
+            return Convert.ToInt32(command.ExecuteScalar());
+        }
+
+        public int GetOrCreateSong(SongRecord song)
+        {
+            using var connection = OpenConnection();
+
+            using (var selectCommand = connection.CreateCommand())
+            {
+                selectCommand.CommandText =
+                @"
+                    SELECT SongId
+                    FROM Songs
+                    WHERE SetId = $setId AND AudioPath = $audioPath;
+                ";
+                selectCommand.Parameters.AddWithValue("$setId", song.SetId);
+                selectCommand.Parameters.AddWithValue("$audioPath", song.AudioPath);
+
+                var existing = selectCommand.ExecuteScalar();
+                if (existing != null)
+                {
+                    return Convert.ToInt32(existing);
+                }
+            }
+
+            using var insertCommand = connection.CreateCommand();
+            insertCommand.CommandText =
+            @"
+                INSERT INTO Songs (SetId, AudioPath, Title, Artist)
+                VALUES ($setId, $audioPath, $title, $artist);
+                SELECT last_insert_rowid();
+            ";
+            insertCommand.Parameters.AddWithValue("$setId", song.SetId);
+            insertCommand.Parameters.AddWithValue("$audioPath", song.AudioPath);
+            insertCommand.Parameters.AddWithValue("$title", song.Title);
+            insertCommand.Parameters.AddWithValue("$artist", song.Artist);
+
+            return Convert.ToInt32(insertCommand.ExecuteScalar());
+        }
+
+        public bool ChartSetExists(string folderPath)
+        {
+            using var connection = OpenConnection();
+            using var command = connection.CreateCommand();
+            command.CommandText =
+            @"
+                SELECT 1
+                FROM ChartSets
+                WHERE FolderPath = $folderPath
+                LIMIT 1;
+            ";
+            command.Parameters.AddWithValue("$folderPath", folderPath);
+
+            return command.ExecuteScalar() != null;
+        }
+    }
+
+    public class ChartSet
+    {
+        public int SetId { get; set; }
+        public string FolderPath { get; set; } = "";
+        public string Source { get; set; } = ""; // 'Native' or 'OsuLink'
+    }
+
+    public class SongRecord
+    {
+        public int SongId { get; set; }
+        public int SetId { get; set; }
+        public string AudioPath { get; set; } = "";
+        public string Title { get; set; } = "";
+        public string Artist { get; set; } = "";
     }
 
     public class ChartRecord

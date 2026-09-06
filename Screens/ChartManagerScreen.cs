@@ -11,7 +11,7 @@ namespace ProjectOdyssey.Screens
     {
         public ChartManagerScreen()
         {
-            
+            ChartImportService.ImportChartsFromOsu();
         }
 
         public void Render()
