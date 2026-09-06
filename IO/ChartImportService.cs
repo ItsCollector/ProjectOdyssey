@@ -98,7 +98,7 @@ namespace ProjectOdyssey
             string fileName = $"{chartData.diffName}.json";
             string outputPath = Path.Combine(destinationFolder, fileName);
 
-            string json = JsonSerializer.Serialize(chartData, );
+            string json = JsonSerializer.Serialize(chartData);
             File.WriteAllText(outputPath, json);
 
             return outputPath;
