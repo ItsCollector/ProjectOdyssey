@@ -1,4 +1,4 @@
-﻿namespace ProjectOdyssey
+﻿namespace ProjectOdyssey.Input
 {
     // Stores a single keyboard input alongside its gameplay timestamp
     public struct InputEvent

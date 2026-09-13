@@ -1,12 +1,15 @@
-﻿namespace ProjectOdyssey
+﻿using ProjectOdyssey.Engine;
+using ProjectOdyssey.Skinning;
+
+namespace ProjectOdyssey.Render
 {
     public class GameplayRenderer : Renderer
     {
         // Gameplay Column Positions
         private int columnStartX;
         private int columnSpacing = 0;
-        private int noteWidth = 80;     
-        private int headOffset;         
+        private int noteWidth = 80;
+        private int headOffset;
 
         private float[] colX = new float[7];
         private bool notesOverflowPastJudgementLine = true;

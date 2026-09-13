@@ -1,4 +1,4 @@
-﻿namespace ProjectOdyssey
+﻿namespace ProjectOdyssey.Skinning
 {
     // Holds the resolved file paths for every skin component, once discovery succeeds.
     public class SkinAssets

@@ -1,4 +1,6 @@
-﻿namespace ProjectOdyssey.Tests
+﻿using ProjectOdyssey.Engine;
+
+namespace ProjectOdyssey.Tests
 {
     public class JudgementEngineTests
     {

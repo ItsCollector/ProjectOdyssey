@@ -1,4 +1,7 @@
-﻿namespace ProjectOdyssey
+﻿using ProjectOdyssey.Common;
+using ProjectOdyssey.Engine;
+
+namespace ProjectOdyssey.IO
 {
     public static class OsuChartParser
     {

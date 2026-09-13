@@ -1,6 +1,6 @@
 ﻿using Microsoft.Data.Sqlite;
 
-namespace ProjectOdyssey
+namespace ProjectOdyssey.IO
 {
     public class ChartDatabase
     {

@@ -1,6 +1,6 @@
 ﻿using System.Collections.Concurrent;
 
-namespace ProjectOdyssey
+namespace ProjectOdyssey.Input
 {
     public class InputHistory
     {

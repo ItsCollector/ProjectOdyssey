@@ -1,7 +1,9 @@
 ﻿using OpenTK.Mathematics;
 using System.Diagnostics;
+using ProjectOdyssey.Input;
+using ProjectOdyssey.IO;
 
-namespace ProjectOdyssey
+namespace ProjectOdyssey.Engine
 {
     public class GameSession
     {
@@ -84,7 +86,7 @@ namespace ProjectOdyssey
 
             Note note = notesByColumn[column][cursor];
             InputDirection direction = inputEvent.IsPressed ? InputDirection.Down : InputDirection.Up;
- 
+
             if (note.noteType == NoteType.Tap)
             {
                 if (direction != InputDirection.Down) return;
@@ -224,7 +226,7 @@ namespace ProjectOdyssey
                 }
             }
         }
-        
+
         private int VkeyToColumn7k(ushort key)
         {
             return key switch

@@ -1,7 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Runtime.InteropServices;
 
-namespace ProjectOdyssey
+namespace ProjectOdyssey.Input.Native
 {
     class Win32KeyInputListener
     {

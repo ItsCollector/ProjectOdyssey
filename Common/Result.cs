@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 
-namespace ProjectOdyssey
+namespace ProjectOdyssey.Common
 {
     public readonly struct Result<T>
     {

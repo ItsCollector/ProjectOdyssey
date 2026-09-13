@@ -1,6 +1,6 @@
 ﻿using OpenTK.Graphics.OpenGL4;
 
-namespace ProjectOdyssey
+namespace ProjectOdyssey.Render
 {
     public class Texture : IDisposable
     {
@@ -8,7 +8,7 @@ namespace ProjectOdyssey
         public int width;
         public int height;
         public string imgPath;
-        
+
         public Texture(int handle, int width, int height, string imgPath)
         {
             this.handle = handle;
