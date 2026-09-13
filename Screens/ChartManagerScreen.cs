@@ -1,17 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection.PortableExecutable;
-using System.Text;
-using System.Threading.Tasks;
+﻿using ProjectOdyssey.IO;
 
 namespace ProjectOdyssey.Screens
 {
     public class ChartManagerScreen : IGameScreen
     {
-        public ChartManagerScreen()
+        public void Load()
         {
             ChartImportService.ImportChartsFromOsu();
+        }
+
+        public void Update(float deltaMs)
+        {
+            // Chart manager UI update logic goes here
         }
 
         public void Render()
@@ -19,12 +19,12 @@ namespace ProjectOdyssey.Screens
             // Render the chart manager UI here
         }
 
-        public void UpdateViewportSize(int width, int height)
+        public void Resize(int width, int height)
         {
             // Handle viewport size changes if necessary
         }
 
-        public void Dispose()
+        public void Unload()
         {
             // Clean up resources if necessary
         }

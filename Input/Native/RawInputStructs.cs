@@ -1,6 +1,6 @@
 ﻿using System.Runtime.InteropServices;
 
-namespace ProjectOdyssey
+namespace ProjectOdyssey.Input.Native
 {
     // Matches the Win32 RAWINPUTHEADER structure used by the Raw Input API
     [StructLayout(LayoutKind.Sequential)]

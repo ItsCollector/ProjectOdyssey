@@ -1,6 +1,6 @@
 ﻿using System.Runtime.InteropServices;
 
-namespace ProjectOdyssey
+namespace ProjectOdyssey.Input.Native
 {
     static class Win32RawInputMethods
     {

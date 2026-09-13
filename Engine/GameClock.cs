@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics;
 
-namespace ProjectOdyssey
+namespace ProjectOdyssey.Engine
 {
     public class GameClock
     {

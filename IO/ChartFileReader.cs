@@ -1,6 +1,6 @@
 ﻿using System.Text.Json;
 
-namespace ProjectOdyssey
+namespace ProjectOdyssey.IO
 {
     public static class ChartFileReader
     {

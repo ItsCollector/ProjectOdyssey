@@ -1,13 +1,13 @@
 ﻿using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 
-namespace ProjectOdyssey
+namespace ProjectOdyssey.Render
 {
     public class Shader
     {
         public int handle;
 
-        public Shader(string vertexShaderPath, string fragmentShaderPath) 
+        public Shader(string vertexShaderPath, string fragmentShaderPath)
         {
             int vertexShader = CompileShader(ShaderType.VertexShader, vertexShaderPath);
             int fragmentShader = CompileShader(ShaderType.FragmentShader, fragmentShaderPath);
@@ -31,7 +31,7 @@ namespace ProjectOdyssey
                 Console.WriteLine(GL.GetShaderInfoLog(shader));
             }
 
-            return shader; 
+            return shader;
         }
 
         private static int LinkProgram(int vertexShader, int fragmentShader)

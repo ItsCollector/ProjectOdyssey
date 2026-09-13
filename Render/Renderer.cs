@@ -2,7 +2,7 @@
 using OpenTK.Mathematics;
 using StbImageSharp;
 
-namespace ProjectOdyssey
+namespace ProjectOdyssey.Render
 {
     public class Renderer
     {
@@ -19,7 +19,7 @@ namespace ProjectOdyssey
             SetupMesh();
             shader = new Shader("Render/Shaders/shader.vert", "Render/Shaders/shader.frag");
 
-            Resize(1920, 1080); 
+            Resize(1920, 1080);
         }
 
         private void SetupMesh()
@@ -64,7 +64,7 @@ namespace ProjectOdyssey
             GL.BindVertexArray(vao);
 
             shader.SetMatrix4("projection", projection);
-            shader.SetInt("uTexture", 0); 
+            shader.SetInt("uTexture", 0);
             shader.SetInt("uUseTexture", 0);
             shader.SetVector4("uColor", new Vector4(1.0f, 1.0f, 1.0f, 1.0f));
 

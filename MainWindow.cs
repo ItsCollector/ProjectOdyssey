@@ -2,14 +2,16 @@
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
+using ProjectOdyssey.Input;
+using ProjectOdyssey.Input.Native;
+using ProjectOdyssey.IO;
 using ProjectOdyssey.Screens;
 
 namespace ProjectOdyssey
 {
     public class MainWindow : GameWindow
     {
-        private GameSession? session;
-        private IGameScreen? currentScreen; // change to song select menu later
+        private readonly ScreenManager screenManager = new();
         private Win32KeyInputListener inputListener = new Win32KeyInputListener();
         private InputHistory inputHistory = new InputHistory();
 
@@ -39,6 +41,11 @@ namespace ProjectOdyssey
             inputListener.Initialise((IntPtr)WindowPtr, WndProcHook);
             inputListener.OnInputEvent += inputHistory.RecordInputEvent;
 
+            // ScreenManager needs to know the viewport before the first
+            // screen is pushed, so Resize() is used here instead of it
+            // reading ClientSize on its own.
+            screenManager.Resize(ClientSize.X, ClientSize.Y);
+
             //string fileName = "Ibuki Kido & Erii Yamazaki - pupa (TV Size) (MapleSyrup-) [Metamorphosis].json";
             //string fileName = "Lime - Pixel Planet (-NoName-) [Advanced].osu";
             string fileName = "test_single_long_note.json";
@@ -46,11 +53,9 @@ namespace ProjectOdyssey
             ChartData chartData = ChartFileReader.LoadChart(fileName);
             //var result = ChartImporter.Import(Path.Combine(AppContext.BaseDirectory, "Test charts", fileName));
 
-            TransitionTo(new GameplayScreen(chartData, inputHistory));
-            (currentScreen as GameplayScreen)?.UpdateViewportSize(ClientSize.X, ClientSize.Y);
+            screenManager.Push(new GameplayScreen(chartData, inputHistory));
 
-            //TransitionTo(new ChartManagerScreen());
-            //(currentScreen as ChartManagerScreen)?.UpdateViewportSize(ClientSize.X, ClientSize.Y);
+            //screenManager.Push(new ChartManagerScreen());
 
             Console.WriteLine($"ClientSize = {ClientSize.X} x {ClientSize.Y}");
         }
@@ -58,6 +63,7 @@ namespace ProjectOdyssey
         protected override void OnUpdateFrame(FrameEventArgs args)
         {
             base.OnUpdateFrame(args);
+            screenManager.Update((float)args.Time * 1000f);
         }
 
         protected override void OnRenderFrame(FrameEventArgs args)
@@ -65,7 +71,7 @@ namespace ProjectOdyssey
             base.OnRenderFrame(args);
             GL.Clear(ClearBufferMask.ColorBufferBit);
 
-            currentScreen?.Render();
+            screenManager.Render();
 
             SwapBuffers();
         }
@@ -74,20 +80,15 @@ namespace ProjectOdyssey
         {
             base.OnUnload();
 
-            currentScreen?.Dispose();
+            screenManager.UnloadAll();
             inputListener.Dispose((IntPtr)WindowPtr);
-
-            if (session != null)
-            {
-                session.Stop();
-            }
         }
 
         protected override void OnFramebufferResize(FramebufferResizeEventArgs args)
         {
             base.OnFramebufferResize(args);
             GL.Viewport(0, 0, args.Width, args.Height);
-            (currentScreen as GameplayScreen)?.UpdateViewportSize(args.Width, args.Height);
+            screenManager.Resize(args.Width, args.Height);
         }
 
         private IntPtr WndProcHook(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam)
@@ -98,11 +99,6 @@ namespace ProjectOdyssey
             }
 
             return inputListener.CallNextWindowProc(hWnd, msg, wParam, lParam);
-        }
-
-        private void TransitionTo(IGameScreen newScreen)
-        {
-            currentScreen = newScreen;
         }
     }
 }

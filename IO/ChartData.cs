@@ -1,4 +1,6 @@
-﻿namespace ProjectOdyssey
+﻿using ProjectOdyssey.Engine;
+
+namespace ProjectOdyssey.IO
 {
     public class ChartData
     {

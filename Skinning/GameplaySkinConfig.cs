@@ -1,4 +1,4 @@
-﻿namespace ProjectOdyssey
+﻿namespace ProjectOdyssey.Skinning
 {
     public class GameplaySkinConfig
     {

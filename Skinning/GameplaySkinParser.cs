@@ -1,6 +1,7 @@
 ﻿using System.Text.Json;
+using ProjectOdyssey.Common;
 
-namespace ProjectOdyssey
+namespace ProjectOdyssey.Skinning
 {
     public static class GameplaySkinParser
     {

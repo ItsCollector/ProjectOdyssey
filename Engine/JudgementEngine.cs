@@ -1,10 +1,10 @@
 ﻿using System.Diagnostics;
 
-namespace ProjectOdyssey
+namespace ProjectOdyssey.Engine
 {
     public static class JudgementEngine
     {
-        public const float earlyReleaseToleranceMs = -200; 
+        public const float earlyReleaseToleranceMs = -200;
         public const float missWindowMs = 200;
 
         // Judge Tap notes or the head of Long Notes

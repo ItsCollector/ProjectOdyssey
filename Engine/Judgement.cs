@@ -1,4 +1,4 @@
-﻿namespace ProjectOdyssey
+﻿namespace ProjectOdyssey.Engine
 {
     public class Judgement
     {
