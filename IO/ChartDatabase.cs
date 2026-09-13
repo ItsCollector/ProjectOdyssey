@@ -18,23 +18,23 @@ namespace ProjectOdyssey.IO
             @"
                 CREATE TABLE IF NOT EXISTS ChartSets (
                     SetId INTEGER PRIMARY KEY AUTOINCREMENT,
-                    FolderPath TEXT NOT NULL UNIQUE,   -- the osu set folder, or your own native import folder
-                    Source TEXT NOT NULL               -- 'Native' or 'OsuLink'
+                    FolderPath TEXT NOT NULL UNIQUE,
+                    Source TEXT NOT NULL
                 );
 
                 CREATE TABLE IF NOT EXISTS Songs (
                     SongId INTEGER PRIMARY KEY AUTOINCREMENT,
                     SetId INTEGER NOT NULL REFERENCES ChartSets(SetId) ON DELETE CASCADE,
-                    AudioPath TEXT NOT NULL,           -- absolute path, unique WITHIN a set, not globally
-                    Title TEXT NOT NULL,
-                    Artist TEXT NOT NULL,
+                    AudioPath TEXT NOT NULL,
                     UNIQUE(SetId, AudioPath)
                 );
 
                 CREATE TABLE IF NOT EXISTS Charts (
                     ChartId INTEGER PRIMARY KEY AUTOINCREMENT,
                     SongId INTEGER NOT NULL REFERENCES Songs(SongId) ON DELETE CASCADE,
-                    FilePath TEXT NOT NULL UNIQUE,      -- the .json chart file
+                    FilePath TEXT NOT NULL UNIQUE,
+                    Title TEXT NOT NULL,
+                    Artist TEXT NOT NULL,
                     DiffName TEXT NOT NULL,
                     Noter TEXT NOT NULL,
                     KeyCount INTEGER NOT NULL,
@@ -109,12 +109,14 @@ namespace ProjectOdyssey.IO
             using var command = connection.CreateCommand();
             command.CommandText =
             @"
-                INSERT INTO Charts (SongId, FilePath, DiffName, Noter, KeyCount, FileLastWriteUtc)
-                VALUES ($songId, $filePath, $diffName, $noter, $keyCount, $fileLastWriteUtc);
+                INSERT INTO Charts (SongId, FilePath, Title, Artist, DiffName, Noter, KeyCount, FileLastWriteUtc)
+                VALUES ($songId, $filePath, $title, $artist, $diffName, $noter, $keyCount, $fileLastWriteUtc);
                 SELECT last_insert_rowid();
             ";
             command.Parameters.AddWithValue("$songId", chart.SongId);
             command.Parameters.AddWithValue("$filePath", chart.FilePath);
+            command.Parameters.AddWithValue("$title", chart.Title);
+            command.Parameters.AddWithValue("$artist", chart.Artist);
             command.Parameters.AddWithValue("$diffName", chart.DiffName);
             command.Parameters.AddWithValue("$noter", chart.Noter);
             command.Parameters.AddWithValue("$keyCount", chart.KeyCount);
@@ -131,31 +133,25 @@ namespace ProjectOdyssey.IO
             {
                 selectCommand.CommandText =
                 @"
-                    SELECT SongId
-                    FROM Songs
+                    SELECT SongId FROM Songs
                     WHERE SetId = $setId AND AudioPath = $audioPath;
                 ";
                 selectCommand.Parameters.AddWithValue("$setId", song.SetId);
                 selectCommand.Parameters.AddWithValue("$audioPath", song.AudioPath);
 
                 var existing = selectCommand.ExecuteScalar();
-                if (existing != null)
-                {
-                    return Convert.ToInt32(existing);
-                }
+                if (existing != null) return Convert.ToInt32(existing);
             }
 
             using var insertCommand = connection.CreateCommand();
             insertCommand.CommandText =
             @"
-                INSERT INTO Songs (SetId, AudioPath, Title, Artist)
-                VALUES ($setId, $audioPath, $title, $artist);
+                INSERT INTO Songs (SetId, AudioPath)
+                VALUES ($setId, $audioPath);
                 SELECT last_insert_rowid();
             ";
             insertCommand.Parameters.AddWithValue("$setId", song.SetId);
             insertCommand.Parameters.AddWithValue("$audioPath", song.AudioPath);
-            insertCommand.Parameters.AddWithValue("$title", song.Title);
-            insertCommand.Parameters.AddWithValue("$artist", song.Artist);
 
             return Convert.ToInt32(insertCommand.ExecuteScalar());
         }
@@ -189,8 +185,6 @@ namespace ProjectOdyssey.IO
         public int SongId { get; set; }
         public int SetId { get; set; }
         public string AudioPath { get; set; } = "";
-        public string Title { get; set; } = "";
-        public string Artist { get; set; } = "";
     }
 
     public class ChartRecord
@@ -198,6 +192,8 @@ namespace ProjectOdyssey.IO
         public int ChartId { get; set; }
         public int SongId { get; set; }
         public string FilePath { get; set; } = "";
+        public string Title { get; set; } = "";
+        public string Artist { get; set; } = "";
         public string DiffName { get; set; } = "";
         public string Noter { get; set; } = "";
         public int KeyCount { get; set; }

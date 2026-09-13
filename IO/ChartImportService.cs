@@ -42,6 +42,7 @@ namespace ProjectOdyssey.IO
                         var (chartData, resolvedAudioPath) = result.value;
                         string jsonFilePath = WriteChartJson(songDir, chartData);
                         parsedChartsInSet.Add((chartData, resolvedAudioPath, jsonFilePath));
+                        Console.WriteLine($"[INFO] Successfully parsed {chartFile} and saved to {jsonFilePath}");
                     }
                     else
                     {
@@ -70,15 +71,15 @@ namespace ProjectOdyssey.IO
                 int songId = chartDatabase.GetOrCreateSong(new SongRecord
                 {
                     SetId = setId,
-                    AudioPath = resolvedAudioPath,
-                    Title = chartData.title,
-                    Artist = chartData.artist
+                    AudioPath = resolvedAudioPath
                 });
 
                 chartDatabase.InsertChart(new ChartRecord
                 {
                     SongId = songId,
                     FilePath = jsonFilePath,
+                    Title = chartData.title,
+                    Artist = chartData.artist,
                     DiffName = chartData.diffName,
                     Noter = chartData.noter,
                     KeyCount = chartData.keyCount,

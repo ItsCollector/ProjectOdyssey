@@ -57,6 +57,8 @@ namespace ProjectOdyssey
 
             //screenManager.Push(new ChartManagerScreen());
 
+            //ChartImportService.ImportChartsFromOsu();
+
             Console.WriteLine($"ClientSize = {ClientSize.X} x {ClientSize.Y}");
         }
 

@@ -187,7 +187,7 @@ namespace ProjectOdyssey.Engine
 
                 Note note = notesByColumn[i][columnCursors[i]];
 
-                if (note.noteState == NoteState.Resolved) // maybe move into judgement block
+                if (note.noteState == NoteState.Resolved) 
                 {
                     columnCursors[i]++;
                     continue;
