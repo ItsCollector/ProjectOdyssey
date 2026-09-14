@@ -48,16 +48,16 @@ namespace ProjectOdyssey
 
             //string fileName = "Ibuki Kido & Erii Yamazaki - pupa (TV Size) (MapleSyrup-) [Metamorphosis].json";
             //string fileName = "Lime - Pixel Planet (-NoName-) [Advanced].osu";
-            string fileName = "test_single_long_note.json";
+            //string fileName = "test_single_long_note.json";
 
-            ChartData chartData = ChartFileReader.LoadChart(fileName);
+            //ChartData chartData = ChartFileReader.LoadChart(fileName);
             //var result = ChartImporter.Import(Path.Combine(AppContext.BaseDirectory, "Test charts", fileName));
 
-            screenManager.Push(new GameplayScreen(chartData, inputHistory));
+            //screenManager.Push(new GameplayScreen(chartData, inputHistory));
 
             //screenManager.Push(new ChartManagerScreen());
 
-            //ChartImportService.ImportChartsFromOsu();
+            Task.Run(() => ChartImportService.ImportChartsFromOsu());
 
             Console.WriteLine($"ClientSize = {ClientSize.X} x {ClientSize.Y}");
         }

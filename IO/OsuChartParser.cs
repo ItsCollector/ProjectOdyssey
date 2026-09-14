@@ -97,6 +97,11 @@ namespace ProjectOdyssey.IO
                 return Result<(ChartData chartData, string resolvedAudioPath)>.Err("CircleSize was never specified");
             }
 
+            if (notes.Count == 0)
+            {
+                return Result<(ChartData chartData, string resolvedAudioPath)>.Err("Chart has zero notes");
+            }
+
             string osuFolder = Path.GetDirectoryName(filePath) ?? string.Empty;
             string resolvedAudioPath = Path.Combine(osuFolder, audioFileName);
 

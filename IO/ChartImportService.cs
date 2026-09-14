@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using System.Text;
+using System.Text.Json;
 
 namespace ProjectOdyssey.IO
 {
@@ -10,7 +11,7 @@ namespace ProjectOdyssey.IO
 
         private static ChartDatabase chartDatabase = new ChartDatabase();
 
-        public static void ImportChartsFromOsu(int maxSets = 10)
+        public static void ImportChartsFromOsu(int maxSets = int.MaxValue)
         {
             if (!Directory.Exists(OsuSongsRoot))
             {
@@ -19,84 +20,94 @@ namespace ProjectOdyssey.IO
             }
 
             int importedCount = 0;
+            var errorLog = new StringBuilder();
+            var allFolders = Directory.GetDirectories(OsuSongsRoot);
+            int processedFolders = 0;
 
-            foreach (var songDir in Directory.GetDirectories(OsuSongsRoot))
+            foreach (var songDir in allFolders)
             {
+                processedFolders++;
+
                 if (importedCount >= maxSets)
                 {
                     break;
                 }
 
-                if (chartDatabase.ChartSetExists(songDir)) // skip imported sets
+                try
                 {
-                    continue;
+                    if (chartDatabase.ChartSetExists(songDir)) // skip imported sets
+                    {
+                        continue;
+                    }
+
+                    var parsedChartsInSet = new List<(ChartData chartData, string resolvedAudioPath, string jsonFilePath)>();
+
+                    foreach (var chartFile in Directory.GetFiles(songDir, "*.osu"))
+                    {
+                        var result = OsuChartParser.OsuToChartData(chartFile);
+                        if (result.isSuccess)
+                        {
+                            var (chartData, resolvedAudioPath) = result.value;
+                            string jsonFilePath = WriteChartJson(songDir, chartFile, chartData);
+                            parsedChartsInSet.Add((chartData, resolvedAudioPath, jsonFilePath));
+                        }
+                        else if (result.error != "Unsupported mode")
+                        {
+                            errorLog.AppendLine($"[WARN] Failed to parse {chartFile}: {result.error}");
+                        }
+                    }
+
+                    if (parsedChartsInSet.Count > 0)
+                    {
+                        InsertItem(songDir, parsedChartsInSet);
+                        importedCount++;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    errorLog.AppendLine($"[ERROR] Failed to import set '{songDir}': {ex.Message}");
                 }
 
-                var parsedChartsInSet = new List<(ChartData chartData, string resolvedAudioPath, string jsonFilePath)>();
-
-                foreach (var chartFile in Directory.GetFiles(songDir, "*.osu"))
+                if (processedFolders % 100 == 0)
                 {
-                    var result = OsuChartParser.OsuToChartData(chartFile);
-                    if (result.isSuccess)
-                    {
-                        var (chartData, resolvedAudioPath) = result.value;
-                        string jsonFilePath = WriteChartJson(songDir, chartData);
-                        parsedChartsInSet.Add((chartData, resolvedAudioPath, jsonFilePath));
-                        Console.WriteLine($"[INFO] Successfully parsed {chartFile} and saved to {jsonFilePath}");
-                    }
-                    else
-                    {
-                        Console.WriteLine($"[WARN] Failed to parse {chartFile}: {result.error}");
-                    }
-                }
-
-                if (parsedChartsInSet.Count > 0)
-                {
-                    InsertItem(songDir, parsedChartsInSet);
-                    importedCount++;
+                    Console.WriteLine($"[Progress] {processedFolders}/{allFolders.Length} folders scanned, {importedCount} sets imported");
                 }
             }
+
+            string logPath = Path.Combine(AppContext.BaseDirectory, $"import_log_{DateTime.Now:yyyyMMdd_HHmmss}.txt");
+            File.WriteAllText(logPath, errorLog.ToString());
+
+            Console.WriteLine($"[Done] Imported {importedCount} sets. Log written to {logPath}");
         }
 
         public static void InsertItem(string folderPath, List<(ChartData chartData, string resolvedAudioPath, string jsonFilePath)> parsedChartsInSet)
         {
-            int setId = chartDatabase.InsertChartSet(new ChartSet
+            chartDatabase.ImportChartSet(new ChartSet
             {
                 FolderPath = folderPath,
                 Source = "OsuLink"
-            });
-
-            foreach (var (chartData, resolvedAudioPath, jsonFilePath) in parsedChartsInSet)
-            {
-                int songId = chartDatabase.GetOrCreateSong(new SongRecord
-                {
-                    SetId = setId,
-                    AudioPath = resolvedAudioPath
-                });
-
-                chartDatabase.InsertChart(new ChartRecord
-                {
-                    SongId = songId,
-                    FilePath = jsonFilePath,
-                    Title = chartData.title,
-                    Artist = chartData.artist,
-                    DiffName = chartData.diffName,
-                    Noter = chartData.noter,
-                    KeyCount = chartData.keyCount,
-                    FileLastWriteUtc = DateTime.UtcNow.Ticks
-                });
-            }
+            }, parsedChartsInSet);
         }
 
-        private static string WriteChartJson(string sourceFolderPath, ChartData chartData)
+        private static string SanitizeForFileSystem(string name)
+        {
+            foreach (char invalidChar in Path.GetInvalidFileNameChars())
+            {
+                name = name.Replace(invalidChar, '_');
+            }
+            return name;
+        }
+
+        private static string WriteChartJson(string sourceFolderPath, string sourceOsuFilePath, ChartData chartData)
         {
             string chartsRoot = Path.Combine(AppContext.BaseDirectory, "Charts");
-            string setFolderName = Path.GetFileName(sourceFolderPath.TrimEnd(Path.DirectorySeparatorChar));
+            string setFolderName = SanitizeForFileSystem(Path.GetFileName(sourceFolderPath.TrimEnd(Path.DirectorySeparatorChar)));
             string destinationFolder = Path.Combine(chartsRoot, setFolderName);
 
             Directory.CreateDirectory(destinationFolder);
 
-            string fileName = $"{chartData.diffName}.json";
+            string baseName = SanitizeForFileSystem(Path.GetFileNameWithoutExtension(sourceOsuFilePath));
+            string fileName = $"{baseName}.json";
             string outputPath = Path.Combine(destinationFolder, fileName);
 
             string json = JsonSerializer.Serialize(chartData);
