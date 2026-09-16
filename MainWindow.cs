@@ -46,18 +46,14 @@ namespace ProjectOdyssey
             // reading ClientSize on its own.
             screenManager.Resize(ClientSize.X, ClientSize.Y);
 
-            //string fileName = "Ibuki Kido & Erii Yamazaki - pupa (TV Size) (MapleSyrup-) [Metamorphosis].json";
-            //string fileName = "Lime - Pixel Planet (-NoName-) [Advanced].osu";
-            //string fileName = "test_single_long_note.json";
-
-            //ChartData chartData = ChartFileReader.LoadChart(fileName);
-            //var result = ChartImporter.Import(Path.Combine(AppContext.BaseDirectory, "Test charts", fileName));
+            //string path = ""; // put the path to your chart file here temporaily 
+            //ChartData chartData = ChartBinaryReader.ReadChartBinary(path);
 
             //screenManager.Push(new GameplayScreen(chartData, inputHistory));
 
             //screenManager.Push(new ChartManagerScreen());
 
-            Task.Run(() => ChartImportService.ImportChartsFromOsu());
+            //Task.Run(() => ChartImportService.ImportChartsFromOsu()); // imports all charts from the osu! Songs directory into the Odyssey's own database
 
             Console.WriteLine($"ClientSize = {ClientSize.X} x {ClientSize.Y}");
         }
