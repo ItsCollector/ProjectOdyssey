@@ -1,5 +1,5 @@
-﻿using System.Text;
-using System.Text.Json;
+﻿using ProjectOdyssey.Engine;
+using System.Text;
 
 namespace ProjectOdyssey.IO
 {
@@ -19,6 +19,7 @@ namespace ProjectOdyssey.IO
                 return;
             }
 
+            Console.WriteLine($"[Info] Starting import from osu! Songs directory: {OsuSongsRoot}");
             int importedCount = 0;
             var errorLog = new StringBuilder();
             var allFolders = Directory.GetDirectories(OsuSongsRoot);
@@ -48,8 +49,8 @@ namespace ProjectOdyssey.IO
                         if (result.isSuccess)
                         {
                             var (chartData, resolvedAudioPath) = result.value;
-                            string jsonFilePath = WriteChartJson(songDir, chartFile, chartData);
-                            parsedChartsInSet.Add((chartData, resolvedAudioPath, jsonFilePath));
+                            string binaryFilePath = WriteChartBinary(chartData, songDir, chartFile);
+                            parsedChartsInSet.Add((chartData, resolvedAudioPath, binaryFilePath));
                         }
                         else if (result.error != "Unsupported mode")
                         {
@@ -98,7 +99,7 @@ namespace ProjectOdyssey.IO
             return name;
         }
 
-        private static string WriteChartJson(string sourceFolderPath, string sourceOsuFilePath, ChartData chartData)
+        public static string WriteChartBinary(ChartData chartData, string sourceFolderPath, string sourceOsuFilePath)
         {
             string chartsRoot = Path.Combine(AppContext.BaseDirectory, "Charts");
             string setFolderName = SanitizeForFileSystem(Path.GetFileName(sourceFolderPath.TrimEnd(Path.DirectorySeparatorChar)));
@@ -107,13 +108,36 @@ namespace ProjectOdyssey.IO
             Directory.CreateDirectory(destinationFolder);
 
             string baseName = SanitizeForFileSystem(Path.GetFileNameWithoutExtension(sourceOsuFilePath));
-            string fileName = $"{baseName}.json";
-            string outputPath = Path.Combine(destinationFolder, fileName);
+            string outputPath = Path.Combine(destinationFolder, $"{baseName}.chart");
 
-            string json = JsonSerializer.Serialize(chartData);
-            File.WriteAllText(outputPath, json);
+            using (var writer = new BinaryWriter(File.Open(outputPath, FileMode.Create)))
+            {
+                writer.Write((byte)1); // format version
+                writer.Write(chartData.title);
+                writer.Write(chartData.artist);
+                writer.Write(chartData.noter);
+                writer.Write(chartData.diffName);
+                writer.Write(chartData.keyCount);
+
+                for (int col = 0; col < chartData.keyCount; col++)
+                {
+                    writer.Write(chartData.notesByColumn[col].Length);
+                    foreach (var note in chartData.notesByColumn[col])
+                    {
+                        WriteNote(writer, note);
+                    }
+                }
+            }
 
             return outputPath;
+        }
+
+        public static void WriteNote(BinaryWriter writer, Note note)
+        {
+            writer.Write((byte)note.noteType);
+            writer.Write(note.column);
+            writer.Write(note.startTime);
+            writer.Write(note.endTime);
         }
     }
 }
