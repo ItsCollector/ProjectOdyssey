@@ -6,6 +6,7 @@ namespace ProjectOdyssey.Engine
     {
         private long startTimestamp;
         private double globalOffsetMs;
+        private long rawElapsedTimestamp = 0;
         private double leadInMs = 2000; // grace period before song-time 0, so players can get fingers on keys for early notes
         private static readonly double TicksPerMs = Stopwatch.Frequency / 1000.0;
 
@@ -14,6 +15,12 @@ namespace ProjectOdyssey.Engine
             this.globalOffsetMs = globalOffsetMs;
             startTimestamp = Stopwatch.GetTimestamp();
         }
+
+        /*public void Pause()
+        {
+            rawElapsedTimestamp = Stopwatch.GetTimestamp() - startTimestamp;
+            Stopwatch.StartNew().Stop();
+        }*/
 
         public double ToSongTimeMs(long rawTimestamp)
             => (rawTimestamp - startTimestamp) / TicksPerMs - leadInMs - globalOffsetMs;

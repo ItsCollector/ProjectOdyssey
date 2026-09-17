@@ -187,7 +187,7 @@ namespace ProjectOdyssey.Render
             viewportHeight = height;
         }
 
-        public void Resize(int width, int height)
+        public virtual void Resize(int width, int height)
         {
             projection = Matrix4.CreateOrthographicOffCenter(0f, width, height, 0f, -1f, 1f);
         }

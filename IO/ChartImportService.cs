@@ -9,8 +9,6 @@ namespace ProjectOdyssey.IO
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "osu!", "Songs");
 
-        private static ChartDatabase chartDatabase = new ChartDatabase();
-
         public static void ImportChartsFromOsu(int maxSets = int.MaxValue)
         {
             if (!Directory.Exists(OsuSongsRoot))
@@ -36,7 +34,7 @@ namespace ProjectOdyssey.IO
 
                 try
                 {
-                    if (chartDatabase.ChartSetExists(songDir)) // skip imported sets
+                    if (ChartDatabase.ChartSetExists(songDir)) // skip imported sets
                     {
                         continue;
                     }
@@ -83,7 +81,7 @@ namespace ProjectOdyssey.IO
 
         public static void InsertItem(string folderPath, List<(ChartData chartData, string resolvedAudioPath, string jsonFilePath)> parsedChartsInSet)
         {
-            chartDatabase.ImportChartSet(new ChartSet
+            ChartDatabase.ImportChartSet(new ChartSet
             {
                 FolderPath = folderPath,
                 Source = "OsuLink"

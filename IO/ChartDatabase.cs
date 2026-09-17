@@ -2,11 +2,11 @@
 
 namespace ProjectOdyssey.IO
 {
-    public class ChartDatabase
+    public static class ChartDatabase
     {
-        private readonly string connectionString;
+        private static readonly string connectionString;
 
-        public ChartDatabase()
+        static ChartDatabase()
         {
             string dbPath = Path.Combine(AppContext.BaseDirectory, "chart_library.db");
             connectionString = $"Data Source={dbPath}";
@@ -51,7 +51,7 @@ namespace ProjectOdyssey.IO
             command.ExecuteNonQuery();
         }
 
-        private SqliteConnection OpenConnection()
+        private static SqliteConnection OpenConnection()
         {
             var connection = new SqliteConnection(connectionString);
             connection.Open();
@@ -64,7 +64,7 @@ namespace ProjectOdyssey.IO
         }
 
         // Song select: load all charts, joined with SetId for right-click action
-        public List<ChartBrowserRow> GetChartsForBrowsing()
+        public static List<ChartBrowserRow> GetChartsForBrowsing()
         {
             var rows = new List<ChartBrowserRow>();
 
@@ -98,7 +98,7 @@ namespace ProjectOdyssey.IO
         }
 
         // Audio loading via SongId
-        public SongRecord? GetSongRecordById(int songId)
+        public static SongRecord? GetSongRecordById(int songId)
         {
             using var connection = OpenConnection();
             using var command = connection.CreateCommand();
@@ -124,7 +124,7 @@ namespace ProjectOdyssey.IO
         }
 
         // Generic chart list
-        public List<ChartRecord> GetAllCharts()
+        public static List<ChartRecord> GetAllCharts()
         {
             var charts = new List<ChartRecord>();
 
@@ -157,7 +157,7 @@ namespace ProjectOdyssey.IO
         }
 
         // Imports an entire chart set (ChartSet + Songs + Charts) atomically in one transaction
-        public void ImportChartSet(ChartSet set, List<(ChartData chartData, string resolvedAudioPath, string jsonFilePath)> parsedChartsInSet)
+        public static void ImportChartSet(ChartSet set, List<(ChartData chartData, string resolvedAudioPath, string jsonFilePath)> parsedChartsInSet)
         {
             using var connection = OpenConnection();
             using var transaction = connection.BeginTransaction();
@@ -250,7 +250,7 @@ namespace ProjectOdyssey.IO
         }
 
         // Check if a ChartSet exists by folder path
-        public bool ChartSetExists(string folderPath)
+        public static bool ChartSetExists(string folderPath)
         {
             using var connection = OpenConnection();
             using var command = connection.CreateCommand();
@@ -267,7 +267,7 @@ namespace ProjectOdyssey.IO
         }
 
         // Delete a single chart; drop its Song too if no other chart references it
-        public void DeleteChart(int chartId)
+        public static void DeleteChart(int chartId)
         {
             using var connection = OpenConnection();
 
@@ -305,7 +305,7 @@ namespace ProjectOdyssey.IO
         }
 
         // Delete an entire chart set; FK cascade handles Songs + Charts underneath it
-        public void DeleteChartSet(int setId)
+        public static void DeleteChartSet(int setId)
         {
             using var connection = OpenConnection();
             using var command = connection.CreateCommand();
