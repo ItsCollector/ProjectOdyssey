@@ -2,6 +2,7 @@
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
+using ProjectOdyssey.Audio;
 using ProjectOdyssey.Input;
 using ProjectOdyssey.Input.Native;
 using ProjectOdyssey.IO;
@@ -12,6 +13,7 @@ namespace ProjectOdyssey
     public class MainWindow : GameWindow
     {
         private readonly ScreenManager screenManager = new();
+        private AudioManager audioManager = new();
         private Win32KeyInputListener inputListener = new Win32KeyInputListener();
         private InputHistory inputHistory = new InputHistory();
 
@@ -46,10 +48,11 @@ namespace ProjectOdyssey
             // reading ClientSize on its own.
             screenManager.Resize(ClientSize.X, ClientSize.Y);
 
-            //string path = ""; // put the path to your chart file here temporaily 
-            //ChartData chartData = ChartBinaryReader.ReadChartBinary(path);
+            string chartPath = ""; // put the path to your chart file here temporaily 
+            string songPath = "";
+            ChartData chartData = ChartBinaryReader.ReadChartBinary(chartPath);
 
-            //screenManager.Push(new GameplayScreen(chartData, inputHistory));
+            screenManager.Push(new GameplayScreen(chartData, songPath, inputHistory, audioManager));
 
             //screenManager.Push(new ChartManagerScreen());
 

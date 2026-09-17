@@ -1,8 +1,10 @@
-﻿using ProjectOdyssey.Engine;
+﻿using ProjectOdyssey.Audio;
+using ProjectOdyssey.Engine;
 using ProjectOdyssey.Input;
 using ProjectOdyssey.IO;
 using ProjectOdyssey.Render;
 using ProjectOdyssey.Skinning;
+using System.Runtime.CompilerServices;
 
 namespace ProjectOdyssey.Screens
 {
@@ -17,11 +19,16 @@ namespace ProjectOdyssey.Screens
         private GameplayRenderer gameplayRenderer = null!;
         private GameplaySkinConfig skinConfig = null!;
         private SkinAssets skinAssets = null!;
+        private AudioManager audioManager;
+        private string songPath;
+        private bool audioStarted = false;
 
-        public GameplayScreen(ChartData chartData, InputHistory inputHistory)
+        public GameplayScreen(ChartData chartData, string songPath, InputHistory inputHistory, AudioManager audioManager)
         {
             this.chartData = chartData;
+            this.songPath = songPath;
             this.inputHistory = inputHistory;
+            this.audioManager = audioManager;
         }
 
         public void Load()
@@ -30,17 +37,17 @@ namespace ProjectOdyssey.Screens
             session = new GameSession(inputHistory, chartData);
             gameplayRenderer = new GameplayRenderer(skinConfig, skinAssets);
             gameplayRenderer.Intitialise();
+            audioManager.ReadAudioFile(songPath);
             session.Start(chartData);
         }
 
         public void Update(float deltaMs)
         {
-            // GameSession deliberately ticks itself on its own background
-            // thread at a fixed 1000Hz so hit-timing stays independent of
-            // render framerate. There's nothing to drive from here yet -
-            // this is an explicit no-op rather than a missing implementation.
-            // If that ever changes (e.g. session becomes frame-driven),
-            // this is where session.Tick(deltaMs) would go.
+            if (!audioStarted && session.AudioReadyToStart)
+            {
+                audioManager.PlayAudio();
+                audioStarted = true;
+            }
         }
 
         public void Render()

@@ -19,6 +19,9 @@ namespace ProjectOdyssey.Engine
         private bool notesOverflowPastJudgementLine = true;
         private float ghostTapThreshold = 200;
 
+        private volatile bool audioReadyToStart = false;
+        public bool AudioReadyToStart => audioReadyToStart;
+
         public Note[][] notesByColumn { get; set; } // pass these into the function later chart loading is being implemented, and remove nullable
         public int[] columnCursors { get; set; } // construct cursors passed on the number of columns in the chart, and remove nullable
 
@@ -57,6 +60,11 @@ namespace ProjectOdyssey.Engine
                 if (currentTime - lastTime >= targetDelta)
                 {
                     float now = (float)gameClock.CurrentSongTimeMs;
+
+                    if (!audioReadyToStart && now >= 0f)
+                    {
+                        audioReadyToStart = true;
+                    }
 
                     while (inputHistory.TryGetNextEvent(out InputEvent inputEvent))
                     {
