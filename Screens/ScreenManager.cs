@@ -1,4 +1,6 @@
-﻿namespace ProjectOdyssey.Screens
+﻿using OpenTK.Windowing.GraphicsLibraryFramework;
+
+namespace ProjectOdyssey.Screens
 {
     // Owns the stack of active screens and drives their lifecycle. MainWindow
     // should only ever talk to this class, never to a concrete IGameScreen -
@@ -65,6 +67,12 @@
         {
             while (screens.Count > 0)
                 screens.Pop().Unload();
+        }
+
+        public void OnKeyDown(Keys key)
+        {
+            if (screens.Count > 0)
+                screens.Peek().OnKeyDown(key);
         }
     }
 }

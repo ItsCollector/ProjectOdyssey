@@ -1,4 +1,6 @@
-﻿namespace ProjectOdyssey.Screens
+﻿using OpenTK.Windowing.GraphicsLibraryFramework;
+
+namespace ProjectOdyssey.Screens
 {
     public interface IGameScreen
     {
@@ -20,5 +22,8 @@
         // Called once when the ScreenManager pops this screen. Release any
         // resources acquired in Load() here.
         void Unload();
+
+        // Default no-op; only screens that care override it
+        void OnKeyDown(Keys key) { }
     }
 }

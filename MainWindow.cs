@@ -48,12 +48,12 @@ namespace ProjectOdyssey
             // reading ClientSize on its own.
             screenManager.Resize(ClientSize.X, ClientSize.Y);
 
-            string chartPath = "C:\\Users\\Evan\\Documents\\GitHub\\ProjectOdyssey\\bin\\Debug\\net8.0\\Charts\\1 VA - Kyukon's 7k Chordjack Practice Pack 2\\V.A - Kyukon's 7K Chordjack Practice Pack 2 (LuKnight) [I Love It].chart"; // put the path to your chart file here temporaily 
-            string songPath = "C:\\Users\\Evan\\AppData\\Local\\osu!\\Songs\\1 VA - Kyukon's 7k Chordjack Practice Pack 2\\iloveit.mp3";
+            string chartPath = ""; // put the path to your chart file here temporaily 
+            string songPath = "";
             ChartData chartData = ChartBinaryReader.ReadChartBinary(chartPath);
 
-            //screenManager.Push(new GameplayScreen(chartData, songPath, inputHistory, audioManager));
-            screenManager.Push(new ChartBrowser());
+            screenManager.Push(new GameplayScreen(chartData, songPath, inputHistory, audioManager));
+            //screenManager.Push(new ChartBrowser());
             //screenManager.Push(new ChartManagerScreen());
 
             //Task.Run(() => ChartImportService.ImportChartsFromOsu()); // imports all charts from the osu! Songs directory into the Odyssey's own database
@@ -90,6 +90,13 @@ namespace ProjectOdyssey
             base.OnFramebufferResize(args);
             GL.Viewport(0, 0, args.Width, args.Height);
             screenManager.Resize(args.Width, args.Height);
+        }
+
+        protected override void OnKeyDown(KeyboardKeyEventArgs e)
+        {
+            base.OnKeyDown(e);
+            if (e.IsRepeat) return; // ignore OS key-repeat while held
+            screenManager.OnKeyDown(e.Key);
         }
 
         private IntPtr WndProcHook(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam)

@@ -1,4 +1,6 @@
-﻿using ProjectOdyssey.Audio;
+﻿using OpenTK.Windowing.Common;
+using OpenTK.Windowing.GraphicsLibraryFramework;
+using ProjectOdyssey.Audio;
 using ProjectOdyssey.Engine;
 using ProjectOdyssey.Input;
 using ProjectOdyssey.IO;
@@ -22,6 +24,7 @@ namespace ProjectOdyssey.Screens
         private AudioManager audioManager;
         private string songPath;
         private bool audioStarted = false;
+        private bool isPaused = false;
 
         public GameplayScreen(ChartData chartData, string songPath, InputHistory inputHistory, AudioManager audioManager)
         {
@@ -64,6 +67,29 @@ namespace ProjectOdyssey.Screens
         {
             session.Stop();
             gameplayRenderer.Dispose();
+        }
+
+        public void OnKeyDown(Keys key)
+        {
+            if (key == Keys.Escape)
+            {
+                PauseGame();
+            }
+        }
+
+        public void PauseGame()
+        {
+            if (isPaused)
+            {
+                session.Resume();
+                audioManager.ResumeAudio();
+            }
+            else
+            {
+                session.Pause();
+                audioManager.PauseAudio();
+            }
+            isPaused = !isPaused;
         }
     }
 }

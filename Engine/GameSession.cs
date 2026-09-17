@@ -16,7 +16,7 @@ namespace ProjectOdyssey.Engine
         private float spawnPositionY = -100;
         private float hitPositionY = 1000;
 
-        private bool notesOverflowPastJudgementLine = true;
+        private bool notesOverflowPastJudgementLine = false;
         private float ghostTapThreshold = 200;
 
         private volatile bool audioReadyToStart = false;
@@ -46,6 +46,17 @@ namespace ProjectOdyssey.Engine
             gameplayThread?.Join();
         }
 
+        public void Pause()
+        {
+            gameClock.Pause();
+            while (inputHistory.TryGetNextEvent(out _)) { } // drop input queued during the pause
+        }
+
+        public void Resume()
+        {
+            gameClock.Resume();
+        }
+
         public void Run()
         {
             gameClock.Start(globalOffsetMs: 0);
@@ -59,21 +70,19 @@ namespace ProjectOdyssey.Engine
 
                 if (currentTime - lastTime >= targetDelta)
                 {
-                    float now = (float)gameClock.CurrentSongTimeMs;
-
-                    if (!audioReadyToStart && now >= 0f)
+                    if (!gameClock.IsPaused)
                     {
-                        audioReadyToStart = true;
-                    }
+                        float now = (float)gameClock.CurrentSongTimeMs;
 
-                    while (inputHistory.TryGetNextEvent(out InputEvent inputEvent))
-                    {
-                        float inputSongTimeMs = (float)gameClock.ToSongTimeMs(inputEvent.TimeStamp);
-                        JudgeNotes(inputEvent, inputSongTimeMs);
-                    }
+                        while (inputHistory.TryGetNextEvent(out InputEvent inputEvent))
+                        {
+                            float inputSongTimeMs = (float)gameClock.ToSongTimeMs(inputEvent.TimeStamp);
+                            JudgeNotes(inputEvent, inputSongTimeMs);
+                        }
 
-                    HandleUnjudgedNotes(now);
-                    UpdateNotePositions(now);
+                        HandleUnjudgedNotes(now);
+                        UpdateNotePositions(now);
+                    }
 
                     lastTime = currentTime;
                 }

@@ -43,6 +43,11 @@ namespace ProjectOdyssey.Audio
             outputDevice.Pause();
         }
 
+        public void ResumeAudio()
+        {
+            outputDevice.Play(); 
+        }
+
         public void Dispose()
         {
             if (outputDevice != null)

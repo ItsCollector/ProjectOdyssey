@@ -12,7 +12,7 @@ namespace ProjectOdyssey.Render
         private int headOffset;
 
         private float[] colX = new float[7];
-        private bool notesOverflowPastJudgementLine = true;
+        private bool notesOverflowPastJudgementLine = false;
 
         // Judgement Line Position
         public int hitPositionX;
