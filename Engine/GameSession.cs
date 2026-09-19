@@ -74,6 +74,11 @@ namespace ProjectOdyssey.Engine
                     {
                         float now = (float)gameClock.CurrentSongTimeMs;
 
+                        if (!audioReadyToStart && now >= 0f)
+                        {
+                            audioReadyToStart = true;
+                        }
+
                         while (inputHistory.TryGetNextEvent(out InputEvent inputEvent))
                         {
                             float inputSongTimeMs = (float)gameClock.ToSongTimeMs(inputEvent.TimeStamp);
