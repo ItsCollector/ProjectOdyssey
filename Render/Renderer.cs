@@ -192,7 +192,7 @@ namespace ProjectOdyssey.Render
             projection = Matrix4.CreateOrthographicOffCenter(0f, width, height, 0f, -1f, 1f);
         }
 
-        public void Dispose()
+        public virtual void Dispose()
         {
             shader.Dispose();
             GL.DeleteBuffer(vbo);

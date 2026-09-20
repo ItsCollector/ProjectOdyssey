@@ -50,7 +50,7 @@ namespace ProjectOdyssey
 
             string chartPath = ""; // put the path to your chart file here temporaily 
             string songPath = "";
-            ChartData chartData = ChartBinaryReader.ReadChartBinary(chartPath);
+            //ChartData chartData = ChartBinaryReader.ReadChartBinary(chartPath);
 
             //screenManager.Push(new GameplayScreen(chartData, songPath, inputHistory, audioManager));
             screenManager.Push(new ChartBrowser());

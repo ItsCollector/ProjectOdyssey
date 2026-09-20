@@ -10,21 +10,21 @@ namespace ProjectOdyssey.Skinning
             string skinDirectory = Path.Combine(AppContext.BaseDirectory, "skins/Skin 1");
 
             // Get the skin files from the skin directory
-            var filesResult = GameplaySkinParser.GetFiles(skinDirectory);
+            var filesResult = GetFiles(skinDirectory);
             if (!filesResult.isSuccess)
             {
                 return Result<(GameplaySkinConfig, SkinAssets)>.Err(filesResult.error);
             }
 
             // Load the skin config 
-            var configResult = GameplaySkinParser.ParseSkinConfig(filesResult.value);
+            var configResult = ParseSkinConfig(filesResult.value);
             if (!configResult.isSuccess)
             {
                 return Result<(GameplaySkinConfig, SkinAssets)>.Err(configResult.error);
             }
 
             // Load skin assets
-            var assetsResult = GameplaySkinParser.DiscoverAssets(filesResult.value);
+            var assetsResult = DiscoverAssets(filesResult.value);
             if (!assetsResult.isSuccess)
             {
                 return Result<(GameplaySkinConfig, SkinAssets)>.Err(assetsResult.error);
