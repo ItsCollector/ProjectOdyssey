@@ -52,8 +52,8 @@ namespace ProjectOdyssey
             string songPath = "";
             ChartData chartData = ChartBinaryReader.ReadChartBinary(chartPath);
 
-            screenManager.Push(new GameplayScreen(chartData, songPath, inputHistory, audioManager));
-            //screenManager.Push(new ChartBrowser());
+            //screenManager.Push(new GameplayScreen(chartData, songPath, inputHistory, audioManager));
+            screenManager.Push(new ChartBrowser());
             //screenManager.Push(new ChartManagerScreen());
 
             //Task.Run(() => ChartImportService.ImportChartsFromOsu()); // imports all charts from the osu! Songs directory into the Odyssey's own database
@@ -97,6 +97,24 @@ namespace ProjectOdyssey
             base.OnKeyDown(e);
             if (e.IsRepeat) return; // ignore OS key-repeat while held
             screenManager.OnKeyDown(e.Key);
+        }
+
+        protected override void OnMouseDown(MouseButtonEventArgs e)
+        {
+            base.OnMouseDown(e);
+            screenManager.OnMouseDown(e);
+        }
+
+        protected override void OnMouseMove(MouseMoveEventArgs e)
+        {
+            base.OnMouseMove(e);
+            screenManager.OnMouseMove(e);
+        }
+
+        protected override void OnMouseWheel(MouseWheelEventArgs e)
+        {
+            base.OnMouseWheel(e);
+            screenManager.OnMouseWheel(e);
         }
 
         private IntPtr WndProcHook(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam)

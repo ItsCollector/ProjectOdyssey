@@ -1,5 +1,6 @@
 ﻿using ProjectOdyssey.IO;
 using ProjectOdyssey.Render;
+using OpenTK.Windowing.Common;
 
 namespace ProjectOdyssey.Screens
 {
@@ -32,6 +33,7 @@ namespace ProjectOdyssey.Screens
 
         public void Update(float deltaMs)
         {
+
         }
 
         public void Render()
@@ -47,6 +49,21 @@ namespace ProjectOdyssey.Screens
         public void Unload()
         {
             browserRenderer.Dispose();
+        }
+
+        public void OnMouseDown(MouseButtonEventArgs e)
+        {
+            Console.WriteLine("[INFO] " + e.Button + " mouse button pressed");
+        }
+
+        public void OnMouseMove(MouseMoveEventArgs e)
+        {
+            Console.WriteLine("[INFO] Mouse moved to position: " + e.Position);
+        }
+
+        public void OnMouseWheel (MouseWheelEventArgs e)
+        {
+            Console.WriteLine("[INFO] Mouse wheel scrolled: " + e.Offset);
         }
     }
 }

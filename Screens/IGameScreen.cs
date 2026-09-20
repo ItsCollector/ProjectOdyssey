@@ -1,4 +1,5 @@
-﻿using OpenTK.Windowing.GraphicsLibraryFramework;
+﻿using OpenTK.Windowing.Common;
+using OpenTK.Windowing.GraphicsLibraryFramework;
 
 namespace ProjectOdyssey.Screens
 {
@@ -25,5 +26,11 @@ namespace ProjectOdyssey.Screens
 
         // Default no-op; only screens that care override it
         void OnKeyDown(Keys key) { }
+
+        void OnMouseDown(MouseButtonEventArgs e) { }
+
+        void OnMouseMove(MouseMoveEventArgs e) { }
+
+        void OnMouseWheel(MouseWheelEventArgs e) { }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using OpenTK.Windowing.GraphicsLibraryFramework;
+using OpenTK.Windowing.Common;
 
 namespace ProjectOdyssey.Screens
 {
@@ -73,6 +74,24 @@ namespace ProjectOdyssey.Screens
         {
             if (screens.Count > 0)
                 screens.Peek().OnKeyDown(key);
+        }
+
+        public void OnMouseDown(MouseButtonEventArgs e)
+        {
+            if (screens.Count > 0)
+                screens.Peek().OnMouseDown(e);
+        }
+
+        public void OnMouseMove(MouseMoveEventArgs e)
+        {
+            if (screens.Count > 0)
+                screens.Peek().OnMouseMove(e);
+        }
+
+        public void OnMouseWheel(MouseWheelEventArgs e)
+        {
+            if (screens.Count > 0)
+                screens.Peek().OnMouseWheel(e);
         }
     }
 }
