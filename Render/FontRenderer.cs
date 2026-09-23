@@ -156,6 +156,21 @@ namespace ProjectOdyssey.Render
             GL.EnableVertexAttribArray(1);
         }
 
+        // Sums glyph advances to get a string's rendered width, for right-aligning
+        // or centring text (e.g. a key count against a card's right edge).
+        public float MeasureText(Dictionary<char, FreeTypeGlyph> glyphs, string text)
+        {
+            float width = 0f;
+            foreach (char c in text)
+            {
+                if (glyphs.TryGetValue(c, out var glyph))
+                {
+                    width += glyph.Advance;
+                }
+            }
+            return width;
+        }
+
         // Renders a string using preloaded glyph textures
         public void Draw(Dictionary<char, FreeTypeGlyph> glyphs, string text, float x, float y, Vector4 colour)
         {

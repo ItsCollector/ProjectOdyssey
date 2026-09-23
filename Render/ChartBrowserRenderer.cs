@@ -1,5 +1,6 @@
-﻿using ProjectOdyssey.IO;
 using OpenTK.Mathematics;
+using ProjectOdyssey.IO;
+using ProjectOdyssey.Screens;
 
 namespace ProjectOdyssey.Render
 {
@@ -8,6 +9,7 @@ namespace ProjectOdyssey.Render
         private FontRenderer fontRenderer = new FontRenderer();
         private Dictionary<char, FreeTypeGlyph> glyphs_40;
         private Vector4 primaryTextColour = new Vector4(1f, 1f, 1f, 1f);
+        private const int CardTextPadding = 16;
 
         private Texture setCard;
         private Texture setCardHover;
@@ -37,18 +39,58 @@ namespace ProjectOdyssey.Render
 
         public override void Resize(int width, int height)
         {
-            base.Resize(width, height);       // Renderer's own fixed 1920x1080 logic — real w/h ignored internally
-            fontRenderer.Resize(1920, 1080);   // force the same fixed logical space, ignore real window size too
+            base.Resize(width, height);
+            fontRenderer.Resize(1920, 1080);
         }
 
-        public void DrawChartBrowser(List<ChartBrowserRow> charts)
+        // Converts from center-based coordinates to bottom-left origin coordinates and draws the texture
+        private void DrawCard(Texture texture, CardRect rect)
         {
-            //fontRenderer.Draw(glyphs_40, "example text", 200, 200, primaryTextColour);
+            Draw(texture, rect.X + rect.Width / 2f, rect.Y + rect.Height / 2f, rect.Width, rect.Height);
+        }
 
-            Draw(setCard, 320, 100);
-            Draw(setCardHover, 320, 300);
-            Draw(chartCard, 280, 500);
-            Draw(chartCardHover, 280, 700);
+        public void DrawChartBrowser(
+            List<(int Slot, CardRect Rect)> setCardRects,
+            List<(int ChartIndex, CardRect Rect)> chartCardRects,
+            List<List<ChartBrowserRow>> chartSets,
+            int chartSetCursor,
+            int chartCursor,
+            int hoveredSet,
+            int hoveredChart)
+        {
+            for (int i = 0; i < setCardRects.Count; i++)
+            {
+                var (slot, rect) = setCardRects[i];
+                bool isSelected = slot == 0;
+                bool isHovered = i == hoveredSet;
+
+                Texture tex = (isSelected || isHovered) ? setCardHover : setCard;
+                DrawCard(tex, rect);
+
+                var set = chartSets[chartSetCursor + slot];
+                float textY = rect.Y + (rect.Height - 40) / 2f; // vertically centre a single 40px line
+                fontRenderer.Draw(glyphs_40, set[0].Title, rect.X + CardTextPadding, textY, primaryTextColour);
+            }
+
+            var currentSet = chartSets[chartSetCursor];
+            for (int i = 0; i < chartCardRects.Count; i++)
+            {
+                var (chartIndex, rect) = chartCardRects[i];
+                bool isSelected = chartIndex == chartCursor;
+                bool isHovered = i == hoveredChart;
+
+                Texture tex = (isSelected || isHovered) ? chartCardHover : chartCard;
+                DrawCard(tex, rect);
+
+                var chart = currentSet[chartIndex];
+                float textY = rect.Y + (rect.Height - 40) / 2f;
+
+                fontRenderer.Draw(glyphs_40, chart.DiffName, rect.X + CardTextPadding, textY, primaryTextColour);
+
+                string keyText = chart.KeyCount + "K";
+                float keyTextWidth = fontRenderer.MeasureText(glyphs_40, keyText);
+                fontRenderer.Draw(glyphs_40, keyText, rect.X + rect.Width - CardTextPadding - keyTextWidth, textY, primaryTextColour);
+            }
         }
 
         public void Dispose()

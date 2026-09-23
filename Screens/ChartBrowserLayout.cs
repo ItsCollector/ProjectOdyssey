@@ -1,0 +1,14 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace ProjectOdyssey.Screens
+{
+    public class ChartBrowserLayout
+    {
+        public const int SetCardWidth = 640, SetCardHeight = 120, SetCardSpacing = 8;
+        public const int ChartCardWidth = 560, ChartCardHeight = 72, ChartCardSpacing = 6;
+    }
+}

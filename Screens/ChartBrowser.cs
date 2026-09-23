@@ -1,4 +1,5 @@
-﻿using OpenTK.Windowing.Common;
+using OpenTK.Mathematics;
+using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using ProjectOdyssey.IO;
 using ProjectOdyssey.Render;
@@ -8,88 +9,44 @@ namespace ProjectOdyssey.Screens
     class ChartBrowser : IGameScreen
     {
         private ChartBrowserRenderer browserRenderer = null!;
-        private List<ChartBrowserRow> charts = new List<ChartBrowserRow>();
-        private List<List<ChartBrowserRow>> chartSets = new List<List<ChartBrowserRow>>();
-        private List<List<ChartBrowserRow>> visibleSets = new List<List<ChartBrowserRow>>();
+        private ChartBrowserSession session = null!;
 
-        private int chartSetCursor;
-        private int chartCursor;
-
-        private List<ChartBrowserRow> CurrentSet => chartSets[chartSetCursor];
-        private ChartBrowserRow CurrentChart => CurrentSet[chartCursor];
+        private int windowWidth = 1920, windowHeight = 1080;
+        private Vector2 lastMousePos;
 
         public void Load()
         {
             browserRenderer = new ChartBrowserRenderer();
             browserRenderer.Initialise();
 
-            charts = ChartDatabase.GetChartsForBrowsing();
+            var charts = ChartDatabase.GetChartsForBrowsing();
 
             if (charts.Count == 0)
             {
                 Console.WriteLine("[WARN] No charts found to browse.");
-                return;
             }
 
-            // One entry per set; each entry holds that set's charts
-            chartSets = charts
-                .GroupBy(c => c.SetId)
-                .Select(g => g.ToList())
-                .ToList();
-
-            chartSetCursor = Random.Shared.Next(chartSets.Count);
-            RefreshVisibleSets();
+            session = new ChartBrowserSession(charts);
         }
 
-        // Refresh the visible sets based on the current set cursor, showing 5 sets before and after the current set
-        private void RefreshVisibleSets()
-        {
-            visibleSets.Clear();
-
-            for (int i = -5; i <= 5; i++)
-            {
-                int index = chartSetCursor + i;
-                if (index < 0 || index >= chartSets.Count) continue;
-                visibleSets.Add(chartSets[index]);
-            }
-
-            Console.WriteLine($"[INFO] Current set cursor: {chartSetCursor}, chart cursor: {chartCursor}, chart count: {CurrentSet.Count}");
-        }
-
-        // Navigate between sets based on direction
-        private void MoveSet(int delta)
-        {
-            if (chartSets.Count == 0) return;
-
-            int newCursor = Math.Clamp(chartSetCursor + delta, 0, chartSets.Count - 1);
-            if (newCursor == chartSetCursor) return;
-
-            chartSetCursor = newCursor;
-            chartCursor = 0; // first chart in the newly selected set
-            RefreshVisibleSets();
-        }
-
-        // Navigate between charts within the current set based on direction
-        private void MoveChart(int delta)
-        {
-            if (chartSets.Count == 0) return;
-
-            chartCursor = Math.Clamp(chartCursor + delta, 0, CurrentSet.Count - 1);
-            Console.WriteLine($"[DEBUG] chartCursor = {chartCursor} / {CurrentSet.Count - 1}: {CurrentChart.DiffName}");
-        }
-
-        public void Update(float deltaMs)
-        { 
-
-        }
+        public void Update(float deltaMs) { }
 
         public void Render()
         {
-            browserRenderer.DrawChartBrowser(charts);
+            browserRenderer.DrawChartBrowser(
+                session.SetCardRects,
+                session.ChartCardRects,
+                session.ChartSets,
+                session.ChartSetCursor,
+                session.ChartCursor,
+                session.HoveredSet,
+                session.HoveredChart);
         }
 
         public void Resize(int width, int height)
         {
+            windowWidth = width;
+            windowHeight = height;
             browserRenderer.Resize(width, height);
         }
 
@@ -98,32 +55,35 @@ namespace ProjectOdyssey.Screens
             browserRenderer.Dispose();
         }
 
-        // keyboard: up/down = sets, left/right = charts within the set
         public void OnKeyDown(Keys key)
         {
             switch (key)
             {
-                case Keys.Up: MoveSet(-1); break;
-                case Keys.Down: MoveSet(1); break;
-                case Keys.Left: MoveChart(-1); break;
-                case Keys.Right: MoveChart(1); break;
+                case Keys.Up: session.MoveSet(-1); break;
+                case Keys.Down: session.MoveSet(1); break;
+                case Keys.Left: session.MoveChart(-1); break;
+                case Keys.Right: session.MoveChart(1); break;
             }
         }
 
         public void OnMouseDown(MouseButtonEventArgs e)
         {
-            Console.WriteLine("[INFO] " + e.Button + " mouse button pressed");
+            if (e.Button != MouseButton.Left) return;
+            session.SelectHovered();
         }
 
         public void OnMouseMove(MouseMoveEventArgs e)
         {
-            //Console.WriteLine("[INFO] Mouse moved to position: " + e.Position);
+            lastMousePos = e.Position;
+            session.UpdateHover(ToLogical(lastMousePos));
         }
 
         public void OnMouseWheel(MouseWheelEventArgs e)
         {
-            MoveSet(-(int)e.OffsetY);
+            session.MoveSet(-(int)e.OffsetY);
         }
 
+        private Vector2 ToLogical(Vector2 windowPos) =>
+            new Vector2(windowPos.X * 1920f / windowWidth, windowPos.Y * 1080f / windowHeight);
     }
 }
