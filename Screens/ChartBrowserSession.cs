@@ -143,8 +143,8 @@ namespace ProjectOdyssey.Screens
             for (int i = anchorIndex - 1; i >= 0; i--)
                 tops[i] = tops[i + 1] - rows[i].Height - SpacingBefore(rows[i + 1]);
 
-            float setX = 0f;
-            float chartX = 0f;
+            float setX = ChartBrowserLayout.SetCardX(1920);
+            float chartX = ChartBrowserLayout.ChartCardX(1920);
 
             for (int i = 0; i < rows.Count; i++)
             {
