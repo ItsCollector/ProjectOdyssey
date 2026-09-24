@@ -15,7 +15,7 @@ namespace ProjectOdyssey.Render
 {
     public class FontRenderer
     {
-        string fontPath = "Assets/Fonts/Exo2.ttf";
+        private string fontPath = "Assets/Fonts/Exo2.ttf";
 
         private int texHandle;
         private int vao;

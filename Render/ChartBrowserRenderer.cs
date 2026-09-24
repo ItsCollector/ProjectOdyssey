@@ -58,20 +58,24 @@ namespace ProjectOdyssey.Render
             int hoveredSet,
             int hoveredChart)
         {
+            // Draw the set cards
             for (int i = 0; i < setCardRects.Count; i++)
             {
                 var (slot, rect) = setCardRects[i];
                 bool isSelected = slot == 0;
                 bool isHovered = i == hoveredSet;
 
-                Texture tex = (isSelected || isHovered) ? setCardHover : setCard;
-                DrawCard(tex, rect);
+                Texture tex = (isSelected || isHovered) ? setCardHover : setCard; // Select texture based on whether its being hovered over or not
+                DrawCard(tex, rect); // Draw the set card
 
                 var set = chartSets[chartSetCursor + slot];
                 float textY = rect.Y + (rect.Height - 40) / 2f; // vertically centre a single 40px line
+
+                // Draw the set title in text
                 fontRenderer.Draw(glyphs_40, set[0].Title, rect.X + CardTextPadding, textY, primaryTextColour);
             }
 
+            // Draw the chart cards
             var currentSet = chartSets[chartSetCursor];
             for (int i = 0; i < chartCardRects.Count; i++)
             {
@@ -79,14 +83,16 @@ namespace ProjectOdyssey.Render
                 bool isSelected = chartIndex == chartCursor;
                 bool isHovered = i == hoveredChart;
 
-                Texture tex = (isSelected || isHovered) ? chartCardHover : chartCard;
-                DrawCard(tex, rect);
+                Texture tex = (isSelected || isHovered) ? chartCardHover : chartCard; // Select texture based on whether its being hovered over or not
+                DrawCard(tex, rect); // Draw the chart card
 
                 var chart = currentSet[chartIndex];
                 float textY = rect.Y + (rect.Height - 40) / 2f;
 
+                // Draw the chart difficulty name in text
                 fontRenderer.Draw(glyphs_40, chart.DiffName, rect.X + CardTextPadding, textY, primaryTextColour);
 
+                // Draw the key count in text
                 string keyText = chart.KeyCount + "K";
                 float keyTextWidth = fontRenderer.MeasureText(glyphs_40, keyText);
                 fontRenderer.Draw(glyphs_40, keyText, rect.X + rect.Width - CardTextPadding - keyTextWidth, textY, primaryTextColour);

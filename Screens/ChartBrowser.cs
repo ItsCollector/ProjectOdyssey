@@ -36,7 +36,7 @@ namespace ProjectOdyssey.Screens
             browserRenderer.DrawChartBrowser(
                 session.SetCardRects,
                 session.ChartCardRects,
-                session.ChartSets,
+                session.FilteredChartSets,
                 session.ChartSetCursor,
                 session.ChartCursor,
                 session.HoveredSet,

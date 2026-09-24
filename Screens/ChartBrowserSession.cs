@@ -4,36 +4,22 @@ namespace ProjectOdyssey.Screens
 {
     public class ChartBrowserSession
     {
-        // One row in the flattened, continuous vertical list this screen renders:
-        // ..., Set(k-1), Set(k), Chart(k,0), ..., Chart(k,N-1), Set(k+1), ...
-        // where k is the currently selected set. Only the selected set expands
-        // into its charts inline — every other set is a single row.
-        private struct Row
-        {
-            public bool IsChart;
-            public int SetSlot;     // Set rows only: slot relative to ChartSetCursor
-            public int ChartIndex;  // Chart rows only: absolute index into CurrentSet
-            public float Height;
-        }
+        private List<List<ChartBrowserRow>> chartSets = new(); // All chart sets, each set is a list of charts
+        public int ChartSetCursor { get; private set; } // Currently selected chart set index
+        public int ChartCursor { get; private set; } // Currently selected chart within the current set as an index
+        public int HoveredSet { get; private set; } = -1; // The set card currently hovered by the mouse, or -1 if none
+        public int HoveredChart { get; private set; } = -1; // The chart card currently hovered by the mouse, or -1 if none
 
-        private List<List<ChartBrowserRow>> chartSets = new();
-
-        public int ChartSetCursor { get; private set; }
-        public int ChartCursor { get; private set; }
-
-        public List<ChartBrowserRow> CurrentSet => chartSets[ChartSetCursor];
-        public List<List<ChartBrowserRow>> ChartSets => chartSets;
-
-        public List<(int Slot, CardRect Rect)> SetCardRects { get; } = new();
-        public List<(int ChartIndex, CardRect Rect)> ChartCardRects { get; } = new();
-
-        public int HoveredSet { get; private set; } = -1;
-        public int HoveredChart { get; private set; } = -1;
+        public List<ChartBrowserRow> CurrentSet => chartSets[ChartSetCursor]; // The currently selected chart set
+        public List<List<ChartBrowserRow>> FilteredChartSets => chartSets; // The chart sets after filtering (currently no filtering applied)
+        public List<(int Slot, CardRect Rect)> SetCardRects { get; } = new(); // Rectangle positions and dimensions of the set cards on screen
+        public List<(int ChartIndex, CardRect Rect)> ChartCardRects { get; } = new(); // Rectangle positions and dimensions of the chart cards on screen
 
         public ChartBrowserSession(List<ChartBrowserRow> charts)
         {
             if (charts.Count == 0) return;
 
+            // Loads all charts into chartSets, grouped by SetId. Each set is a list of charts.
             chartSets = charts
                 .GroupBy(c => c.SetId)
                 .Select(g => g.ToList())
@@ -43,6 +29,7 @@ namespace ProjectOdyssey.Screens
             RebuildLayout();
         }
 
+        // Moves the set cursor by delta (clamped to valid range), resets the chart cursor to 0, and rebuilds the layout.
         public void MoveSet(int delta)
         {
             if (chartSets.Count == 0) return;
@@ -71,11 +58,20 @@ namespace ProjectOdyssey.Screens
         // takes priority over a set card underneath it.
         public void SelectHovered()
         {
-            if (HoveredChart != -1) { SelectChart(ChartCardRects[HoveredChart].ChartIndex); return; }
-            if (HoveredSet != -1) { MoveSet(SetCardRects[HoveredSet].Slot); return; }
+            if (HoveredChart != -1) 
+            { 
+                SelectChart(ChartCardRects[HoveredChart].ChartIndex); 
+                return;
+            }
+
+            if (HoveredSet != -1) 
+            { 
+                MoveSet(SetCardRects[HoveredSet].Slot); 
+                return; 
+            }
         }
 
-        // logicalPos must already be in the fixed 1920x1080 space.
+        // LogicalPos must already be in the fixed 1920x1080 space.
         public void UpdateHover(OpenTK.Mathematics.Vector2 logicalPos)
         {
             HoveredChart = -1;
@@ -94,18 +90,20 @@ namespace ProjectOdyssey.Screens
             }
         }
 
-        // Spacing between two adjacent rows depends only on what the LATER row
-        // is: a chart row leaves a small gap, a set row leaves a bigger one.
-        // This one rule correctly covers every transition (set->set, set->first
-        // chart, chart->chart, last chart->next set).
-        private static float SpacingBefore(Row row) =>
-            row.IsChart ? ChartBrowserLayout.ChartCardSpacing : ChartBrowserLayout.SetCardSpacing;
+        // Returns the vertical spacing before a row, which is different for set cards and chart cards.
+        private static float SpacingBefore(Row row)
+        {
+            if (row.IsChart)
+            {
+                return ChartBrowserLayout.ChartCardSpacing;
+            }
+            else 
+            {
+                return ChartBrowserLayout.SetCardSpacing;
+            }
+        }
 
-        // The whole set/chart list is flattened into one ordered sequence of
-        // rows, then positioned by walking outward from the selected chart —
-        // which is always pinned to the vertical centre of the screen. Rows
-        // above/below simply overflow past the top/bottom of the screen; that's
-        // fine, nothing needs to fit.
+        // Builds the layout of set and chart cards, calculating their positions and sizes, and storing them in SetCardRects and ChartCardRects.
         private void RebuildLayout()
         {
             SetCardRects.Clear();
@@ -114,13 +112,17 @@ namespace ProjectOdyssey.Screens
             if (chartSets.Count == 0) return;
 
             var rows = new List<Row>();
+
+            // Add rows for the selected set and its charts, plus a few sets above and below it.
             for (int slot = -5; slot <= 5; slot++)
             {
                 int index = ChartSetCursor + slot;
                 if (index < 0 || index >= chartSets.Count) continue;
 
+                // Adds a row for the set card
                 rows.Add(new Row { IsChart = false, SetSlot = slot, Height = ChartBrowserLayout.SetCardHeight });
 
+                // For identified set, add rows for each of its charts
                 if (index == ChartSetCursor)
                 {
                     var set = chartSets[index];
@@ -131,21 +133,27 @@ namespace ProjectOdyssey.Screens
                 }
             }
 
+            // Finds the index of the row corresponding to the currently selected chart, which will be vertically centred.
             int anchorIndex = rows.FindIndex(r => r.IsChart && r.ChartIndex == ChartCursor);
-            if (anchorIndex == -1) return; // shouldn't happen — selected set is always included as slot 0
 
+            // Calculates the Y positions of all rows, starting from the centered anchor row and moving outward.
             float[] tops = new float[rows.Count];
             tops[anchorIndex] = 1080 / 2f - rows[anchorIndex].Height / 2f;
 
             for (int i = anchorIndex + 1; i < rows.Count; i++)
+            {
                 tops[i] = tops[i - 1] + rows[i - 1].Height + SpacingBefore(rows[i]);
+            }
 
             for (int i = anchorIndex - 1; i >= 0; i--)
+            {
                 tops[i] = tops[i + 1] - rows[i].Height - SpacingBefore(rows[i + 1]);
+            }
 
             float setX = ChartBrowserLayout.SetCardX(1920);
             float chartX = ChartBrowserLayout.ChartCardX(1920);
 
+            // Creates the rectangles for each row, storing them in SetCardRects or ChartCardRects as appropriate.
             for (int i = 0; i < rows.Count; i++)
             {
                 var r = rows[i];
@@ -170,6 +178,14 @@ namespace ProjectOdyssey.Screens
                     }));
                 }
             }
+        }
+
+        private struct Row
+        {
+            public bool IsChart;
+            public int SetSlot;     // Set rows only: slot relative to ChartSetCursor
+            public int ChartIndex;  // Chart rows only: absolute index into CurrentSet
+            public float Height;
         }
     }
 }
