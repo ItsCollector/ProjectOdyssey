@@ -4,30 +4,30 @@ namespace ProjectOdyssey.IO
 {
     public class ChartData
     {
-        public string title { get; set; }
-        public string artist { get; set; }
-        public string noter { get; set; }
-        public string diffName { get; set; }
-        public byte keyCount { get; set; }
-        public Note[][] notesByColumn { get; set; }
+        public string Title { get; set; }
+        public string Artist { get; set; }
+        public string Noter { get; set; }
+        public string DiffName { get; set; }
+        public byte KeyCount { get; set; }
+        public Note[][] NotesByColumn { get; set; }
 
         public ChartData(string title, string artist, string noter, string diffName, byte keyCount, Note[][] notesByColumn)
         {
-            this.title = title;
-            this.artist = artist;
-            this.noter = noter;
-            this.diffName = diffName;
-            this.keyCount = keyCount;
-            this.notesByColumn = notesByColumn;
+            this.Title = title;
+            this.Artist = artist;
+            this.Noter = noter;
+            this.DiffName = diffName;
+            this.KeyCount = keyCount;
+            this.NotesByColumn = notesByColumn;
         }
 
         public void DisplayInfo()
         {
-            Console.WriteLine($"Title: {title}");
-            Console.WriteLine($"Artist: {artist}");
-            Console.WriteLine($"Noter: {noter}");
-            Console.WriteLine($"Difficulty Name: {diffName}");
-            Console.WriteLine($"Key Count: {keyCount}");
+            Console.WriteLine($"Title: {Title}");
+            Console.WriteLine($"Artist: {Artist}");
+            Console.WriteLine($"Noter: {Noter}");
+            Console.WriteLine($"Difficulty Name: {DiffName}");
+            Console.WriteLine($"Key Count: {KeyCount}");
         }
     }
 }

@@ -5,7 +5,7 @@ namespace ProjectOdyssey.Render
 {
     public class Shader
     {
-        public int handle;
+        private int handle;
 
         public Shader(string vertexShaderPath, string fragmentShaderPath)
         {

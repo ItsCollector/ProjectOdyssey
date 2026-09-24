@@ -6,10 +6,10 @@ namespace ProjectOdyssey.Input.Native
     [StructLayout(LayoutKind.Sequential)]
     public struct RAWINPUTHEADER
     {
-        public int dwType;
-        public int dwSize;
-        public nint hDevice;
-        public nint wParam;
+        public int Type;
+        public int Size;
+        public nint Device;
+        public nint WParam;
     }
 
     // Contains low-level keyboard input data from the Windows Raw Input system
@@ -28,17 +28,17 @@ namespace ProjectOdyssey.Input.Native
     [StructLayout(LayoutKind.Sequential)]
     public struct RAWINPUT
     {
-        public RAWINPUTHEADER header;
-        public RAWKEYBOARD keyboard;
+        public RAWINPUTHEADER Header;
+        public RAWKEYBOARD Keyboard;
     }
 
     // Used to register the application to receive raw keyboard input from Windows
     [StructLayout(LayoutKind.Sequential)]
     public struct RAWINPUTDEVICE
     {
-        public ushort usUsagePage;
-        public ushort usUsage;
-        public uint dwFlags;
-        public nint hwndTarget;
+        public ushort UsagePage;
+        public ushort Usage;
+        public uint Flags;
+        public nint HwndTarget;
     }
 }

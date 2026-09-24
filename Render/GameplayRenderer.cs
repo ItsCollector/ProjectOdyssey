@@ -15,10 +15,10 @@ namespace ProjectOdyssey.Render
         private bool notesOverflowPastJudgementLine = false;
 
         // Judgement Line Position
-        public int hitPositionX;
-        public int hitPositionY = 1000;
-        public int hitPositionWidth;
-        public int hitPositionHeight = 50;
+        private int hitPositionX;
+        private int hitPositionY = 1000;
+        private int hitPositionWidth;
+        private int hitPositionHeight = 50;
 
         // Textures
         private Texture[] tapNoteTextures = new Texture[7];
@@ -86,29 +86,28 @@ namespace ProjectOdyssey.Render
                 {
                     Note note = notesByColumn[i][j + columnCursors[i]];
 
-                    if (note.headPosY <= 0) break;
+                    if (note.HeadPosY <= 0) break;
 
                     if (!notesOverflowPastJudgementLine)
                     {
-                        if (note.noteType == NoteType.Tap && note.headPosY >= hitPositionY) continue;
-                        if (note.noteType == NoteType.Long && (note.tailPosY + noteWidth) >= hitPositionY) continue;
+                        if (note.NoteType == NoteType.Tap && note.HeadPosY >= hitPositionY) continue;
+                        if (note.NoteType == NoteType.Long && (note.TailPosY + noteWidth) >= hitPositionY) continue;
                     }
 
                     float x = colX[i];
 
-                    if (note.noteType == NoteType.Tap)
+                    if (note.NoteType == NoteType.Tap)
                     {
-                        Draw(tapNoteTextures[i], x, note.headPosY - headOffset, noteWidth, noteWidth);
+                        Draw(tapNoteTextures[i], x, note.HeadPosY - headOffset, noteWidth, noteWidth);
                     }
                     else
                     {
-                        bool anchorHead = notesOverflowPastJudgementLine && note.noteState == NoteState.Holding;
-                        float effectiveHeadPosY = anchorHead ? Math.Min(note.headPosY, hitPositionY) : note.headPosY;
+                        bool anchorHead = notesOverflowPastJudgementLine && note.NoteState == NoteState.Holding;
+                        float effectiveHeadPosY = anchorHead ? Math.Min(note.HeadPosY, hitPositionY) : note.HeadPosY;
 
                         float headCenterY = effectiveHeadPosY - headOffset;
-                        float tailCenterY = note.tailPosY + headOffset;
-                        float tailBottomEdge = note.tailPosY + noteWidth;
-
+                        float tailCenterY = note.TailPosY + headOffset;
+                        float tailBottomEdge = note.TailPosY + noteWidth;
                         float bodyHeight = headCenterY - tailBottomEdge;
                         float bodyPosY = (headCenterY + tailBottomEdge) / 2f;
 

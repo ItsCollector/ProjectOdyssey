@@ -2,16 +2,13 @@
 {
     public class Note
     {
-        public NoteType noteType { get; set; }
-        [System.Text.Json.Serialization.JsonIgnore]
-        public NoteState noteState { get; set; } = NoteState.Waiting;
-        public byte column { get; set; }
-        public float startTime { get; set; }
-        public float endTime { get; set; }
-        [System.Text.Json.Serialization.JsonIgnore]
-        public float headPosY { get; set; }
-        [System.Text.Json.Serialization.JsonIgnore]
-        public float tailPosY { get; set; }
+        public NoteType NoteType { get; set; }
+        public NoteState NoteState { get; set; } = NoteState.Waiting;
+        public byte Column { get; set; }
+        public float StartTime { get; set; }
+        public float EndTime { get; set; }
+        public float HeadPosY { get; set; }
+        public float TailPosY { get; set; }
     }
 
     public enum NoteType

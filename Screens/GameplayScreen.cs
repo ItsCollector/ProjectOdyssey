@@ -36,7 +36,7 @@ namespace ProjectOdyssey.Screens
 
         public void Load()
         {
-            (skinConfig, skinAssets) = GameplaySkinParser.LoadSkin().value;
+            (skinConfig, skinAssets) = GameplaySkinParser.LoadSkin().Value;
             session = new GameSession(inputHistory, chartData);
             gameplayRenderer = new GameplayRenderer(skinConfig, skinAssets);
             gameplayRenderer.Intitialise();
@@ -55,7 +55,7 @@ namespace ProjectOdyssey.Screens
 
         public void Render()
         {
-            gameplayRenderer.DrawGameplay(session.notesByColumn, session.columnCursors);
+            gameplayRenderer.DrawGameplay(session.NotesByColumn, session.ColumnCursors);
         }
 
         public void Resize(int width, int height)

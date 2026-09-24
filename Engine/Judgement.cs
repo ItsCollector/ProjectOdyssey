@@ -2,8 +2,8 @@
 {
     public class Judgement
     {
-        public long inputTimestamp;
-        public JudgementType type;
+        public long InputTimestamp;
+        public JudgementType Type;
     }
 
     public enum JudgementType

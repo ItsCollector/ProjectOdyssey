@@ -4,19 +4,19 @@ namespace ProjectOdyssey.Common
 {
     public readonly struct Result<T>
     {
-        [MemberNotNullWhen(true, nameof(value))]
-        public bool isSuccess { get; }
+        [MemberNotNullWhen(true, nameof(Value))]
+        public bool IsSuccess { get; }
 
         [MaybeNull]
-        public T value { get; }
+        public T Value { get; }
 
-        public string error { get; }
+        public string Error { get; }
 
         private Result(bool isSuccess, [AllowNull] T value, string error)
         {
-            this.isSuccess = isSuccess;
-            this.value = value!;
-            this.error = error;
+            this.IsSuccess = isSuccess;
+            this.Value = value!;
+            this.Error = error;
         }
 
         public static Result<T> Ok(T value) => new Result<T>(true, value, string.Empty);
@@ -24,11 +24,11 @@ namespace ProjectOdyssey.Common
 
         public bool TryGetValue([MaybeNullWhen(false)] out T value)
         {
-            value = this.value;
-            return isSuccess;
+            value = this.Value;
+            return IsSuccess;
         }
 
         public TResult Match<TResult>(Func<T, TResult> onSuccess, Func<string, TResult> onError)
-            => isSuccess ? onSuccess(value) : onError(error);
+            => IsSuccess ? onSuccess(Value) : onError(Error);
     }
 }

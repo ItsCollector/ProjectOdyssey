@@ -36,13 +36,13 @@ namespace ProjectOdyssey.IO
         {
             return new Note
             {
-                noteType = (NoteType)reader.ReadByte(),
-                column = reader.ReadByte(),
-                startTime = reader.ReadSingle(),
-                endTime = reader.ReadSingle(),
-                noteState = NoteState.Waiting, // not stored — always starts here
-                headPosY = 0f,                 // not stored — computed live at runtime
-                tailPosY = 0f                  // not stored — computed live at runtime
+                NoteType = (NoteType)reader.ReadByte(),
+                Column = reader.ReadByte(),
+                StartTime = reader.ReadSingle(),
+                EndTime = reader.ReadSingle(),
+                NoteState = NoteState.Waiting, // not stored — always starts here
+                HeadPosY = 0f,                 // not stored — computed live at runtime
+                TailPosY = 0f                  // not stored — computed live at runtime
             };
         }
     }

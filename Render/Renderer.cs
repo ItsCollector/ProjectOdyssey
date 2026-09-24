@@ -146,10 +146,10 @@ namespace ProjectOdyssey.Render
             }
             else
             {
-                float w = (width == -1) ? texture.width : width;
-                float h = (height == -1) ? texture.height : height;
+                float w = (width == -1) ? texture.Width : width;
+                float h = (height == -1) ? texture.Height : height;
 
-                GL.BindTexture(TextureTarget.Texture2D, texture.handle);
+                GL.BindTexture(TextureTarget.Texture2D, texture.Handle);
                 shader.SetInt("uUseTexture", 1);
 
                 shader.SetVector2("uPosition", xPosition, yPosition);

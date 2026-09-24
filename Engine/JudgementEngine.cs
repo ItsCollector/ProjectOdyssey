@@ -4,8 +4,8 @@ namespace ProjectOdyssey.Engine
 {
     public static class JudgementEngine
     {
-        public const float earlyReleaseToleranceMs = -200;
-        public const float missWindowMs = 200;
+        public const float EarlyReleaseToleranceMs = -200;
+        public const float MissWindowMs = 200;
 
         // Judge Tap notes or the head of Long Notes
         public static JudgementType JudgeHead(float inputTimestamp, float nearestNoteTime)
@@ -27,7 +27,7 @@ namespace ProjectOdyssey.Engine
                 // and flag the note so a repress can attempt recovery.
                 // Otherwise, released within a judgeable window -> map the timing
                 // delta to a judgement and resolve the note normally.
-                return signedDelta < earlyReleaseToleranceMs
+                return signedDelta < EarlyReleaseToleranceMs
                     ? (JudgementType.Miss, NoteState.ReleasedEarly)
                     : (MapDeltaToJudgement(Math.Abs(signedDelta)), NoteState.Resolved);
             }
@@ -45,7 +45,7 @@ namespace ProjectOdyssey.Engine
                 // another recovery attempt.
                 // Released within the window -> resolves, but judgement stays capped
                 // at Bad since a clean hold was never achieved.
-                return signedDelta < earlyReleaseToleranceMs
+                return signedDelta < EarlyReleaseToleranceMs
                     ? (JudgementType.Miss, NoteState.ReleasedEarly)
                     : (JudgementType.Bad, NoteState.Resolved);
             }
@@ -73,7 +73,7 @@ namespace ProjectOdyssey.Engine
         // Resolve overheld notes or non-held nones that have exceeded the tail time + 200ms threshold
         public static bool TryResolveOverheldNote(NoteState noteState, float tailTime, float now, out JudgementType result, out NoteState newState)
         {
-            if ((noteState == NoteState.Holding || noteState == NoteState.Recovering || noteState == NoteState.ReleasedEarly) && now > tailTime + missWindowMs)
+            if ((noteState == NoteState.Holding || noteState == NoteState.Recovering || noteState == NoteState.ReleasedEarly) && now > tailTime + MissWindowMs)
             {
                 result = JudgementType.Miss;
                 newState = NoteState.Resolved;

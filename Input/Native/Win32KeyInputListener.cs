@@ -28,7 +28,7 @@ namespace ProjectOdyssey.Input.Native
         //Hooks into the Windows Message Loop to intercept Raw Input.
         public void Initialise(nint glfwHandle, Win32RawInputMethods.WndProc hookDelegate)
         {
-            nint hWnd = Win32RawInputMethods.glfwGetWin32Window(glfwHandle);
+            nint window = Win32RawInputMethods.glfwGetWin32Window(glfwHandle);
 
             // Keep reference alive to prevent Garbage Collection 
             inputHookDelegate = hookDelegate;
@@ -36,28 +36,28 @@ namespace ProjectOdyssey.Input.Native
             // 'SetWindowLongPtr' returns the original procedure so we can chain them
             originalWndProc = Win32RawInputMethods.SetWindowLongPtr
             (
-                hWnd,
+                window,
                 Win32RawInputMethods.GWL_WNDPROC,
                 Marshal.GetFunctionPointerForDelegate(inputHookDelegate)
             );
 
-            bool success = RegisterKeyboardDevice(hWnd);
+            bool success = RegisterKeyboardDevice(window);
 
             if (!success)
             {
                 Console.WriteLine("[Input] Failed to register raw input device.");
             }
 
-            Console.WriteLine($"[Input] Hooked HWND: 0x{hWnd:X}");
+            Console.WriteLine($"[Input] Hooked HWND: 0x{window:X}");
         }
 
         private bool RegisterKeyboardDevice(nint targetHwnd)
         {
             RAWINPUTDEVICE[] devices = new RAWINPUTDEVICE[1];
-            devices[0].usUsagePage = 0x01;
-            devices[0].usUsage = 0x06; // Keyboard
-            devices[0].dwFlags = Win32RawInputMethods.RIDEV_INPUTSINK;
-            devices[0].hwndTarget = targetHwnd;
+            devices[0].UsagePage = 0x01;
+            devices[0].Usage = 0x06; // Keyboard
+            devices[0].Flags = Win32RawInputMethods.RIDEV_INPUTSINK;
+            devices[0].HwndTarget = targetHwnd;
 
             return Win32RawInputMethods.RegisterRawInputDevices(
                 devices,
@@ -88,9 +88,9 @@ namespace ProjectOdyssey.Input.Native
 
         private void ProcessInput(RAWINPUT input)
         {
-            if (input.header.dwType == RIM_TYPEKEYBOARD)
+            if (input.Header.Type == RIM_TYPEKEYBOARD)
             {
-                var kb = input.keyboard;
+                var kb = input.Keyboard;
                 bool isPressed = (kb.Flags & RI_KEY_BREAK) == 0;
                 ushort key = kb.VKey;
 

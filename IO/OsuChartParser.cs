@@ -118,13 +118,13 @@ namespace ProjectOdyssey.IO
 
             foreach (var note in notes)
             {
-                grouped[note.column].Add(note);
+                grouped[note.Column].Add(note);
             }
 
             var notesByColumn = new Note[keyCount][];
             for (int i = 0; i < keyCount; i++)
             {
-                grouped[i].Sort((a, b) => a.startTime.CompareTo(b.startTime));
+                grouped[i].Sort((a, b) => a.StartTime.CompareTo(b.StartTime));
                 notesByColumn[i] = grouped[i].ToArray();
             }
 
@@ -150,13 +150,13 @@ namespace ProjectOdyssey.IO
 
             return new Note
             {
-                noteType = isLongNote ? NoteType.Long : NoteType.Tap,
-                noteState = NoteState.Waiting,
-                column = (byte)(x * keyCount / 512),
-                startTime = time,
-                endTime = endTime,
-                headPosY = -20f,
-                tailPosY = -20f
+                NoteType = isLongNote ? NoteType.Long : NoteType.Tap,
+                NoteState = NoteState.Waiting,
+                Column = (byte)(x * keyCount / 512),
+                StartTime = time,
+                EndTime = endTime,
+                HeadPosY = -20f,
+                TailPosY = -20f
             };
         }
 
@@ -165,11 +165,11 @@ namespace ProjectOdyssey.IO
             int tapCount = 0;
             int longCount = 0;
 
-            foreach (var column in chartData.notesByColumn)
+            foreach (var column in chartData.NotesByColumn)
             {
                 if (column == null) continue;
-                tapCount += column.Count(n => n.noteType == NoteType.Tap);
-                longCount += column.Count(n => n.noteType == NoteType.Long);
+                tapCount += column.Count(n => n.NoteType == NoteType.Tap);
+                longCount += column.Count(n => n.NoteType == NoteType.Long);
             }
 
             return (tapCount, longCount);

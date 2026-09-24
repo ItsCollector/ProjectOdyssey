@@ -5,22 +5,22 @@ namespace ProjectOdyssey.IO
 {
     public static class ChartImportService
     {
-        private static readonly string OsuSongsRoot = Path.Combine(
+        private static readonly string osuSongsRoot = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "osu!", "Songs");
 
         public static void ImportChartsFromOsu(int maxSets = int.MaxValue)
         {
-            if (!Directory.Exists(OsuSongsRoot))
+            if (!Directory.Exists(osuSongsRoot))
             {
-                Console.WriteLine($"[Error] osu! Songs directory not found at {OsuSongsRoot}");
+                Console.WriteLine($"[Error] osu! Songs directory not found at {osuSongsRoot}");
                 return;
             }
 
-            Console.WriteLine($"[Info] Starting import from osu! Songs directory: {OsuSongsRoot}");
+            Console.WriteLine($"[Info] Starting import from osu! Songs directory: {osuSongsRoot}");
             int importedCount = 0;
             var errorLog = new StringBuilder();
-            var allFolders = Directory.GetDirectories(OsuSongsRoot);
+            var allFolders = Directory.GetDirectories(osuSongsRoot);
             int processedFolders = 0;
 
             foreach (var songDir in allFolders)
@@ -44,15 +44,15 @@ namespace ProjectOdyssey.IO
                     foreach (var chartFile in Directory.GetFiles(songDir, "*.osu"))
                     {
                         var result = OsuChartParser.OsuToChartData(chartFile);
-                        if (result.isSuccess)
+                        if (result.IsSuccess)
                         {
-                            var (chartData, resolvedAudioPath) = result.value;
+                            var (chartData, resolvedAudioPath) = result.Value;
                             string binaryFilePath = WriteChartBinary(chartData, songDir, chartFile);
                             parsedChartsInSet.Add((chartData, resolvedAudioPath, binaryFilePath));
                         }
-                        else if (result.error != "Unsupported mode")
+                        else if (result.Error != "Unsupported mode")
                         {
-                            errorLog.AppendLine($"[WARN] Failed to parse {chartFile}: {result.error}");
+                            errorLog.AppendLine($"[WARN] Failed to parse {chartFile}: {result.Error}");
                         }
                     }
 
@@ -111,16 +111,15 @@ namespace ProjectOdyssey.IO
             using (var writer = new BinaryWriter(File.Open(outputPath, FileMode.Create)))
             {
                 writer.Write((byte)1); // format version
-                writer.Write(chartData.title);
-                writer.Write(chartData.artist);
-                writer.Write(chartData.noter);
-                writer.Write(chartData.diffName);
-                writer.Write(chartData.keyCount);
-
-                for (int col = 0; col < chartData.keyCount; col++)
+                writer.Write(chartData.Title);
+                writer.Write(chartData.Artist);
+                writer.Write(chartData.Noter);
+                writer.Write(chartData.DiffName);
+                writer.Write(chartData.KeyCount);
+                for (int col = 0; col < chartData.KeyCount; col++)
                 {
-                    writer.Write(chartData.notesByColumn[col].Length);
-                    foreach (var note in chartData.notesByColumn[col])
+                    writer.Write(chartData.NotesByColumn[col].Length);
+                    foreach (var note in chartData.NotesByColumn[col])
                     {
                         WriteNote(writer, note);
                     }
@@ -132,10 +131,10 @@ namespace ProjectOdyssey.IO
 
         public static void WriteNote(BinaryWriter writer, Note note)
         {
-            writer.Write((byte)note.noteType);
-            writer.Write(note.column);
-            writer.Write(note.startTime);
-            writer.Write(note.endTime);
+            writer.Write((byte)note.NoteType);
+            writer.Write(note.Column);
+            writer.Write(note.StartTime);
+            writer.Write(note.EndTime);
         }
     }
 }

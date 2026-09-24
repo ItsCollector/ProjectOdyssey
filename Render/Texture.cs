@@ -4,25 +4,25 @@ namespace ProjectOdyssey.Render
 {
     public class Texture : IDisposable
     {
-        public int handle;
-        public int width;
-        public int height;
-        public string imgPath;
+        public int Handle;
+        public int Width;
+        public int Height;
+        public string ImgPath;
 
         public Texture(int handle, int width, int height, string imgPath)
         {
-            this.handle = handle;
-            this.width = width;
-            this.height = height;
-            this.imgPath = imgPath;
+            this.Handle = handle;
+            this.Width = width;
+            this.Height = height;
+            this.ImgPath = imgPath;
         }
 
         public void Dispose()
         {
-            if (handle != 0)
+            if (Handle != 0)
             {
-                GL.DeleteTexture(handle);
-                handle = 0;
+                GL.DeleteTexture(Handle);
+                Handle = 0;
             }
         }
     }

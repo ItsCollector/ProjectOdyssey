@@ -157,7 +157,7 @@ namespace ProjectOdyssey.IO
         }
 
         // Imports an entire chart set (ChartSet + Songs + Charts) atomically in one transaction
-        public static void ImportChartSet(ChartSet set, List<(ChartData chartData, string resolvedAudioPath, string jsonFilePath)> parsedChartsInSet)
+        public static void ImportChartSet(ChartSet set, List<(ChartData chartData, string resolvedAudioPath, string binaryFilePath)> parsedChartsInSet)
         {
             using var connection = OpenConnection();
             using var transaction = connection.BeginTransaction();
@@ -183,7 +183,7 @@ namespace ProjectOdyssey.IO
                 // several charts doesn't re-run the same SELECT repeatedly.
                 var songIdCache = new Dictionary<string, int>();
 
-                foreach (var (chartData, resolvedAudioPath, jsonFilePath) in parsedChartsInSet)
+                foreach (var (chartData, resolvedAudioPath, binaryFilePath) in parsedChartsInSet)
                 {
                     if (!songIdCache.TryGetValue(resolvedAudioPath, out int songId))
                     {
@@ -230,12 +230,12 @@ namespace ProjectOdyssey.IO
                         VALUES ($songId, $filePath, $title, $artist, $diffName, $noter, $keyCount, $fileLastWriteUtc);
                     ";
                     insertChartCommand.Parameters.AddWithValue("$songId", songId);
-                    insertChartCommand.Parameters.AddWithValue("$filePath", jsonFilePath);
-                    insertChartCommand.Parameters.AddWithValue("$title", chartData.title);
-                    insertChartCommand.Parameters.AddWithValue("$artist", chartData.artist);
-                    insertChartCommand.Parameters.AddWithValue("$diffName", chartData.diffName);
-                    insertChartCommand.Parameters.AddWithValue("$noter", chartData.noter);
-                    insertChartCommand.Parameters.AddWithValue("$keyCount", chartData.keyCount);
+                    insertChartCommand.Parameters.AddWithValue("$filePath", binaryFilePath);
+                    insertChartCommand.Parameters.AddWithValue("$title", chartData.Title);
+                    insertChartCommand.Parameters.AddWithValue("$artist", chartData.Artist);
+                    insertChartCommand.Parameters.AddWithValue("$diffName", chartData.DiffName);
+                    insertChartCommand.Parameters.AddWithValue("$noter", chartData.Noter);
+                    insertChartCommand.Parameters.AddWithValue("$keyCount", chartData.KeyCount);
                     insertChartCommand.Parameters.AddWithValue("$fileLastWriteUtc", DateTime.UtcNow.Ticks);
                     insertChartCommand.ExecuteNonQuery();
                 }

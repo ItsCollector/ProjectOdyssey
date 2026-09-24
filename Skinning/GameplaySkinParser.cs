@@ -11,26 +11,26 @@ namespace ProjectOdyssey.Skinning
 
             // Get the skin files from the skin directory
             var filesResult = GetFiles(skinDirectory);
-            if (!filesResult.isSuccess)
+            if (!filesResult.IsSuccess)
             {
-                return Result<(GameplaySkinConfig, SkinAssets)>.Err(filesResult.error);
+                return Result<(GameplaySkinConfig, SkinAssets)>.Err(filesResult.Error);
             }
 
             // Load the skin config 
-            var configResult = ParseSkinConfig(filesResult.value);
-            if (!configResult.isSuccess)
+            var configResult = ParseSkinConfig(filesResult.Value);
+            if (!configResult.IsSuccess)
             {
-                return Result<(GameplaySkinConfig, SkinAssets)>.Err(configResult.error);
+                return Result<(GameplaySkinConfig, SkinAssets)>.Err(configResult.Error);
             }
 
             // Load skin assets
-            var assetsResult = DiscoverAssets(filesResult.value);
-            if (!assetsResult.isSuccess)
+            var assetsResult = DiscoverAssets(filesResult.Value);
+            if (!assetsResult.IsSuccess)
             {
-                return Result<(GameplaySkinConfig, SkinAssets)>.Err(assetsResult.error);
+                return Result<(GameplaySkinConfig, SkinAssets)>.Err(assetsResult.Error);
             }
 
-            return Result<(GameplaySkinConfig, SkinAssets)>.Ok((configResult.value, assetsResult.value));
+            return Result<(GameplaySkinConfig, SkinAssets)>.Ok((configResult.Value, assetsResult.Value));
         }
 
         public static Result<string[]> GetFiles(string skinDirectory)
@@ -76,35 +76,35 @@ namespace ProjectOdyssey.Skinning
         public static Result<SkinAssets> DiscoverAssets(string[] files)
         {
             var tapNotes = FindImageVariants(files, "tap_note");
-            if (!tapNotes.isSuccess) return Result<SkinAssets>.Err(tapNotes.error);
+            if (!tapNotes.IsSuccess) return Result<SkinAssets>.Err(tapNotes.Error);
 
             var lnHeads = FindImageVariants(files, "ln_head");
-            if (!lnHeads.isSuccess) return Result<SkinAssets>.Err(lnHeads.error);
+            if (!lnHeads.IsSuccess) return Result<SkinAssets>.Err(lnHeads.Error);
 
             var lnBody = FindImage(files, "ln_body");
-            if (!lnBody.isSuccess) return Result<SkinAssets>.Err(lnBody.error);
+            if (!lnBody.IsSuccess) return Result<SkinAssets>.Err(lnBody.Error);
 
             var lnTail = FindImage(files, "ln_tail");
-            if (!lnTail.isSuccess) return Result<SkinAssets>.Err(lnTail.error);
+            if (!lnTail.IsSuccess) return Result<SkinAssets>.Err(lnTail.Error);
 
             var judgementLine = FindImage(files, "judgement_line");
-            if (!judgementLine.isSuccess) return Result<SkinAssets>.Err(judgementLine.error);
+            if (!judgementLine.IsSuccess) return Result<SkinAssets>.Err(judgementLine.Error);
 
             var receptorUp = FindImage(files, "receptor_up");
-            if (!receptorUp.isSuccess) return Result<SkinAssets>.Err(receptorUp.error);
+            if (!receptorUp.IsSuccess) return Result<SkinAssets>.Err(receptorUp.Error);
 
             var receptorDown = FindImage(files, "receptor_down");
-            if (!receptorDown.isSuccess) return Result<SkinAssets>.Err(receptorDown.error);
+            if (!receptorDown.IsSuccess) return Result<SkinAssets>.Err(receptorDown.Error);
 
             return Result<SkinAssets>.Ok(new SkinAssets
             {
-                TapNotePaths = tapNotes.value,
-                LnHeadPaths = lnHeads.value,
-                LnBodyPath = lnBody.value,
-                LnTailPath = lnTail.value,
-                JudgementLinePath = judgementLine.value,
-                ReceptorUpPath = receptorUp.value,
-                ReceptorDownPath = receptorDown.value
+                TapNotePaths = tapNotes.Value,
+                LnHeadPaths = lnHeads.Value,
+                LnBodyPath = lnBody.Value,
+                LnTailPath = lnTail.Value,
+                JudgementLinePath = judgementLine.Value,
+                ReceptorUpPath = receptorUp.Value,
+                ReceptorDownPath = receptorDown.Value
             });
         }
 
