@@ -48,7 +48,7 @@ namespace ProjectOdyssey.Screens
         {
             if (!audioStarted && session.AudioReadyToStart)
             {
-                audioManager.PlayAudio();
+                audioManager.PlayAudio(songPath);
                 audioStarted = true;
             }
         }

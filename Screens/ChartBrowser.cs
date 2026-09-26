@@ -3,6 +3,7 @@ using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using ProjectOdyssey.IO;
 using ProjectOdyssey.Render;
+using ProjectOdyssey.Audio;
 
 namespace ProjectOdyssey.Screens
 {
@@ -13,6 +14,12 @@ namespace ProjectOdyssey.Screens
 
         private int windowWidth = 1920, windowHeight = 1080;
         private Vector2 lastMousePos;
+        private AudioManager audioManager;
+
+        public ChartBrowser(AudioManager audioManager)
+        {
+            this.audioManager = audioManager;
+        }
 
         public void Load()
         {
@@ -26,7 +33,13 @@ namespace ProjectOdyssey.Screens
                 Console.WriteLine("[WARN] No charts found to browse.");
             }
 
-            session = new ChartBrowserSession(charts);
+            session = new ChartBrowserSession(charts, audioManager);
+            session.SelectionChanged += browserRenderer.LoadBackgroundTexture;
+
+            if (charts.Count > 0)
+            {
+                browserRenderer.LoadBackgroundTexture(session.CurrentSet[session.ChartCursor].BackgroundPath);
+            }
         }
 
         public void Update(float deltaMs) { }
@@ -53,6 +66,7 @@ namespace ProjectOdyssey.Screens
         public void Unload()
         {
             browserRenderer.Dispose();
+            session.SelectionChanged -= browserRenderer.LoadBackgroundTexture;
         }
 
         public void OnKeyDown(Keys key)

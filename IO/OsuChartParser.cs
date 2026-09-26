@@ -8,9 +8,10 @@ namespace ProjectOdyssey.IO
         // Generic entry point: parse a .osu file at an already-known absolute
         // path. Used directly for test charts / non-osu-library imports, and
         // internally by ImportFromOsuLibrary once the path is resolved.
-        public static Result<(ChartData chartData, string resolvedAudioPath)> OsuToChartData(string filePath)
+        public static Result<(ChartData chartData, string resolvedAudioPath, string resolvedBackgroundPath)> OsuToChartData(string filePath)
         {
             string audioFileName = string.Empty;
+            string backgroundFileName = string.Empty;
             string title = string.Empty;
             string artist = string.Empty;
             string noter = string.Empty;
@@ -20,6 +21,7 @@ namespace ProjectOdyssey.IO
 
             IEnumerable<string> lines;
             bool inNotes = false;
+            bool inEvents = false;
 
             try
             {
@@ -27,7 +29,7 @@ namespace ProjectOdyssey.IO
             }
             catch (Exception ex)
             {
-                return Result<(ChartData chartData, string resolvedAudioPath)>.Err($"Error reading file: {ex.Message}");
+                return Result<(ChartData chartData, string resolvedAudioPath, string resolvedBackgroundPath)>.Err($"Error reading file: {ex.Message}");
             }
 
             var notes = new List<Note>();
@@ -50,9 +52,35 @@ namespace ProjectOdyssey.IO
                     {
                         if (!keyCountSet)
                         {
-                            return Result<(ChartData chartData, string resolvedAudioPath)>.Err("HitObjects encountered before CircleSize was set");
+                            return Result<(ChartData chartData, string resolvedAudioPath, string resolvedBackgroundPath)>.Err("HitObjects encountered before CircleSize was set");
                         }
                         notes.Add(ParseNote(line, keyCount));
+                    }
+                    continue;
+                }
+
+                if (line.StartsWith("[Events]"))
+                {
+                    inEvents = true;
+                    continue;
+                }
+
+                if (inEvents)
+                {
+                    if (string.IsNullOrWhiteSpace(line) || line.StartsWith("["))
+                    {
+                        inEvents = false;
+                    }
+                    else
+                    {
+                        if (line.StartsWith("0,0,"))
+                        {
+                            var parts = line.Split(',');
+                            if (parts.Length >= 3)
+                            {
+                                backgroundFileName = parts[2].Trim('"');
+                            }
+                        }
                     }
                     continue;
                 }
@@ -66,7 +94,7 @@ namespace ProjectOdyssey.IO
                     int mode = int.Parse(ExtractValue(line));
                     if (mode != 3)
                     {
-                        return Result<(ChartData chartData, string resolvedAudioPath)>.Err("Unsupported mode");
+                        return Result<(ChartData chartData, string resolvedAudioPath, string resolvedBackgroundPath)>.Err("Unsupported mode");
                     }
                 }
                 else if (line.StartsWith("Title:"))
@@ -94,20 +122,26 @@ namespace ProjectOdyssey.IO
 
             if (!keyCountSet)
             {
-                return Result<(ChartData chartData, string resolvedAudioPath)>.Err("CircleSize was never specified");
+                return Result<(ChartData chartData, string resolvedAudioPath, string resolvedBackgroundPath)>.Err("CircleSize was never specified");
             }
 
             if (notes.Count == 0)
             {
-                return Result<(ChartData chartData, string resolvedAudioPath)>.Err("Chart has zero notes");
+                return Result<(ChartData chartData, string resolvedAudioPath, string resolvedBackgroundPath)>.Err("Chart has zero notes");
             }
 
             string osuFolder = Path.GetDirectoryName(filePath) ?? string.Empty;
             string resolvedAudioPath = Path.Combine(osuFolder, audioFileName);
+            string resolvedBackgroundPath = Path.Combine(osuFolder, backgroundFileName);
 
             if (!File.Exists(resolvedAudioPath))
             {
-                return Result<(ChartData chartData, string resolvedAudioPath)>.Err($"Audio file not found: {resolvedAudioPath}");
+                return Result<(ChartData chartData, string resolvedAudioPath, string resolvedBackgroundPath)>.Err($"Audio file not found: {resolvedAudioPath}");
+            }
+
+            if (!File.Exists(resolvedBackgroundPath))
+            {
+                resolvedBackgroundPath = Path.Combine(AppContext.BaseDirectory, "Assets\\Chart Browser\\missing_background_image.png");
             }
 
             var grouped = new List<Note>[keyCount];
@@ -129,7 +163,7 @@ namespace ProjectOdyssey.IO
             }
 
             var chartData = new ChartData(title, artist, noter, diffName, keyCount, notesByColumn);
-            return Result<(ChartData chartData, string resolvedAudioPath)>.Ok((chartData, resolvedAudioPath));
+            return Result<(ChartData chartData, string resolvedAudioPath, string resolvedBackgroundPath)>.Ok((chartData, resolvedAudioPath, resolvedBackgroundPath));
         }
 
         public static Note ParseNote(string line, byte keyCount)

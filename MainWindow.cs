@@ -53,7 +53,7 @@ namespace ProjectOdyssey
             //ChartData chartData = ChartBinaryReader.ReadChartBinary(chartPath);
 
             //screenManager.Push(new GameplayScreen(chartData, songPath, inputHistory, audioManager));
-            screenManager.Push(new ChartBrowser());
+            screenManager.Push(new ChartBrowser(audioManager));
             //screenManager.Push(new ChartManagerScreen());
 
             //Task.Run(() => ChartImportService.ImportChartsFromOsu()); // imports all charts from the osu! Songs directory into the Odyssey's own database

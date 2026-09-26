@@ -36,16 +36,17 @@ namespace ProjectOdyssey.IO
                 );
 
                 CREATE TABLE IF NOT EXISTS Charts (
-                    ChartId INTEGER PRIMARY KEY AUTOINCREMENT,
-                    SongId INTEGER NOT NULL REFERENCES Songs(SongId) ON DELETE CASCADE,
-                    FilePath TEXT NOT NULL UNIQUE,
-                    Title TEXT NOT NULL,
-                    Artist TEXT NOT NULL,
-                    DiffName TEXT NOT NULL,
-                    Noter TEXT NOT NULL,
-                    KeyCount INTEGER NOT NULL,
-                    FileLastWriteUtc INTEGER NOT NULL
-                );
+                ChartId INTEGER PRIMARY KEY AUTOINCREMENT,
+                SongId INTEGER NOT NULL REFERENCES Songs(SongId) ON DELETE CASCADE,
+                BinaryFilePath TEXT NOT NULL UNIQUE,
+                BackgroundPath TEXT NOT NULL DEFAULT '',
+                Title TEXT NOT NULL,
+                Artist TEXT NOT NULL,
+                DiffName TEXT NOT NULL,
+                Noter TEXT NOT NULL,
+                KeyCount INTEGER NOT NULL,
+                FileLastWriteUtc INTEGER NOT NULL
+            );
             ";
 
             command.ExecuteNonQuery();
@@ -72,7 +73,8 @@ namespace ProjectOdyssey.IO
             using var command = connection.CreateCommand();
             command.CommandText =
             @"
-                SELECT c.ChartId, c.SongId, s.SetId, c.FilePath, c.Title, c.Artist, c.DiffName, c.Noter, c.KeyCount
+                SELECT c.ChartId, c.SongId, s.SetId, c.BinaryFilePath, s.AudioPath, c.BackgroundPath,
+                       c.Title, c.Artist, c.DiffName, c.Noter, c.KeyCount
                 FROM Charts c
                 JOIN Songs s ON c.SongId = s.SongId;
             ";
@@ -86,11 +88,13 @@ namespace ProjectOdyssey.IO
                     SongId = reader.GetInt32(1),
                     SetId = reader.GetInt32(2),
                     FilePath = reader.GetString(3),
-                    Title = reader.GetString(4),
-                    Artist = reader.GetString(5),
-                    DiffName = reader.GetString(6),
-                    Noter = reader.GetString(7),
-                    KeyCount = reader.GetInt32(8)
+                    AudioPath = reader.GetString(4),
+                    BackgroundPath = reader.GetString(5),
+                    Title = reader.GetString(6),
+                    Artist = reader.GetString(7),
+                    DiffName = reader.GetString(8),
+                    Noter = reader.GetString(9),
+                    KeyCount = reader.GetInt32(10)
                 });
             }
 
@@ -132,7 +136,7 @@ namespace ProjectOdyssey.IO
             using var command = connection.CreateCommand();
             command.CommandText =
             @"
-                SELECT ChartId, SongId, FilePath, Title, Artist, DiffName, Noter, KeyCount, FileLastWriteUtc
+                SELECT ChartId, SongId, BinaryFilePath, BackgroundPath, Title, Artist, DiffName, Noter, KeyCount, FileLastWriteUtc
                 FROM Charts;
             ";
 
@@ -143,13 +147,14 @@ namespace ProjectOdyssey.IO
                 {
                     ChartId = reader.GetInt32(0),
                     SongId = reader.GetInt32(1),
-                    FilePath = reader.GetString(2),
-                    Title = reader.GetString(3),
-                    Artist = reader.GetString(4),
-                    DiffName = reader.GetString(5),
-                    Noter = reader.GetString(6),
-                    KeyCount = reader.GetInt32(7),
-                    FileLastWriteUtc = reader.GetInt64(8)
+                    BinaryFilePath = reader.GetString(2),
+                    BackgroundPath = reader.GetString(3),
+                    Title = reader.GetString(4),
+                    Artist = reader.GetString(5),
+                    DiffName = reader.GetString(6),
+                    Noter = reader.GetString(7),
+                    KeyCount = reader.GetInt32(8),
+                    FileLastWriteUtc = reader.GetInt64(9)
                 });
             }
 
@@ -157,7 +162,7 @@ namespace ProjectOdyssey.IO
         }
 
         // Imports an entire chart set (ChartSet + Songs + Charts) atomically in one transaction
-        public static void ImportChartSet(ChartSet set, List<(ChartData chartData, string resolvedAudioPath, string binaryFilePath)> parsedChartsInSet)
+        public static void ImportChartSet(ChartSet set, List<(ChartData chartData, string resolvedAudioPath, string binaryFilePath, string backgroundPath)> parsedChartsInSet)
         {
             using var connection = OpenConnection();
             using var transaction = connection.BeginTransaction();
@@ -183,7 +188,7 @@ namespace ProjectOdyssey.IO
                 // several charts doesn't re-run the same SELECT repeatedly.
                 var songIdCache = new Dictionary<string, int>();
 
-                foreach (var (chartData, resolvedAudioPath, binaryFilePath) in parsedChartsInSet)
+                foreach (var (chartData, resolvedAudioPath, binaryFilePath, backgroundPath) in parsedChartsInSet)
                 {
                     if (!songIdCache.TryGetValue(resolvedAudioPath, out int songId))
                     {
@@ -226,11 +231,12 @@ namespace ProjectOdyssey.IO
                     insertChartCommand.Transaction = transaction;
                     insertChartCommand.CommandText =
                     @"
-                        INSERT INTO Charts (SongId, FilePath, Title, Artist, DiffName, Noter, KeyCount, FileLastWriteUtc)
-                        VALUES ($songId, $filePath, $title, $artist, $diffName, $noter, $keyCount, $fileLastWriteUtc);
+                        INSERT INTO Charts (SongId, BinaryFilePath, BackgroundPath, Title, Artist, DiffName, Noter, KeyCount, FileLastWriteUtc)
+                        VALUES ($songId, $filePath, $backgroundPath, $title, $artist, $diffName, $noter, $keyCount, $fileLastWriteUtc);
                     ";
                     insertChartCommand.Parameters.AddWithValue("$songId", songId);
                     insertChartCommand.Parameters.AddWithValue("$filePath", binaryFilePath);
+                    insertChartCommand.Parameters.AddWithValue("$backgroundPath", backgroundPath);
                     insertChartCommand.Parameters.AddWithValue("$title", chartData.Title);
                     insertChartCommand.Parameters.AddWithValue("$artist", chartData.Artist);
                     insertChartCommand.Parameters.AddWithValue("$diffName", chartData.DiffName);
@@ -333,7 +339,8 @@ namespace ProjectOdyssey.IO
     {
         public int ChartId { get; set; }
         public int SongId { get; set; }
-        public string FilePath { get; set; } = "";
+        public string BinaryFilePath { get; set; } = "";
+        public string BackgroundPath { get; set; } = "";
         public string Title { get; set; } = "";
         public string Artist { get; set; } = "";
         public string DiffName { get; set; } = "";
@@ -349,6 +356,8 @@ namespace ProjectOdyssey.IO
         public int SongId { get; set; }
         public int SetId { get; set; }
         public string FilePath { get; set; } = "";
+        public string AudioPath { get; set; } = "";
+        public string BackgroundPath { get; set; } = "";
         public string Title { get; set; } = "";
         public string Artist { get; set; } = "";
         public string DiffName { get; set; } = "";

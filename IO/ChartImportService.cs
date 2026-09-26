@@ -39,16 +39,16 @@ namespace ProjectOdyssey.IO
                         continue;
                     }
 
-                    var parsedChartsInSet = new List<(ChartData chartData, string resolvedAudioPath, string jsonFilePath)>();
+                    var parsedChartsInSet = new List<(ChartData chartData, string resolvedAudioPath, string binaryFilePath, string resolvedBackgroundPath)>();
 
                     foreach (var chartFile in Directory.GetFiles(songDir, "*.osu"))
                     {
                         var result = OsuChartParser.OsuToChartData(chartFile);
                         if (result.IsSuccess)
                         {
-                            var (chartData, resolvedAudioPath) = result.Value;
+                            var (chartData, resolvedAudioPath, resolvedBackgroundPath) = result.Value;
                             string binaryFilePath = WriteChartBinary(chartData, songDir, chartFile);
-                            parsedChartsInSet.Add((chartData, resolvedAudioPath, binaryFilePath));
+                            parsedChartsInSet.Add((chartData, resolvedAudioPath, binaryFilePath, resolvedBackgroundPath));
                         }
                         else if (result.Error != "Unsupported mode")
                         {
@@ -79,7 +79,7 @@ namespace ProjectOdyssey.IO
             Console.WriteLine($"[Done] Imported {importedCount} sets. Log written to {logPath}");
         }
 
-        public static void InsertItem(string folderPath, List<(ChartData chartData, string resolvedAudioPath, string jsonFilePath)> parsedChartsInSet)
+        public static void InsertItem(string folderPath, List<(ChartData chartData, string resolvedAudioPath, string jsonFilePath, string backgroundPath)> parsedChartsInSet)
         {
             ChartDatabase.ImportChartSet(new ChartSet
             {

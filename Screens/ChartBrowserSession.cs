@@ -1,10 +1,15 @@
+using ProjectOdyssey.Audio;
 using ProjectOdyssey.IO;
+using System.Runtime.CompilerServices;
 
 namespace ProjectOdyssey.Screens
 {
     public class ChartBrowserSession
     {
         private List<List<ChartBrowserRow>> chartSets = new(); // All chart sets, each set is a list of charts
+        private AudioManager audioManager;
+        public event Action<string>? SelectionChanged;
+
         public int ChartSetCursor { get; private set; } // Currently selected chart set index
         public int ChartCursor { get; private set; } // Currently selected chart within the current set as an index
         public int HoveredSet { get; private set; } = -1; // The set card currently hovered by the mouse, or -1 if none
@@ -14,9 +19,11 @@ namespace ProjectOdyssey.Screens
         public List<List<ChartBrowserRow>> FilteredChartSets => chartSets; // The chart sets after filtering (currently no filtering applied)
         public List<(int Slot, CardRect Rect)> SetCardRects { get; } = new(); // Rectangle positions and dimensions of the set cards on screen
         public List<(int ChartIndex, CardRect Rect)> ChartCardRects { get; } = new(); // Rectangle positions and dimensions of the chart cards on screen
-
-        public ChartBrowserSession(List<ChartBrowserRow> charts)
+       
+        public ChartBrowserSession(List<ChartBrowserRow> charts, AudioManager audioManager)
         {
+            this.audioManager = audioManager;   
+
             if (charts.Count == 0) return;
 
             // Loads all charts into chartSets, grouped by SetId. Each set is a list of charts.
@@ -178,6 +185,18 @@ namespace ProjectOdyssey.Screens
                     }));
                 }
             }
+
+            SelectionChanged?.Invoke(CurrentSet[ChartCursor].BackgroundPath);
+            PlaySelectedChartMusic();
+        }
+
+        public void PlaySelectedChartMusic()
+        {
+            if (chartSets.Count == 0) return;
+
+            string audioPath = CurrentSet[ChartCursor].AudioPath;
+            audioManager.ReadAudioFile(audioPath);
+            audioManager.PlayAudio(audioPath);
         }
 
         private struct Row
