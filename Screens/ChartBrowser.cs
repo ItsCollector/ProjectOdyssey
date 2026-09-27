@@ -18,11 +18,13 @@ namespace ProjectOdyssey.Screens
         private int windowWidth = 1920, windowHeight = 1080;
         private Vector2 lastMousePos;
         private AudioManager audioManager;
+        private InputHistory inputHistory;
 
-        public ChartBrowser(ScreenManager screenManager, AudioManager audioManager)
+        public ChartBrowser(ScreenManager screenManager, AudioManager audioManager, InputHistory inputHistory)
         {
             this.screenManager = screenManager;
             this.audioManager = audioManager;
+            this.inputHistory = inputHistory;
         }
 
         public void Load()
@@ -80,7 +82,7 @@ namespace ProjectOdyssey.Screens
             var (chartData, songPath) = session.FinaliseChartSelection();
             if (chartData != null)
             {
-                screenManager.Replace(new GameplayScreen(chartData, songPath, new InputHistory(), audioManager));
+                screenManager.Replace(new GameplayScreen(chartData, songPath, inputHistory, audioManager));
             }
         }
 

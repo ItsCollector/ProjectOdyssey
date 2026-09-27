@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using ProjectOdyssey.Input;
 using ProjectOdyssey.IO;
+using System.Runtime.InteropServices.Marshalling;
 
 namespace ProjectOdyssey.Engine
 {
@@ -24,6 +25,7 @@ namespace ProjectOdyssey.Engine
 
         public Note[][] NotesByColumn { get; set; } // pass these into the function later chart loading is being implemented, and remove nullable
         public int[] ColumnCursors { get; set; } // construct cursors passed on the number of columns in the chart, and remove nullable
+        public int Combo { get; private set; } = 0;
 
         public GameSession(InputHistory inputHistory, ChartData chartData)
         {
@@ -117,7 +119,7 @@ namespace ProjectOdyssey.Engine
                 JudgementType judgement = JudgementEngine.JudgeHead(inputSongTimeMs, note.StartTime);
                 note.NoteState = NoteState.Resolved;
                 ColumnCursors[column]++;
-
+                Combo++;
                 //Console.WriteLine($"[JUDGEMENT] Vkey: {column + 1} Position: Tap Note | Note ST: {note.StartTime} Note ET: {note.EndTime} | Direction: {direction} | Judge: {judgement}");
                 return;
             }
@@ -131,7 +133,7 @@ namespace ProjectOdyssey.Engine
 
                     JudgementType headJudgement = JudgementEngine.JudgeHead(inputSongTimeMs, note.StartTime);
                     note.NoteState = NoteState.Holding;
-
+                    Combo++;
                     //Console.WriteLine($"[JUDGEMENT] Vkey: {column + 1} Position: Long Note | Note ST: {note.StartTime} Note ET: {note.EndTime} | Direction: {direction} | Judge: {headJudgement}");
                     return;
                 }
@@ -140,13 +142,14 @@ namespace ProjectOdyssey.Engine
                     JudgementEngine.JudgeTail(inputSongTimeMs, note.EndTime, direction, note.NoteState);
 
                 note.NoteState = newState;
+                Combo++;
 
                 if (newState == NoteState.Resolved)
                 {
                     ColumnCursors[column]++;
                 }
 
-                //Console.WriteLine($"[JUDGEMENT] Vkey: {column + 1} Position: Long Note | Note ST: {note.startTime} Note ET: {note.endTime} | Direction: {direction} | Judge: {tailJudgement}");
+                //Console.WriteLine($"[JUDGEMENT] Vkey: {column + 1} Position: Long Note | Note ST: {note.StartTime} Note ET: {note.EndTime} | Direction: {direction} | Judge: {tailJudgement}");
             }
         }
 
@@ -220,6 +223,7 @@ namespace ProjectOdyssey.Engine
                 {
                     //Console.WriteLine($"[JUDGEMENT] Vkey: {note.Column + 1} Position: Tap Note | Note ST: {note.StartTime} Note ET: {note.EndTime} | Judge: Miss");
                     note.NoteState = NoteState.Resolved;
+                    Combo = 0;
                     ColumnCursors[i]++;
                     continue;
                 }
@@ -229,6 +233,7 @@ namespace ProjectOdyssey.Engine
                     // TODO: record as a Miss
                     //Console.WriteLine($"[JUDGEMENT] Vkey: {note.Column + 1} Position: Long Note | Note ST: {note.StartTime} Note ET: {note.EndTime} | Judge: Miss");
                     note.NoteState = NoteState.ReleasedEarly;
+                    Combo = 0;
                     continue;
                 }
 
@@ -240,6 +245,7 @@ namespace ProjectOdyssey.Engine
                         ColumnCursors[i]++;
 
                         // TODO: record `result` as a Miss
+                        Combo = 0;
                         //Console.WriteLine($"[JUDGEMENT] Vkey: {note.Column + 1} Position: Long Note | Note ST: {note.StartTime} Note ET: {note.EndTime} | Judge: Miss");
                         continue;
                     }

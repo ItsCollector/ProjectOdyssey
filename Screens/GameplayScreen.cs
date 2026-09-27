@@ -19,6 +19,7 @@ namespace ProjectOdyssey.Screens
         // Update()/Render()/Resize()/Unload() are ever called on this screen.
         private GameSession session = null!;
         private GameplayRenderer gameplayRenderer = null!;
+        private HudRenderer hudRenderer = null!;
         private GameplaySkinConfig skinConfig = null!;
         private SkinAssets skinAssets = null!;
         private AudioManager audioManager;
@@ -40,6 +41,8 @@ namespace ProjectOdyssey.Screens
             session = new GameSession(inputHistory, chartData);
             gameplayRenderer = new GameplayRenderer(skinConfig, skinAssets);
             gameplayRenderer.Intitialise();
+            hudRenderer = new HudRenderer();
+            hudRenderer.Initialise();
             audioManager.ReadAudioFile(songPath);
             session.Start(chartData);
         }
@@ -56,11 +59,13 @@ namespace ProjectOdyssey.Screens
         public void Render()
         {
             gameplayRenderer.DrawGameplay(session.NotesByColumn, session.ColumnCursors);
+            hudRenderer.DrawHud(session.Combo);
         }
 
         public void Resize(int width, int height)
         {
             gameplayRenderer.UpdateViewportSize(width, height);
+            hudRenderer?.Resize(width, height);
         }
 
         public void Unload()
