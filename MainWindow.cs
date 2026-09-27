@@ -35,7 +35,7 @@ namespace ProjectOdyssey
         protected unsafe override void OnLoad()
         {
             base.OnLoad();
-            GL.ClearColor(0.051f, 0.051f, 0.051f, 1.0f);
+            GL.ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
             GL.Viewport(0, 0, ClientSize.X, ClientSize.Y);
             GL.Enable(EnableCap.Blend);
             GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
