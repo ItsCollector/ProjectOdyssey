@@ -87,7 +87,7 @@ namespace ProjectOdyssey.IO
                     ChartId = reader.GetInt32(0),
                     SongId = reader.GetInt32(1),
                     SetId = reader.GetInt32(2),
-                    FilePath = reader.GetString(3),
+                    BinaryFilePath = reader.GetString(3),
                     AudioPath = reader.GetString(4),
                     BackgroundPath = reader.GetString(5),
                     Title = reader.GetString(6),
@@ -355,7 +355,7 @@ namespace ProjectOdyssey.IO
         public int ChartId { get; set; }
         public int SongId { get; set; }
         public int SetId { get; set; }
-        public string FilePath { get; set; } = "";
+        public string BinaryFilePath { get; set; } = "";
         public string AudioPath { get; set; } = "";
         public string BackgroundPath { get; set; } = "";
         public string Title { get; set; } = "";

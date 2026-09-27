@@ -199,6 +199,31 @@ namespace ProjectOdyssey.Screens
             audioManager.PlayAudio(audioPath);
         }
 
+        public void StopSelectedChartMusic()
+        {
+            if (chartSets.Count == 0) return;
+            string audioPath = CurrentSet[ChartCursor].AudioPath;
+            audioManager.StopAudio();
+        }
+
+        public (ChartData, string) FinaliseChartSelection()
+        {
+            // get chart data
+            string selectedChartPath = CurrentSet[ChartCursor].BinaryFilePath;
+            ChartData chartData = ChartBinaryReader.ReadChartBinary(selectedChartPath);
+            
+            // get song
+            string selectedSongPath = CurrentSet[ChartCursor].AudioPath;
+
+            return (chartData, selectedSongPath);
+        }
+
+        // True when the mouse is hovering the chart that's already the active
+        // selection — as opposed to hovering a different chart, which should just
+        // move the cursor rather than commit anything.
+        public bool IsHoveredChartAlreadySelected =>
+            HoveredChart != -1 && ChartCardRects[HoveredChart].ChartIndex == ChartCursor;
+
         private struct Row
         {
             public bool IsChart;

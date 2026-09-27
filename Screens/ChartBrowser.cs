@@ -1,14 +1,17 @@
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
+using ProjectOdyssey.Audio;
+using ProjectOdyssey.Input;
+using ProjectOdyssey.Input.Native;
 using ProjectOdyssey.IO;
 using ProjectOdyssey.Render;
-using ProjectOdyssey.Audio;
 
 namespace ProjectOdyssey.Screens
 {
     class ChartBrowser : IGameScreen
     {
+        private readonly ScreenManager screenManager;
         private ChartBrowserRenderer browserRenderer = null!;
         private ChartBrowserSession session = null!;
 
@@ -16,8 +19,9 @@ namespace ProjectOdyssey.Screens
         private Vector2 lastMousePos;
         private AudioManager audioManager;
 
-        public ChartBrowser(AudioManager audioManager)
+        public ChartBrowser(ScreenManager screenManager, AudioManager audioManager)
         {
+            this.screenManager = screenManager;
             this.audioManager = audioManager;
         }
 
@@ -69,20 +73,45 @@ namespace ProjectOdyssey.Screens
             session.SelectionChanged -= browserRenderer.LoadBackgroundTexture;
         }
 
+        private void CommitSelection()
+        {
+            session.StopSelectedChartMusic();
+
+            var (chartData, songPath) = session.FinaliseChartSelection();
+            if (chartData != null)
+            {
+                screenManager.Replace(new GameplayScreen(chartData, songPath, new InputHistory(), audioManager));
+            }
+        }
+
         public void OnKeyDown(Keys key)
         {
             switch (key)
             {
-                case Keys.Up: session.MoveSet(-1); break;
-                case Keys.Down: session.MoveSet(1); break;
-                case Keys.Left: session.MoveChart(-1); break;
-                case Keys.Right: session.MoveChart(1); break;
+                case Keys.Up:
+                    session.MoveSet(-1); break;
+                case Keys.Down:
+                    session.MoveSet(1); break;
+                case Keys.Left:
+                    session.MoveChart(-1); break;
+                case Keys.Right:
+                    session.MoveChart(1); break;
+                case Keys.Enter:
+                    CommitSelection();
+                    break;
             }
         }
 
         public void OnMouseDown(MouseButtonEventArgs e)
         {
             if (e.Button != MouseButton.Left) return;
+
+            if (session.IsHoveredChartAlreadySelected)
+            {
+                CommitSelection();
+                return;
+            }
+
             session.SelectHovered();
         }
 
