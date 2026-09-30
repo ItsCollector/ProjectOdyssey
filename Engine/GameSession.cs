@@ -147,6 +147,7 @@ namespace ProjectOdyssey.Engine
                     //Console.WriteLine($"[JUDGEMENT] Vkey: {column + 1} Position: Long Note | Note ST: {note.StartTime} Note ET: {note.EndTime} | Direction: {direction} | Judge: {headJudgement}");
                     judgementResultBuffer.Add(new JudgementResult(headJudgement, hitDeviation, inputSongTimeMs));
                     CurrentJudgementResult = new JudgementResult(headJudgement, hitDeviation, inputSongTimeMs);
+                    return;
                 }
 
                 (JudgementType tailJudgement, NoteState newState, hitDeviation) = JudgementEngine.JudgeTail(inputSongTimeMs, note.EndTime, direction, note.NoteState);
