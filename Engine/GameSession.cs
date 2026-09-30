@@ -22,10 +22,14 @@ namespace ProjectOdyssey.Engine
 
         private volatile bool audioReadyToStart = false;
         public bool AudioReadyToStart => audioReadyToStart;
-
+        public float CurrentSongTimeMs => (float)gameClock.CurrentSongTimeMs;
         public Note[][] NotesByColumn { get; set; } // pass these into the function later chart loading is being implemented, and remove nullable
         public int[] ColumnCursors { get; set; } // construct cursors passed on the number of columns in the chart, and remove nullable
         public int Combo { get; private set; } = 0;
+        public JudgementResult[] GetRecentJudgementResults() => judgementResultBuffer.Snapshot();
+        public JudgementResult CurrentJudgementResult { get; private set; } = new JudgementResult(JudgementType.Marvellous, 0f, float.NegativeInfinity);
+
+        private JudgementResultBuffer judgementResultBuffer = new(300);
 
         public GameSession(InputHistory inputHistory, ChartData chartData)
         {
@@ -84,6 +88,7 @@ namespace ProjectOdyssey.Engine
                         while (inputHistory.TryGetNextEvent(out InputEvent inputEvent))
                         {
                             float inputSongTimeMs = (float)gameClock.ToSongTimeMs(inputEvent.TimeStamp);
+
                             JudgeNotes(inputEvent, inputSongTimeMs);
                         }
 
@@ -106,7 +111,7 @@ namespace ProjectOdyssey.Engine
             int column = VkeyToColumn7k(inputEvent.VKey);
             int cursor = ColumnCursors[column];
 
-            if (cursor >= NotesByColumn[column].Length) return;
+            if (cursor >= NotesByColumn[column].Length) return; 
 
             Note note = NotesByColumn[column][cursor];
             InputDirection direction = inputEvent.IsPressed ? InputDirection.Down : InputDirection.Up;
@@ -116,30 +121,35 @@ namespace ProjectOdyssey.Engine
                 if (direction != InputDirection.Down) return;
                 if (Math.Abs(inputSongTimeMs - note.StartTime) > ghostTapThreshold) return;
 
-                JudgementType judgement = JudgementEngine.JudgeHead(inputSongTimeMs, note.StartTime);
+                (JudgementType judgement, float hitDeviation) = JudgementEngine.JudgeHead(inputSongTimeMs, note.StartTime);
                 note.NoteState = NoteState.Resolved;
                 ColumnCursors[column]++;
                 Combo++;
                 //Console.WriteLine($"[JUDGEMENT] Vkey: {column + 1} Position: Tap Note | Note ST: {note.StartTime} Note ET: {note.EndTime} | Direction: {direction} | Judge: {judgement}");
+                // wherever you had: JudgementResults.Add(new JudgementResult(judgement, note.NoteState, hitDeviation));
+                judgementResultBuffer.Add(new JudgementResult(judgement, hitDeviation, inputSongTimeMs));
+                CurrentJudgementResult = new JudgementResult(judgement, hitDeviation, inputSongTimeMs);
                 return;
             }
 
             if (note.NoteType == NoteType.Long)
             {
+                float hitDeviation; 
+
                 if (note.NoteState == NoteState.Waiting)
                 {
                     if (direction != InputDirection.Down) return;
                     if (Math.Abs(inputSongTimeMs - note.StartTime) > ghostTapThreshold) return;
 
-                    JudgementType headJudgement = JudgementEngine.JudgeHead(inputSongTimeMs, note.StartTime);
+                    (JudgementType headJudgement, hitDeviation) = JudgementEngine.JudgeHead(inputSongTimeMs, note.StartTime);
                     note.NoteState = NoteState.Holding;
                     Combo++;
                     //Console.WriteLine($"[JUDGEMENT] Vkey: {column + 1} Position: Long Note | Note ST: {note.StartTime} Note ET: {note.EndTime} | Direction: {direction} | Judge: {headJudgement}");
-                    return;
+                    judgementResultBuffer.Add(new JudgementResult(headJudgement, hitDeviation, inputSongTimeMs));
+                    CurrentJudgementResult = new JudgementResult(headJudgement, hitDeviation, inputSongTimeMs);
                 }
 
-                (JudgementType tailJudgement, NoteState newState) =
-                    JudgementEngine.JudgeTail(inputSongTimeMs, note.EndTime, direction, note.NoteState);
+                (JudgementType tailJudgement, NoteState newState, hitDeviation) = JudgementEngine.JudgeTail(inputSongTimeMs, note.EndTime, direction, note.NoteState);
 
                 note.NoteState = newState;
                 Combo++;
@@ -150,7 +160,12 @@ namespace ProjectOdyssey.Engine
                 }
 
                 //Console.WriteLine($"[JUDGEMENT] Vkey: {column + 1} Position: Long Note | Note ST: {note.StartTime} Note ET: {note.EndTime} | Direction: {direction} | Judge: {tailJudgement}");
+                judgementResultBuffer.Add(new JudgementResult(tailJudgement, hitDeviation, inputSongTimeMs));
+                CurrentJudgementResult = new JudgementResult(tailJudgement, hitDeviation, inputSongTimeMs);
+                return;
             }
+
+            Debug.Fail($"[ERROR] Unreachable state because of incorrect NoteType passed: {note.NoteType}");
         }
 
         /*  Some key documentation so I don't get confused when trying to map out the logic. 
@@ -219,21 +234,26 @@ namespace ProjectOdyssey.Engine
                 float timeUntilHit = note.StartTime - now;
                 float timeUntilEnd = note.EndTime - now;
 
+                // Missed tap notes that have scrolled past the maximum hit window
                 if (note.NoteType == NoteType.Tap && timeUntilHit < -JudgementEngine.MissWindowMs)
                 {
-                    //Console.WriteLine($"[JUDGEMENT] Vkey: {note.Column + 1} Position: Tap Note | Note ST: {note.StartTime} Note ET: {note.EndTime} | Judge: Miss");
                     note.NoteState = NoteState.Resolved;
                     Combo = 0;
                     ColumnCursors[i]++;
+                    var missResult = new JudgementResult(JudgementType.Miss, 201f, now);
+                    judgementResultBuffer.Add(missResult);
+                    CurrentJudgementResult = missResult;
                     continue;
                 }
 
+                // Missed long note heads that have scrolled past the maximum hit window
                 if (note.NoteType == NoteType.Long && note.NoteState == NoteState.Waiting && timeUntilHit < -JudgementEngine.MissWindowMs)
                 {
-                    // TODO: record as a Miss
-                    //Console.WriteLine($"[JUDGEMENT] Vkey: {note.Column + 1} Position: Long Note | Note ST: {note.StartTime} Note ET: {note.EndTime} | Judge: Miss");
                     note.NoteState = NoteState.ReleasedEarly;
                     Combo = 0;
+                    var missResult = new JudgementResult(JudgementType.Miss, 201f, now);
+                    judgementResultBuffer.Add(missResult);
+                    CurrentJudgementResult = missResult;
                     continue;
                 }
 
@@ -243,10 +263,10 @@ namespace ProjectOdyssey.Engine
                     {
                         note.NoteState = newState;
                         ColumnCursors[i]++;
-
-                        // TODO: record `result` as a Miss
                         Combo = 0;
-                        //Console.WriteLine($"[JUDGEMENT] Vkey: {note.Column + 1} Position: Long Note | Note ST: {note.StartTime} Note ET: {note.EndTime} | Judge: Miss");
+                        var missResult = new JudgementResult(JudgementType.Miss, 201f, now);
+                        judgementResultBuffer.Add(missResult);
+                        CurrentJudgementResult = missResult;
                         continue;
                     }
                 }

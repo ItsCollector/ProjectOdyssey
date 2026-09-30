@@ -111,6 +111,24 @@
     <None Update="Assets\Fonts\Exo2.ttf">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Update="Assets\Judgements\judge-bad.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\Judgements\judge-good.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\Judgements\judge-great.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\Judgements\judge-marv.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\Judgements\judge-miss.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\Judgements\judge-perfect.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="Charts\test_single_long_note.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
@@ -176,7 +194,6 @@
   <ItemGroup>
     <Folder Include="Assets\Judgements\" />
     <Folder Include="Charts\" />
-    <Folder Include="Engine\" />
     <Folder Include="Input\" />
     <Folder Include="Skinning\" />
   </ItemGroup>

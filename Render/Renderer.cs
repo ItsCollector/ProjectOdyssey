@@ -159,6 +159,30 @@ namespace ProjectOdyssey.Render
             GL.DrawElements(PrimitiveType.Triangles, 6, DrawElementsType.UnsignedInt, 0);
         }
 
+        public void DrawQuad(Texture? texture, float xPosition, float yPosition, float width = -1, float height = -1, Vector4? colour = null)
+        {
+            if (texture == null)
+            {
+                shader.SetInt("uUseTexture", 0);
+                shader.SetVector4("uColor", colour ?? Vector4.One);
+                shader.SetVector2("uPosition", xPosition, yPosition);
+                shader.SetVector2("uSize", width, height);
+            }
+            else
+            {
+                float w = (width == -1) ? texture.Width : width;
+                float h = (height == -1) ? texture.Height : height;
+
+                GL.BindTexture(TextureTarget.Texture2D, texture.Handle);
+                shader.SetInt("uUseTexture", 1);
+
+                shader.SetVector2("uPosition", xPosition, yPosition);
+                shader.SetVector2("uSize", w, h);
+            }
+
+            GL.DrawElements(PrimitiveType.Triangles, 6, DrawElementsType.UnsignedInt, 0);
+        }
+
         public void DrawClippedBelow(Texture texture, float x, float y, float width, float height, float clipBelowScreenY)
         {
             GL.Enable(EnableCap.ScissorTest);

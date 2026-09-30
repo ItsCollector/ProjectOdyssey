@@ -1,9 +1,17 @@
 ﻿namespace ProjectOdyssey.Engine
 {
-    public class Judgement
+    public readonly struct JudgementResult
     {
-        public long InputTimestamp;
-        public JudgementType Type;
+        public JudgementType Type { get; }
+        public float HitDeviation { get; }
+        public float JudgedAtMs { get; }
+
+        public JudgementResult(JudgementType type, float hitDeviation, float judgedAtMs)
+        {
+            Type = type;
+            HitDeviation = hitDeviation;
+            JudgedAtMs = judgedAtMs;
+        }
     }
 
     public enum JudgementType
@@ -21,4 +29,6 @@
         Down,
         Up
     }
+
+    
 }

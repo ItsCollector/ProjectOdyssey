@@ -8,17 +8,23 @@ namespace ProjectOdyssey.Engine
         public const float MissWindowMs = 200;
 
         // Judge Tap notes or the head of Long Notes
-        public static JudgementType JudgeHead(float inputTimestamp, float nearestNoteTime)
-            => MapDeltaToJudgement(Math.Abs(inputTimestamp - nearestNoteTime));
+        public static (JudgementType, float) JudgeHead(float inputTimestamp, float nearestNoteTime)
+        {
+            float hitDeviation = GetHitDeviation(inputTimestamp,  nearestNoteTime);
+            JudgementType judgementResult = MapDeltaToJudgement(Math.Abs(hitDeviation));
+
+            return (judgementResult, hitDeviation); 
+        }
+            
 
         // Judge the tail of a Long Note, given the direction of the current input event
         // (key down/up) and the note's current hold state. Returns the resulting
         // judgement (if any) and the note's new state after processing this input.
-        public static (JudgementType, NoteState) JudgeTail(float inputTimestamp, float nearestNoteTime, InputDirection inputDirection, NoteState noteState)
+        public static (JudgementType, NoteState, float) JudgeTail(float inputTimestamp, float nearestNoteTime, InputDirection inputDirection, NoteState noteState)
         {
             // Signed offset between when the input happened and when the tail was due.
             // Negative = input was early, positive = input was late.
-            float signedDelta = inputTimestamp - nearestNoteTime;
+            float hitDevation = GetHitDeviation(inputTimestamp, nearestNoteTime);
 
             // Case 1: key released while the note is currently being held normally.
             if (inputDirection == InputDirection.Up && noteState == NoteState.Holding)
@@ -27,16 +33,23 @@ namespace ProjectOdyssey.Engine
                 // and flag the note so a repress can attempt recovery.
                 // Otherwise, released within a judgeable window -> map the timing
                 // delta to a judgement and resolve the note normally.
-                return signedDelta < EarlyReleaseToleranceMs
-                    ? (JudgementType.Miss, NoteState.ReleasedEarly)
-                    : (MapDeltaToJudgement(Math.Abs(signedDelta)), NoteState.Resolved);
+
+                if (hitDevation < EarlyReleaseToleranceMs)
+                {
+                    return (JudgementType.Miss, NoteState.ReleasedEarly, hitDevation);
+                }
+                else
+                {
+                    return (MapDeltaToJudgement(Math.Abs(hitDevation)), NoteState.Resolved, hitDevation);
+                }
+
             }
             // Case 2: key pressed again after an early release -> enter recovery.
             // The judgement is capped at Bad regardless of timing, since the note
             // was already let go once.
             else if (inputDirection == InputDirection.Down && noteState == NoteState.ReleasedEarly)
             {
-                return (JudgementType.Bad, NoteState.Recovering);
+                return (JudgementType.Bad, NoteState.Recovering, hitDevation);
             }
             // Case 3: key released again while recovering from an earlier early release.
             else if (inputDirection == InputDirection.Up && noteState == NoteState.Recovering)
@@ -45,29 +58,34 @@ namespace ProjectOdyssey.Engine
                 // another recovery attempt.
                 // Released within the window -> resolves, but judgement stays capped
                 // at Bad since a clean hold was never achieved.
-                return signedDelta < EarlyReleaseToleranceMs
-                    ? (JudgementType.Miss, NoteState.ReleasedEarly)
-                    : (JudgementType.Bad, NoteState.Resolved);
+                if (hitDevation < EarlyReleaseToleranceMs)
+                {
+                    return (JudgementType.Miss, NoteState.ReleasedEarly, hitDevation);
+                }
+                else
+                {
+                    return (JudgementType.Bad, NoteState.Resolved, hitDevation);
+                }
             }
             // Case 4: duplicate/bounced release event while already ReleasedEarly
             // (no corresponding press happened in between) -> no new information,
             // stay in ReleasedEarly.
             else if (inputDirection == InputDirection.Up && noteState == NoteState.ReleasedEarly)
             {
-                return (JudgementType.Miss, NoteState.ReleasedEarly);
+                return (JudgementType.Miss, NoteState.ReleasedEarly, hitDevation);
             }
             // Case 5: a key-down while already Holding or Recovering (e.g. input
             // bounce/repeat) carries no new information -> ignore, state unchanged.
             else if (inputDirection == InputDirection.Down)
             {
-                return (default, noteState);
+                return (default, noteState, hitDevation);
             }
 
             // Should never be reached — every valid (direction, state) combination
             // is handled above. If this fires, a new state or input case was added
             // without updating this function.
-            Debug.Fail($"Unreachable JudgeTail state: direction={inputDirection}, noteState={noteState}");
-            return (JudgementType.Miss, NoteState.Resolved);
+            Debug.Fail($"[ERROR] Unreachable JudgeTail state: direction={inputDirection}, noteState={noteState}");
+            return (JudgementType.Miss, NoteState.Resolved, hitDevation);
         }
 
         // Resolve overheld notes or non-held nones that have exceeded the tail time + 200ms threshold
@@ -100,6 +118,11 @@ namespace ProjectOdyssey.Engine
                 return JudgementType.Bad;
             else
                 return JudgementType.Miss;
+        }
+
+        public static float GetHitDeviation(float inputTimestamp, float nearestNoteTime)
+        {
+            return (inputTimestamp - nearestNoteTime);
         }
     }
 }

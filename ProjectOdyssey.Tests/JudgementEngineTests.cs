@@ -29,32 +29,36 @@ namespace ProjectOdyssey.Tests
         {
             // Hitting 30ms early and 30ms late should produce the same judgement,
             // since JudgeHead should be direction-agnostic (unlike JudgeTail).
-            var early = JudgementEngine.JudgeHead(inputTimestamp: 970, nearestNoteTime: 1000);
-            var late = JudgementEngine.JudgeHead(inputTimestamp: 1030, nearestNoteTime: 1000);
+            (JudgementType judgementResultEarly, float hitDeviationEarly) = JudgementEngine.JudgeHead(inputTimestamp: 970, nearestNoteTime: 1000);
+            (JudgementType judgementResultLate, float hitDeviationLate) = JudgementEngine.JudgeHead(inputTimestamp: 1030, nearestNoteTime: 1000);
 
-            Assert.Equal(JudgementType.Perfect, early);
-            Assert.Equal(JudgementType.Perfect, late);
+            Assert.Equal(JudgementType.Perfect, judgementResultEarly);
+            Assert.Equal(JudgementType.Perfect, judgementResultLate);
+            Assert.Equal(-30f, hitDeviationEarly);
+            Assert.Equal(30f, hitDeviationLate);
         }
 
         [Fact]
         public void JudgeHead_ExactHit_ReturnsMarvellous()
         {
-            var result = JudgementEngine.JudgeHead(inputTimestamp: 5000, nearestNoteTime: 5000);
-            Assert.Equal(JudgementType.Marvellous, result);
+            (JudgementType judgementResult, float hitDeviation) = JudgementEngine.JudgeHead(inputTimestamp: 5000, nearestNoteTime: 5000);
+            Assert.Equal(JudgementType.Marvellous, judgementResult);
+            Assert.Equal(0f, hitDeviation);
         }
 
         // JudgeTail — normal release within the judgeable window
         [Fact]
         public void JudgeTail_ReleaseExactlyOnTime_ReturnsMarvellousAndResolved()
         {
-            var (judgement, state) = JudgementEngine.JudgeTail(
+            (JudgementType judgementResult, NoteState state, float hitDeviation) = JudgementEngine.JudgeTail(
                 inputTimestamp: 2000,
                 nearestNoteTime: 2000,
                 inputDirection: InputDirection.Up,
                 noteState: NoteState.Holding);
 
-            Assert.Equal(JudgementType.Marvellous, judgement);
+            Assert.Equal(JudgementType.Marvellous, judgementResult);
             Assert.Equal(NoteState.Resolved, state);
+            Assert.Equal(0f, hitDeviation);
         }
 
         [Fact]
@@ -63,27 +67,29 @@ namespace ProjectOdyssey.Tests
             // 50ms early, well inside the -200ms early-release cutoff, should
             // resolve immediately via MapDeltaToJudgement rather than triggering
             // the ReleasedEarly second-chance path.
-            var (judgement, state) = JudgementEngine.JudgeTail(
+            (JudgementType judgementResult, NoteState state, float hitDeviation) = JudgementEngine.JudgeTail(
                 inputTimestamp: 1950,
                 nearestNoteTime: 2000,
                 inputDirection: InputDirection.Up,
                 noteState: NoteState.Holding);
 
-            Assert.Equal(JudgementType.Perfect, judgement);
+            Assert.Equal(JudgementType.Perfect, judgementResult);
             Assert.Equal(NoteState.Resolved, state);
+            Assert.Equal(-50f, hitDeviation);
         }
 
         [Fact]
         public void JudgeTail_ReleaseSlightlyLate_WithinWindow_ResolvesNormally()
         {
-            var (judgement, state) = JudgementEngine.JudgeTail(
+            (JudgementType judgementResult, NoteState state, float hitDeviation) = JudgementEngine.JudgeTail(
                 inputTimestamp: 2100,
                 nearestNoteTime: 2000,
                 inputDirection: InputDirection.Up,
                 noteState: NoteState.Holding);
 
-            Assert.Equal(JudgementType.Great, judgement);
+            Assert.Equal(JudgementType.Great, judgementResult);
             Assert.Equal(NoteState.Resolved, state);
+            Assert.Equal(100f, hitDeviation);
         }
 
         [Fact]
@@ -91,7 +97,7 @@ namespace ProjectOdyssey.Tests
         {
             // signedDelta == -200 should NOT trigger ReleasedEarly, since the
             // condition is strictly "< earlyReleaseTolerance" (-200), not "<=".
-            var (judgement, state) = JudgementEngine.JudgeTail(
+            (JudgementType judgementResult, NoteState state, float hitDeviation) = JudgementEngine.JudgeTail(
                 inputTimestamp: 1800,
                 nearestNoteTime: 2000,
                 inputDirection: InputDirection.Up,
@@ -99,6 +105,7 @@ namespace ProjectOdyssey.Tests
 
             Assert.Equal(NoteState.Resolved, state);
             Assert.NotEqual(NoteState.ReleasedEarly, state);
+            Assert.Equal(-200f, hitDeviation);
         }
 
 
@@ -107,27 +114,29 @@ namespace ProjectOdyssey.Tests
         public void JudgeTail_ReleaseWayTooEarly_ReturnsMissAndReleasedEarly()
         {
             // 201ms early — just past the -200ms threshold.
-            var (judgement, state) = JudgementEngine.JudgeTail(
+            (JudgementType judgementResult, NoteState state, float hitDeviation) = JudgementEngine.JudgeTail(
                 inputTimestamp: 1799,
                 nearestNoteTime: 2000,
                 inputDirection: InputDirection.Up,
                 noteState: NoteState.Holding);
 
-            Assert.Equal(JudgementType.Miss, judgement);
+            Assert.Equal(JudgementType.Miss, judgementResult);
             Assert.Equal(NoteState.ReleasedEarly, state);
+            Assert.Equal(-201, hitDeviation);
         }
 
         [Fact]
         public void JudgeTail_RepressAfterEarlyRelease_ReturnsBadAndHolding()
         {
-            var (judgement, state) = JudgementEngine.JudgeTail(
+            (JudgementType judgementResult, NoteState state, float hitDeviation) = JudgementEngine.JudgeTail(
                 inputTimestamp: 1850,
                 nearestNoteTime: 2000,
                 inputDirection: InputDirection.Down,
                 noteState: NoteState.ReleasedEarly);
 
-            Assert.Equal(JudgementType.Bad, judgement);
+            Assert.Equal(JudgementType.Bad, judgementResult);
             Assert.Equal(NoteState.Recovering, state);
+            Assert.Equal(-150f, hitDeviation);
         }
 
         [Fact]
@@ -135,20 +144,21 @@ namespace ProjectOdyssey.Tests
         {
             // Simulates: release early -> repress -> release early again.
             // The second early release should behave identically to the first.
-            var (_, afterRepress) = JudgementEngine.JudgeTail(
+            (JudgementType initialJudgementResult, NoteState afterRepress, float initialHitDeviation) = JudgementEngine.JudgeTail(
                 inputTimestamp: 1850,
                 nearestNoteTime: 2000,
                 inputDirection: InputDirection.Down,
                 noteState: NoteState.ReleasedEarly);
 
-            var (judgement, finalState) = JudgementEngine.JudgeTail(
+            (JudgementType judgementResult, NoteState finalState, float hitDeviation) = JudgementEngine.JudgeTail(
                 inputTimestamp: 1750,
                 nearestNoteTime: 2000,
                 inputDirection: InputDirection.Up,
                 noteState: afterRepress);
 
-            Assert.Equal(JudgementType.Miss, judgement);
+            Assert.Equal(JudgementType.Miss, judgementResult);
             Assert.Equal(NoteState.ReleasedEarly, finalState);
+            Assert.Equal(-250f, hitDeviation);
         }
 
         // TryResolveOverheldNote
@@ -241,30 +251,31 @@ namespace ProjectOdyssey.Tests
         {
             var state = NoteState.Holding;
             JudgementType judgement;
+            float hitDeviation;
 
             // First early release
-            (judgement, state) = JudgementEngine.JudgeTail(1500, 2000, InputDirection.Up, state);
+            (judgement, state, hitDeviation) = JudgementEngine.JudgeTail(1500, 2000, InputDirection.Up, state);
             Assert.Equal(NoteState.ReleasedEarly, state);
             Assert.Equal(JudgementType.Miss, judgement);
 
             // First repress -> enters Recovering, capped at Bad
-            (judgement, state) = JudgementEngine.JudgeTail(1650, 2000, InputDirection.Down, state);
+            (judgement, state, hitDeviation) = JudgementEngine.JudgeTail(1650, 2000, InputDirection.Down, state);
             Assert.Equal(NoteState.Recovering, state);
             Assert.Equal(JudgementType.Bad, judgement);
 
             // Second early release, this time from Recovering -> back to ReleasedEarly
-            (judgement, state) = JudgementEngine.JudgeTail(1700, 2000, InputDirection.Up, state);
+            (judgement, state, hitDeviation) = JudgementEngine.JudgeTail(1700, 2000, InputDirection.Up, state);
             Assert.Equal(NoteState.ReleasedEarly, state);
             Assert.Equal(JudgementType.Miss, judgement);
 
             // Second repress -> Recovering again, still capped at Bad
-            (judgement, state) = JudgementEngine.JudgeTail(1750, 2000, InputDirection.Down, state);
+            (judgement, state, hitDeviation) = JudgementEngine.JudgeTail(1750, 2000, InputDirection.Down, state);
             Assert.Equal(NoteState.Recovering, state);
             Assert.Equal(JudgementType.Bad, judgement);
 
             // Correct, well-timed final release at the tail -- should NOT
             // upgrade past Bad despite hitting the tail exactly.
-            (judgement, state) = JudgementEngine.JudgeTail(2000, 2000, InputDirection.Up, state);
+            (judgement, state, hitDeviation) = JudgementEngine.JudgeTail(2000, 2000, InputDirection.Up, state);
             Assert.Equal(NoteState.Resolved, state);
             Assert.Equal(JudgementType.Bad, judgement);
         }
@@ -277,11 +288,12 @@ namespace ProjectOdyssey.Tests
         {
             var state = NoteState.Holding;
             JudgementType judgement;
+            float hitDeviation;
 
-            (judgement, state) = JudgementEngine.JudgeTail(1700, 2000, InputDirection.Up, state);
+            (judgement, state, hitDeviation) = JudgementEngine.JudgeTail(1700, 2000, InputDirection.Up, state);
             Assert.Equal(NoteState.ReleasedEarly, state);
 
-            (judgement, state) = JudgementEngine.JudgeTail(1750, 2000, InputDirection.Down, state);
+            (judgement, state, hitDeviation) = JudgementEngine.JudgeTail(1750, 2000, InputDirection.Down, state);
             Assert.Equal(NoteState.Recovering, state);
             Assert.Equal(JudgementType.Bad, judgement);
 
@@ -307,14 +319,15 @@ namespace ProjectOdyssey.Tests
         {
             var state = NoteState.Holding;
             JudgementType judgement;
+            float hitDeviation;
 
-            (judgement, state) = JudgementEngine.JudgeTail(1500, 2000, InputDirection.Up, state);
+            (judgement, state, hitDeviation) = JudgementEngine.JudgeTail(1500, 2000, InputDirection.Up, state);
             Assert.Equal(NoteState.ReleasedEarly, state);
 
-            (judgement, state) = JudgementEngine.JudgeTail(1650, 2000, InputDirection.Down, state);
+            (judgement, state, hitDeviation) = JudgementEngine.JudgeTail(1650, 2000, InputDirection.Down, state);
             Assert.Equal(NoteState.Recovering, state);
 
-            (judgement, state) = JudgementEngine.JudgeTail(1750, 2000, InputDirection.Up, state);
+            (judgement, state, hitDeviation) = JudgementEngine.JudgeTail(1750, 2000, InputDirection.Up, state);
             Assert.Equal(NoteState.ReleasedEarly, state);
             Assert.Equal(JudgementType.Miss, judgement);
 
