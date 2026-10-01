@@ -14,25 +14,23 @@ namespace ProjectOdyssey.Screens
     {
         private readonly ChartData chartData;
         private readonly InputHistory inputHistory;
-
-        // Assigned in Load(), which the ScreenManager guarantees runs before
-        // Update()/Render()/Resize()/Unload() are ever called on this screen.
         private GameSession session = null!;
         private GameplayRenderer gameplayRenderer = null!;
         private HudRenderer hudRenderer = null!;
         private GameplaySkinConfig skinConfig = null!;
         private SkinAssets skinAssets = null!;
-        private AudioManager audioManager;
         private string songPath;
         private bool audioStarted = false;
         private bool isPaused = false;
 
-        public GameplayScreen(ChartData chartData, string songPath, InputHistory inputHistory, AudioManager audioManager)
+        public ScreenManager ScreenManager { private get; set; }
+        public AudioManager AudioManager { private get; set; }
+
+        public GameplayScreen(ChartData chartData, string songPath, InputHistory inputHistory)
         {
             this.chartData = chartData;
             this.songPath = songPath;
             this.inputHistory = inputHistory;
-            this.audioManager = audioManager;
         }
 
         public void Load()
@@ -43,7 +41,7 @@ namespace ProjectOdyssey.Screens
             gameplayRenderer.Intitialise();
             hudRenderer = new HudRenderer();
             hudRenderer.Initialise();
-            audioManager.ReadAudioFile(songPath);
+            AudioManager.ReadAudioFile(songPath);
             session.Start(chartData);
         }
 
@@ -51,7 +49,7 @@ namespace ProjectOdyssey.Screens
         {
             if (!audioStarted && session.AudioReadyToStart)
             {
-                audioManager.PlayAudio(songPath);
+                AudioManager.PlayAudio(songPath);
                 audioStarted = true;
             }
         }
@@ -60,6 +58,11 @@ namespace ProjectOdyssey.Screens
         {
             gameplayRenderer.DrawGameplay(session.NotesByColumn, session.ColumnCursors);
             hudRenderer.DrawHud(session.Combo, session.CurrentJudgementResult, session.GetRecentJudgementResults(), session.CurrentSongTimeMs, session.Accuracy);
+
+            if (isPaused)
+            {
+
+            }
         }
 
         public void Resize(int width, int height)
@@ -88,12 +91,12 @@ namespace ProjectOdyssey.Screens
             if (isPaused)
             {
                 session.Resume();
-                audioManager.ResumeAudio();
+                AudioManager.ResumeAudio();
             }
             else
             {
                 session.Pause();
-                audioManager.PauseAudio();
+                AudioManager.PauseAudio();
             }
             isPaused = !isPaused;
         }

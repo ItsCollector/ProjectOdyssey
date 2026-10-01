@@ -1,10 +1,14 @@
 ﻿using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
+using ProjectOdyssey.Audio;
 
 namespace ProjectOdyssey.Screens
 {
     public interface IGameScreen
     {
+        ScreenManager ScreenManager { set; }
+        AudioManager AudioManager { set; }
+
         // Called once when the ScreenManager pushes this screen. Do expensive
         // setup here (loading skins, starting sessions, etc.) rather than in
         // the constructor, so screens can be constructed cheaply ahead of time.

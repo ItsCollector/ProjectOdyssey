@@ -1,5 +1,6 @@
 ﻿using OpenTK.Windowing.GraphicsLibraryFramework;
 using OpenTK.Windowing.Common;
+using ProjectOdyssey.Audio;
 
 namespace ProjectOdyssey.Screens
 {
@@ -9,17 +10,25 @@ namespace ProjectOdyssey.Screens
     // events instead of knowing about GameplayScreen/ChartManagerScreen etc.
     public class ScreenManager
     {
+        private readonly AudioManager audioManager;
         private readonly Stack<IGameScreen> screens = new();
         private int viewportWidth;
         private int viewportHeight;
 
         public bool HasScreen => screens.Count > 0;
 
+        public ScreenManager()
+        {
+            this.audioManager = new AudioManager();
+        }   
+
         // Pushes a new screen on top of the stack (e.g. gameplay -> pause menu).
         // The screen underneath is left loaded but no longer updated/rendered
         // until this one is popped.
         public void Push(IGameScreen screen)
         {
+            screen.ScreenManager = this;
+            screen.AudioManager = audioManager;
             screen.Load();
             screen.Resize(viewportWidth, viewportHeight);
             screens.Push(screen);

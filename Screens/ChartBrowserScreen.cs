@@ -9,21 +9,20 @@ using ProjectOdyssey.Render;
 
 namespace ProjectOdyssey.Screens
 {
-    class ChartBrowser : IGameScreen
+    class ChartBrowserScreen : IGameScreen
     {
-        private readonly ScreenManager screenManager;
         private ChartBrowserRenderer browserRenderer = null!;
         private ChartBrowserSession session = null!;
 
         private int windowWidth = 1920, windowHeight = 1080;
         private Vector2 lastMousePos;
-        private AudioManager audioManager;
         private InputHistory inputHistory;
 
-        public ChartBrowser(ScreenManager screenManager, AudioManager audioManager, InputHistory inputHistory)
+        public ScreenManager ScreenManager { private get; set; }
+        public AudioManager AudioManager { private get; set; }
+
+        public ChartBrowserScreen(InputHistory inputHistory)
         {
-            this.screenManager = screenManager;
-            this.audioManager = audioManager;
             this.inputHistory = inputHistory;
         }
 
@@ -39,7 +38,7 @@ namespace ProjectOdyssey.Screens
                 Console.WriteLine("[WARN] No charts found to browse.");
             }
 
-            session = new ChartBrowserSession(charts, audioManager);
+            session = new ChartBrowserSession(charts, AudioManager);
             session.SelectionChanged += browserRenderer.LoadBackgroundTexture;
 
             if (charts.Count > 0)
@@ -82,7 +81,7 @@ namespace ProjectOdyssey.Screens
             var (chartData, songPath) = session.FinaliseChartSelection();
             if (chartData != null)
             {
-                screenManager.Replace(new GameplayScreen(chartData, songPath, inputHistory, audioManager));
+                ScreenManager.Replace(new GameplayScreen(chartData, songPath, inputHistory));
             }
         }
 

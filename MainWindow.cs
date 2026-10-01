@@ -13,13 +13,15 @@ namespace ProjectOdyssey
     public class MainWindow : GameWindow
     {
         private readonly ScreenManager screenManager = new();
-        private AudioManager audioManager = new();
         private Win32KeyInputListener inputListener = new Win32KeyInputListener();
         private InputHistory inputHistory = new InputHistory();
 
-        public MainWindow(int width, int height, string title, bool vsync = true)
+        public MainWindow(int width, int height, string title, bool vsync = false)
             : base(
-                GameWindowSettings.Default,
+                new GameWindowSettings
+                {
+                    UpdateFrequency = 240
+                },
                 new NativeWindowSettings
                 {
                     ClientSize = new Vector2i(width, height),
@@ -28,6 +30,7 @@ namespace ProjectOdyssey
                 })
         {
             WindowState = WindowState.Maximized;
+            
             //WindowState = WindowState.Fullscreen;
             Context.SwapInterval = vsync ? 1 : 0;
         }
@@ -53,7 +56,7 @@ namespace ProjectOdyssey
             //ChartData chartData = ChartBinaryReader.ReadChartBinary(chartPath);
 
             //screenManager.Push(new GameplayScreen(chartData, songPath, inputHistory, audioManager));
-            screenManager.Push(new ChartBrowser(screenManager, audioManager, inputHistory));
+            screenManager.Push(new ChartBrowserScreen(inputHistory));
             //screenManager.Push(new ChartManagerScreen());
 
             //Task.Run(() => ChartImportService.ImportChartsFromOsu()); // imports all charts from the osu! Songs directory into the Odyssey's own database
