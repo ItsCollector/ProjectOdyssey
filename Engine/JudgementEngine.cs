@@ -1,14 +1,36 @@
-﻿using System.Diagnostics;
+﻿using NAudio.Wave;
+using System.Diagnostics;
 
 namespace ProjectOdyssey.Engine
 {
-    public static class JudgementEngine
+    public class JudgementEngine
     {
-        public const float EarlyReleaseToleranceMs = -200;
-        public const float MissWindowMs = 200;
+        private string name { get; set; }
+        private float ghostTapThreshold { get; set; }
+        private JudgementMechanics judgementMechanics { get; set; }
+        private List<Judgement> judgements { get; set; } = new();
+        public float missWindow;
+
+        public JudgementEngine(IRuleset ruleset)
+        {
+            name = ruleset.Name;
+            ghostTapThreshold = ruleset.GhostTapThreshold;
+            judgementMechanics = ruleset.JudgementMechanics;
+
+            var sortedJudgements = ruleset.Judgements
+                .OrderBy(judgement => judgement.HitWindow)
+                .Select(judgement => judgement);
+
+            foreach (var judgement in sortedJudgements)
+            {
+                judgements.Add(judgement);
+            }
+
+            missWindow = judgements.Last().HitWindow;
+        }
 
         // Judge Tap notes or the head of Long Notes
-        public static (JudgementType, float) JudgeHead(float inputTimestamp, float nearestNoteTime)
+        public (JudgementType, float) JudgeHead(float inputTimestamp, float nearestNoteTime)
         {
             float hitDeviation = GetHitDeviation(inputTimestamp,  nearestNoteTime);
             JudgementType judgementResult = MapDeltaToJudgement(Math.Abs(hitDeviation));
@@ -20,7 +42,7 @@ namespace ProjectOdyssey.Engine
         // Judge the tail of a Long Note, given the direction of the current input event
         // (key down/up) and the note's current hold state. Returns the resulting
         // judgement (if any) and the note's new state after processing this input.
-        public static (JudgementType, NoteState, float) JudgeTail(float inputTimestamp, float nearestNoteTime, InputDirection inputDirection, NoteState noteState)
+        public (JudgementType, NoteState, float) JudgeTail(float inputTimestamp, float nearestNoteTime, InputDirection inputDirection, NoteState noteState)
         {
             // Signed offset between when the input happened and when the tail was due.
             // Negative = input was early, positive = input was late.
@@ -34,7 +56,7 @@ namespace ProjectOdyssey.Engine
                 // Otherwise, released within a judgeable window -> map the timing
                 // delta to a judgement and resolve the note normally.
 
-                if (hitDevation < EarlyReleaseToleranceMs)
+                if (hitDevation < -missWindow)
                 {
                     return (JudgementType.Miss, NoteState.ReleasedEarly, hitDevation);
                 }
@@ -58,7 +80,7 @@ namespace ProjectOdyssey.Engine
                 // another recovery attempt.
                 // Released within the window -> resolves, but judgement stays capped
                 // at Bad since a clean hold was never achieved.
-                if (hitDevation < EarlyReleaseToleranceMs)
+                if (hitDevation < -missWindow)
                 {
                     return (JudgementType.Miss, NoteState.ReleasedEarly, hitDevation);
                 }
@@ -89,9 +111,9 @@ namespace ProjectOdyssey.Engine
         }
 
         // Resolve overheld notes or non-held nones that have exceeded the tail time + 200ms threshold
-        public static bool TryResolveOverheldNote(NoteState noteState, float tailTime, float now, out JudgementType result, out NoteState newState)
+        public bool TryResolveOverheldNote(NoteState noteState, float tailTime, float now, out JudgementType result, out NoteState newState)
         {
-            if ((noteState == NoteState.Holding || noteState == NoteState.Recovering || noteState == NoteState.ReleasedEarly) && now > tailTime + MissWindowMs)
+            if ((noteState == NoteState.Holding || noteState == NoteState.Recovering || noteState == NoteState.ReleasedEarly) && now > tailTime + missWindow)
             {
                 result = JudgementType.Miss;
                 newState = NoteState.Resolved;
@@ -104,20 +126,17 @@ namespace ProjectOdyssey.Engine
         }
 
         // Map the absolute delta between input and note time to a JudgementType
-        public static JudgementType MapDeltaToJudgement(float delta)
+        public JudgementType MapDeltaToJudgement(float delta)
         {
-            if (delta <= 20)
-                return JudgementType.Marvellous;
-            else if (delta <= 50)
-                return JudgementType.Perfect;
-            else if (delta <= 100)
-                return JudgementType.Great;
-            else if (delta <= 150)
-                return JudgementType.Good;
-            else if (delta <= 200)
-                return JudgementType.Bad;
-            else
-                return JudgementType.Miss;
+            foreach (var judgement in judgements)
+            {
+                if (delta <= judgement.HitWindow)
+                {
+                    return judgement.Type;
+                }
+            }
+
+            return JudgementType.Miss;
         }
 
         public static float GetHitDeviation(float inputTimestamp, float nearestNoteTime)

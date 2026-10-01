@@ -3,6 +3,7 @@ using System.Diagnostics;
 using ProjectOdyssey.Input;
 using ProjectOdyssey.IO;
 using System.Runtime.InteropServices.Marshalling;
+using ProjectOdyssey.Engine.Rulesets;
 
 namespace ProjectOdyssey.Engine
 {
@@ -33,12 +34,15 @@ namespace ProjectOdyssey.Engine
         private int judgedNotesCount = 0;
         private float accuracyAccumulator = 0f;
         public float Accuracy { get; private set; } = 100f;
+        private JudgementEngine judgementEngine;
 
         public GameSession(InputHistory inputHistory, ChartData chartData)
         {
             this.inputHistory = inputHistory;
             NotesByColumn = chartData.NotesByColumn;
             ColumnCursors = new int[NotesByColumn.Length];
+
+            this.judgementEngine = new JudgementEngine(new NativeRuleset());
         }
 
         public void Start(ChartData chartData)
@@ -123,7 +127,7 @@ namespace ProjectOdyssey.Engine
                 if (direction != InputDirection.Down) return;
                 if (Math.Abs(inputSongTimeMs - note.StartTime) > ghostTapThreshold) return;
 
-                (JudgementType judgement, float hitDeviation) = JudgementEngine.JudgeHead(inputSongTimeMs, note.StartTime);
+                (JudgementType judgement, float hitDeviation) = judgementEngine.JudgeHead(inputSongTimeMs, note.StartTime);
                 note.NoteState = NoteState.Resolved;
                 ColumnCursors[column]++;
                 Combo++;
@@ -142,7 +146,7 @@ namespace ProjectOdyssey.Engine
                     if (direction != InputDirection.Down) return;
                     if (Math.Abs(inputSongTimeMs - note.StartTime) > ghostTapThreshold) return;
 
-                    (JudgementType headJudgement, hitDeviation) = JudgementEngine.JudgeHead(inputSongTimeMs, note.StartTime);
+                    (JudgementType headJudgement, hitDeviation) = judgementEngine.JudgeHead(inputSongTimeMs, note.StartTime);
                     note.NoteState = NoteState.Holding;
                     Combo++;
                     judgementResultBuffer.Add(new JudgementResult(headJudgement, hitDeviation, inputSongTimeMs));
@@ -151,7 +155,7 @@ namespace ProjectOdyssey.Engine
                     return;
                 }
 
-                (JudgementType tailJudgement, NoteState newState, hitDeviation) = JudgementEngine.JudgeTail(inputSongTimeMs, note.EndTime, direction, note.NoteState);
+                (JudgementType tailJudgement, NoteState newState, hitDeviation) = judgementEngine.JudgeTail(inputSongTimeMs, note.EndTime, direction, note.NoteState);
 
                 note.NoteState = newState;
 
@@ -233,7 +237,7 @@ namespace ProjectOdyssey.Engine
                 float timeUntilEnd = note.EndTime - now;
 
                 // Missed tap notes that have scrolled past the maximum hit window
-                if (note.NoteType == NoteType.Tap && timeUntilHit < -JudgementEngine.MissWindowMs)
+                if (note.NoteType == NoteType.Tap && timeUntilHit < -judgementEngine.missWindow)
                 {
                     note.NoteState = NoteState.Resolved;
                     Combo = 0;
@@ -246,7 +250,7 @@ namespace ProjectOdyssey.Engine
                 }
 
                 // Missed long note heads that have scrolled past the maximum hit window
-                if (note.NoteType == NoteType.Long && note.NoteState == NoteState.Waiting && timeUntilHit < -JudgementEngine.MissWindowMs)
+                if (note.NoteType == NoteType.Long && note.NoteState == NoteState.Waiting && timeUntilHit < -judgementEngine.missWindow)
                 {
                     note.NoteState = NoteState.ReleasedEarly;
                     Combo = 0;
@@ -259,7 +263,7 @@ namespace ProjectOdyssey.Engine
 
                 if (note.NoteType == NoteType.Long && (note.NoteState == NoteState.Holding || note.NoteState == NoteState.Recovering || note.NoteState == NoteState.ReleasedEarly))
                 {
-                    if (JudgementEngine.TryResolveOverheldNote(note.NoteState, note.EndTime, now, out var result, out var newState))
+                    if (judgementEngine.TryResolveOverheldNote(note.NoteState, note.EndTime, now, out var result, out var newState))
                     {
                         note.NoteState = newState;
                         ColumnCursors[i]++;
