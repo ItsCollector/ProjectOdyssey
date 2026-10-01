@@ -17,8 +17,8 @@ namespace ProjectOdyssey.Render
         private int cachedCombo = 0;
         private string comboString = "";
 
-        private float cachedAccuracy = 100f;
-        private string accuracyString = "100";
+        private float cachedAccuracy = 100.00f;
+        private string accuracyString = "100.00";
 
         private const float JudgementDisplayDurationMs = 500f;
         private const float ErrorTickDisplayDurationMs = 500f;
@@ -81,7 +81,7 @@ namespace ProjectOdyssey.Render
 
             if (incomingAccuracy != cachedAccuracy)
             {
-                cachedAccuracy = incomingAccuracy;
+                cachedAccuracy = (float)Math.Round(incomingAccuracy, 2);
                 accuracyString = incomingAccuracy.ToString();
             }
 
