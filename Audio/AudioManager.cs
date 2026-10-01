@@ -1,5 +1,6 @@
-﻿using NAudio.Wave;
-using NAudio.Vorbis;
+﻿using NAudio.Vorbis;
+using NAudio.Wave;
+using NAudio.Wave.SampleProviders;
 
 namespace ProjectOdyssey.Audio
 {
@@ -26,15 +27,29 @@ namespace ProjectOdyssey.Audio
         {
             if (songPath == loadedPath) return;
 
+            if (string.IsNullOrEmpty(songPath) || !File.Exists(songPath))
+            {
+                Console.WriteLine($"[Warning] Audio file not found or invalid: {songPath}");
+                return;
+            }
+
             outputDevice?.Dispose();
             reader?.Dispose();
 
             outputDevice = new WasapiOut(NAudio.CoreAudioApi.AudioClientShareMode.Shared, 30);
-            reader = OpenAudioStream(songPath);
 
-            outputDevice.Init(reader);
-
-            loadedPath = songPath;
+            try
+            {
+                reader = OpenAudioStream(songPath);
+                outputDevice.Init(reader);
+                loadedPath = songPath;
+            }
+            catch (Exception ex) 
+            {
+                Console.WriteLine($"[Warning] Failed to load audio '{songPath}': {ex.GetType().Name} - {ex.Message}");
+                reader = null;
+                loadedPath = null;
+            }
         }
 
         public void PlayAudio(string songPath)

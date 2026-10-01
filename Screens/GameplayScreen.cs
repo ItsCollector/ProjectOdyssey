@@ -59,7 +59,7 @@ namespace ProjectOdyssey.Screens
         public void Render()
         {
             gameplayRenderer.DrawGameplay(session.NotesByColumn, session.ColumnCursors);
-            hudRenderer.DrawHud(session.Combo, session.CurrentJudgementResult, session.GetRecentJudgementResults(), session.CurrentSongTimeMs);
+            hudRenderer.DrawHud(session.Combo, session.CurrentJudgementResult, session.GetRecentJudgementResults(), session.CurrentSongTimeMs, session.Accuracy);
         }
 
         public void Resize(int width, int height)

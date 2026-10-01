@@ -30,6 +30,9 @@ namespace ProjectOdyssey.Engine
         public JudgementResult CurrentJudgementResult { get; private set; } = new JudgementResult(JudgementType.Marvellous, 0f, float.NegativeInfinity);
 
         private JudgementResultBuffer judgementResultBuffer = new(300);
+        private int judgedNotesCount = 0;
+        private float accuracyAccumulator = 0f;
+        public float Accuracy { get; private set; } = 100f;
 
         public GameSession(InputHistory inputHistory, ChartData chartData)
         {
@@ -88,7 +91,6 @@ namespace ProjectOdyssey.Engine
                         while (inputHistory.TryGetNextEvent(out InputEvent inputEvent))
                         {
                             float inputSongTimeMs = (float)gameClock.ToSongTimeMs(inputEvent.TimeStamp);
-
                             JudgeNotes(inputEvent, inputSongTimeMs);
                         }
 
@@ -125,10 +127,9 @@ namespace ProjectOdyssey.Engine
                 note.NoteState = NoteState.Resolved;
                 ColumnCursors[column]++;
                 Combo++;
-                //Console.WriteLine($"[JUDGEMENT] Vkey: {column + 1} Position: Tap Note | Note ST: {note.StartTime} Note ET: {note.EndTime} | Direction: {direction} | Judge: {judgement}");
-                // wherever you had: JudgementResults.Add(new JudgementResult(judgement, note.NoteState, hitDeviation));
                 judgementResultBuffer.Add(new JudgementResult(judgement, hitDeviation, inputSongTimeMs));
                 CurrentJudgementResult = new JudgementResult(judgement, hitDeviation, inputSongTimeMs);
+                CalculateAccuracyContinuous(hitDeviation);
                 return;
             }
 
@@ -144,49 +145,45 @@ namespace ProjectOdyssey.Engine
                     (JudgementType headJudgement, hitDeviation) = JudgementEngine.JudgeHead(inputSongTimeMs, note.StartTime);
                     note.NoteState = NoteState.Holding;
                     Combo++;
-                    //Console.WriteLine($"[JUDGEMENT] Vkey: {column + 1} Position: Long Note | Note ST: {note.StartTime} Note ET: {note.EndTime} | Direction: {direction} | Judge: {headJudgement}");
                     judgementResultBuffer.Add(new JudgementResult(headJudgement, hitDeviation, inputSongTimeMs));
                     CurrentJudgementResult = new JudgementResult(headJudgement, hitDeviation, inputSongTimeMs);
+                    CalculateAccuracyContinuous(hitDeviation);
                     return;
                 }
 
                 (JudgementType tailJudgement, NoteState newState, hitDeviation) = JudgementEngine.JudgeTail(inputSongTimeMs, note.EndTime, direction, note.NoteState);
 
                 note.NoteState = newState;
-                Combo++;
+
+                if (newState == NoteState.ReleasedEarly)
+                {
+                    Combo = 0; // break combo on early release no matter what
+                }
 
                 if (newState == NoteState.Resolved)
                 {
                     ColumnCursors[column]++;
+
+                    if (tailJudgement == JudgementType.Miss)
+                    {
+                        Combo = 0;
+                    }
+                    else
+                    {
+                        Combo++;
+                    }
+
+                    judgementResultBuffer.Add(new JudgementResult(tailJudgement, hitDeviation, inputSongTimeMs));
+                    CurrentJudgementResult = new JudgementResult(tailJudgement, hitDeviation, inputSongTimeMs);
+                    CalculateAccuracyContinuous(hitDeviation);
                 }
 
-                //Console.WriteLine($"[JUDGEMENT] Vkey: {column + 1} Position: Long Note | Note ST: {note.StartTime} Note ET: {note.EndTime} | Direction: {direction} | Judge: {tailJudgement}");
-                judgementResultBuffer.Add(new JudgementResult(tailJudgement, hitDeviation, inputSongTimeMs));
-                CurrentJudgementResult = new JudgementResult(tailJudgement, hitDeviation, inputSongTimeMs);
                 return;
             }
 
             Debug.Fail($"[ERROR] Unreachable state because of incorrect NoteType passed: {note.NoteType}");
         }
 
-        /*  Some key documentation so I don't get confused when trying to map out the logic. 
-         * 
-         *  Tap notes that are marked as "Resolved" should never find their way into this function because
-         *  upon judgement, the cursor for the corresponding key column will increment, moving this resolved note
-         *  out of scope for when the UpdateNotePositions() function is called. 
-         * 
-         *  This mean that all notes that are read in this function are always unresolved in some form. 
-         *  
-         *  Cases include: 
-         *  - Tap notes that are still in the approach phase (not yet hit).
-         *  - All long notes until the tail's hitbox has completely passed the judgement line
-         *    regardless of whatever happened to the head note. 
-         *    
-         *  The NoteState.Waiting should probaby be changed to NoteState.Approaching to better reflect the state of the note.
-         *  
-         *  The only responsibility of this function should be to move unresolved notes along the Y axis based on the current
-         *  time and the note's start and end times in accordance to the cases mentioned. 
-         */
         public void UpdateNotePositions(float now)
         {
             for (int i = 0; i < NotesByColumn.Length; i++) // Iterate through each column
@@ -244,6 +241,7 @@ namespace ProjectOdyssey.Engine
                     var missResult = new JudgementResult(JudgementType.Miss, 201f, now);
                     judgementResultBuffer.Add(missResult);
                     CurrentJudgementResult = missResult;
+                    CalculateAccuracyContinuous(201f);
                     continue;
                 }
 
@@ -255,6 +253,7 @@ namespace ProjectOdyssey.Engine
                     var missResult = new JudgementResult(JudgementType.Miss, 201f, now);
                     judgementResultBuffer.Add(missResult);
                     CurrentJudgementResult = missResult;
+                    CalculateAccuracyContinuous(201f);
                     continue;
                 }
 
@@ -268,9 +267,37 @@ namespace ProjectOdyssey.Engine
                         var missResult = new JudgementResult(JudgementType.Miss, 201f, now);
                         judgementResultBuffer.Add(missResult);
                         CurrentJudgementResult = missResult;
+                        CalculateAccuracyContinuous(201f);
                         continue;
                     }
                 }
+            }
+        }
+
+        // Calculate the accuracy of a hit using a continous hit deviation curve
+        public void CalculateAccuracyContinuous(float hitDeviation)
+        {
+            float absHitDeviation = Math.Abs(hitDeviation);
+            absHitDeviation = Math.Clamp(absHitDeviation, 0f, ghostTapThreshold);
+
+            float decay = 0.3f;
+            float normalised = 1.0f - (absHitDeviation / ghostTapThreshold);
+            float accuracyContribution = (float)Math.Pow(normalised, decay);
+
+            accuracyAccumulator += (float)Math.Round(accuracyContribution, 3);
+            judgedNotesCount++;
+            CalculateFinalAccuracy();
+        }
+
+        public void CalculateFinalAccuracy()
+        {
+            if (judgedNotesCount == 0)
+            {
+                Accuracy = 100f;
+            }
+            else
+            {
+                Accuracy = (accuracyAccumulator / judgedNotesCount) * 100f;
             }
         }
 

@@ -2,6 +2,7 @@
 using ProjectOdyssey.Engine;
 using ProjectOdyssey.Screens;
 using ProjectOdyssey.Skinning;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace ProjectOdyssey.Render
 {
@@ -15,6 +16,9 @@ namespace ProjectOdyssey.Render
 
         private int cachedCombo = 0;
         private string comboString = "";
+
+        private float cachedAccuracy = 100f;
+        private string accuracyString = "100";
 
         private const float JudgementDisplayDurationMs = 500f;
         private const float ErrorTickDisplayDurationMs = 500f;
@@ -52,16 +56,10 @@ namespace ProjectOdyssey.Render
             fontRenderer.Intitialise();
         }
 
-        public override void Resize(int width, int height)
-        {
-            base.Resize(width, height);
-            fontRenderer.Resize(1920, 1080);
-        }
-
         // currentResult = the result to draw as feedback for the player's worst hit
         // recentJudgementResults = all recent results to use to draw the error graph
         // currentSongTimeMs = the song time "now", used to age out stale results
-        public void DrawHud(int incomingCombo, JudgementResult currentResult, JudgementResult[] recentJudgementResults, float currentSongTimeMs)
+        public void DrawHud(int incomingCombo, JudgementResult currentResult, JudgementResult[] recentJudgementResults, float currentSongTimeMs, float incomingAccuracy)
         {
             float resultAge = currentSongTimeMs - currentResult.JudgedAtMs;
 
@@ -78,8 +76,16 @@ namespace ProjectOdyssey.Render
                     comboString = incomingCombo.ToString();
                 }
 
-                fontRenderer.Draw(glyphs_40, comboString, 960, 540, primaryTextColour);
+                fontRenderer.Draw(glyphs_40, comboString, 960 - (GlyphOffsetX(comboString, glyphs_40) / 2), 540, primaryTextColour);
             }
+
+            if (incomingAccuracy != cachedAccuracy)
+            {
+                cachedAccuracy = incomingAccuracy;
+                accuracyString = incomingAccuracy.ToString();
+            }
+
+            fontRenderer.Draw(glyphs_40, accuracyString + "%", 50, 50, primaryTextColour);
 
             foreach (var result in recentJudgementResults)
             {
@@ -92,6 +98,28 @@ namespace ProjectOdyssey.Render
 
                 DrawQuad(null, tickX, ErrorGraphY, ErrorTickSize, ErrorTickSize, colour);
             }
+        }
+
+        // Helper function to calculate the total width of a string in pixels based on the glyphs
+        public int GlyphOffsetX(string text, Dictionary<char, FreeTypeGlyph> glyphs)
+        {
+            int totalWidth = 0;
+
+            foreach (char c in text)
+            {
+                if (glyphs.ContainsKey(c))
+                {
+                    totalWidth += glyphs[c].Advance;
+                }
+            }
+
+            return totalWidth;
+        }
+
+        public override void Resize(int width, int height)
+        {
+            base.Resize(width, height);
+            fontRenderer.Resize(1920, 1080);
         }
 
         public override void Dispose()
