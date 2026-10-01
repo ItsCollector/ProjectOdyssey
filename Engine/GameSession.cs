@@ -3,6 +3,7 @@ using System.Diagnostics;
 using ProjectOdyssey.Input;
 using ProjectOdyssey.IO;
 using System.Runtime.InteropServices.Marshalling;
+using ProjectOdyssey.Engine.Mechanics;
 using ProjectOdyssey.Engine.Rulesets;
 
 namespace ProjectOdyssey.Engine
@@ -19,7 +20,6 @@ namespace ProjectOdyssey.Engine
         private float hitPositionY = 1000;
 
         private bool notesOverflowPastJudgementLine = false;
-        private float ghostTapThreshold = 200;
 
         private volatile bool audioReadyToStart = false;
         public bool AudioReadyToStart => audioReadyToStart;
@@ -34,15 +34,16 @@ namespace ProjectOdyssey.Engine
         private int judgedNotesCount = 0;
         private float accuracyAccumulator = 0f;
         public float Accuracy { get; private set; } = 100f;
-        private JudgementEngine judgementEngine;
+        private readonly RulesetMechanics mechanics;
 
-        public GameSession(InputHistory inputHistory, ChartData chartData)
+        public GameSession(InputHistory inputHistory, ChartData chartData, IRuleset? ruleset = null)
         {
             this.inputHistory = inputHistory;
             NotesByColumn = chartData.NotesByColumn;
             ColumnCursors = new int[NotesByColumn.Length];
 
-            this.judgementEngine = new JudgementEngine(new NativeRuleset());
+            ruleset ??= new NativeRuleset();
+            mechanics = ruleset.CreateMechanics();
         }
 
         public void Start(ChartData chartData)
@@ -111,81 +112,18 @@ namespace ProjectOdyssey.Engine
             }
         }
 
-        // Judge one note
+        // Hand an input event to the mechanics for the note at the front of its column and apply the result
         public void JudgeNotes(InputEvent inputEvent, float inputSongTimeMs)
         {
             int column = VkeyToColumn7k(inputEvent.VKey);
             int cursor = ColumnCursors[column];
 
-            if (cursor >= NotesByColumn[column].Length) return; 
+            if (cursor >= NotesByColumn[column].Length) return;
 
             Note note = NotesByColumn[column][cursor];
             InputDirection direction = inputEvent.IsPressed ? InputDirection.Down : InputDirection.Up;
 
-            if (note.NoteType == NoteType.Tap)
-            {
-                if (direction != InputDirection.Down) return;
-                if (Math.Abs(inputSongTimeMs - note.StartTime) > ghostTapThreshold) return;
-
-                (JudgementType judgement, float hitDeviation) = judgementEngine.JudgeHead(inputSongTimeMs, note.StartTime);
-                note.NoteState = NoteState.Resolved;
-                ColumnCursors[column]++;
-                Combo++;
-                judgementResultBuffer.Add(new JudgementResult(judgement, hitDeviation, inputSongTimeMs));
-                CurrentJudgementResult = new JudgementResult(judgement, hitDeviation, inputSongTimeMs);
-                CalculateAccuracyContinuous(hitDeviation);
-                return;
-            }
-
-            if (note.NoteType == NoteType.Long)
-            {
-                float hitDeviation; 
-
-                if (note.NoteState == NoteState.Waiting)
-                {
-                    if (direction != InputDirection.Down) return;
-                    if (Math.Abs(inputSongTimeMs - note.StartTime) > ghostTapThreshold) return;
-
-                    (JudgementType headJudgement, hitDeviation) = judgementEngine.JudgeHead(inputSongTimeMs, note.StartTime);
-                    note.NoteState = NoteState.Holding;
-                    Combo++;
-                    judgementResultBuffer.Add(new JudgementResult(headJudgement, hitDeviation, inputSongTimeMs));
-                    CurrentJudgementResult = new JudgementResult(headJudgement, hitDeviation, inputSongTimeMs);
-                    CalculateAccuracyContinuous(hitDeviation);
-                    return;
-                }
-
-                (JudgementType tailJudgement, NoteState newState, hitDeviation) = judgementEngine.JudgeTail(inputSongTimeMs, note.EndTime, direction, note.NoteState);
-
-                note.NoteState = newState;
-
-                if (newState == NoteState.ReleasedEarly)
-                {
-                    Combo = 0; // break combo on early release no matter what
-                }
-
-                if (newState == NoteState.Resolved)
-                {
-                    ColumnCursors[column]++;
-
-                    if (tailJudgement == JudgementType.Miss)
-                    {
-                        Combo = 0;
-                    }
-                    else
-                    {
-                        Combo++;
-                    }
-
-                    judgementResultBuffer.Add(new JudgementResult(tailJudgement, hitDeviation, inputSongTimeMs));
-                    CurrentJudgementResult = new JudgementResult(tailJudgement, hitDeviation, inputSongTimeMs);
-                    CalculateAccuracyContinuous(hitDeviation);
-                }
-
-                return;
-            }
-
-            Debug.Fail($"[ERROR] Unreachable state because of incorrect NoteType passed: {note.NoteType}");
+            ApplyOutcome(mechanics.OnInput(note, direction, inputSongTimeMs), note, column, inputSongTimeMs);
         }
 
         public void UpdateNotePositions(float now)
@@ -219,7 +157,8 @@ namespace ProjectOdyssey.Engine
             }
         }
 
-        // This function is specifically for handling notes that the cursor sees but haven't been judged within their windows
+        // Let the mechanics resolve notes that time has passed on without a (further) input:
+        // taps/heads that scrolled past the miss window, long notes held past their tail, etc.
         public void HandleUnjudgedNotes(float now)
         {
             for (int i = 0; i < NotesByColumn.Length; i++)
@@ -227,54 +166,36 @@ namespace ProjectOdyssey.Engine
                 if (ColumnCursors[i] >= NotesByColumn[i].Length) continue;
 
                 Note note = NotesByColumn[i][ColumnCursors[i]];
-                if (note.NoteState == NoteState.Resolved) 
-                {
-                    ColumnCursors[i]++;
-                    continue;
-                }
+                ApplyOutcome(mechanics.OnTick(note, now), note, i, now);
+            }
+        }
 
-                float timeUntilHit = note.StartTime - now;
-                float timeUntilEnd = note.EndTime - now;
+        // Apply exactly what the mechanics decided. No interpretation of why happens here.
+        private void ApplyOutcome(in MechanicsOutcome outcome, Note note, int column, float judgedAtMs)
+        {
+            note.NoteState = outcome.NewState;
 
-                // Missed tap notes that have scrolled past the maximum hit window
-                if (note.NoteType == NoteType.Tap && timeUntilHit < -judgementEngine.missWindow)
-                {
-                    note.NoteState = NoteState.Resolved;
+            if (outcome.AdvanceCursor)
+            {
+                ColumnCursors[column]++;
+            }
+
+            switch (outcome.Combo)
+            {
+                case ComboEffect.Increment:
+                    Combo++;
+                    break;
+                case ComboEffect.Break:
                     Combo = 0;
-                    ColumnCursors[i]++;
-                    var missResult = new JudgementResult(JudgementType.Miss, 201f, now);
-                    judgementResultBuffer.Add(missResult);
-                    CurrentJudgementResult = missResult;
-                    CalculateAccuracyContinuous(201f);
-                    continue;
-                }
+                    break;
+            }
 
-                // Missed long note heads that have scrolled past the maximum hit window
-                if (note.NoteType == NoteType.Long && note.NoteState == NoteState.Waiting && timeUntilHit < -judgementEngine.missWindow)
-                {
-                    note.NoteState = NoteState.ReleasedEarly;
-                    Combo = 0;
-                    var missResult = new JudgementResult(JudgementType.Miss, 201f, now);
-                    judgementResultBuffer.Add(missResult);
-                    CurrentJudgementResult = missResult;
-                    CalculateAccuracyContinuous(201f);
-                    continue;
-                }
-
-                if (note.NoteType == NoteType.Long && (note.NoteState == NoteState.Holding || note.NoteState == NoteState.Recovering || note.NoteState == NoteState.ReleasedEarly))
-                {
-                    if (judgementEngine.TryResolveOverheldNote(note.NoteState, note.EndTime, now, out var result, out var newState))
-                    {
-                        note.NoteState = newState;
-                        ColumnCursors[i]++;
-                        Combo = 0;
-                        var missResult = new JudgementResult(JudgementType.Miss, 201f, now);
-                        judgementResultBuffer.Add(missResult);
-                        CurrentJudgementResult = missResult;
-                        CalculateAccuracyContinuous(201f);
-                        continue;
-                    }
-                }
+            if (outcome.Judgement is JudgementType judgement)
+            {
+                var result = new JudgementResult(judgement, outcome.HitDeviation, judgedAtMs);
+                judgementResultBuffer.Add(result);
+                CurrentJudgementResult = result;
+                CalculateAccuracyContinuous(outcome.HitDeviation);
             }
         }
 
@@ -282,10 +203,10 @@ namespace ProjectOdyssey.Engine
         public void CalculateAccuracyContinuous(float hitDeviation)
         {
             float absHitDeviation = Math.Abs(hitDeviation);
-            absHitDeviation = Math.Clamp(absHitDeviation, 0f, ghostTapThreshold);
+            absHitDeviation = Math.Clamp(absHitDeviation, 0f, mechanics.GhostTapThreshold);
 
             float decay = 0.3f;
-            float normalised = 1.0f - (absHitDeviation / ghostTapThreshold);
+            float normalised = 1.0f - (absHitDeviation / mechanics.GhostTapThreshold);
             float accuracyContribution = (float)Math.Pow(normalised, decay);
 
             accuracyAccumulator += (float)Math.Round(accuracyContribution, 3);
