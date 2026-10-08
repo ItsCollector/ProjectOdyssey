@@ -10,6 +10,7 @@ namespace ProjectOdyssey.Screens
         ScreenManager ScreenManager { set; }
         AudioManager AudioManager { set; }
         SkinManager SkinManager { set; }
+        bool DrawsScreenBeneath => false;
 
         // Called once when the ScreenManager pushes this screen. Do expensive
         // setup here (loading skins, starting sessions, etc.) rather than in

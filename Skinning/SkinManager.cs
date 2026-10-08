@@ -23,11 +23,11 @@ namespace ProjectOdyssey.Skinning
         private static readonly (JudgementType Type, string File)[] JudgementFiles =
         {
             (JudgementType.Marvellous, "judge-marv.png"),
-            (JudgementType.Perfect, "judge-perfect.png"),
-            (JudgementType.Great, "judge-great.png"),
-            (JudgementType.Good, "judge-good.png"),
-            (JudgementType.Bad, "judge-bad.png"),
-            (JudgementType.Miss, "judge-miss.png"),
+            (JudgementType.Perfect,    "judge-perfect.png"),
+            (JudgementType.Great,      "judge-great.png"),
+            (JudgementType.Good,       "judge-good.png"),
+            (JudgementType.Bad,        "judge-bad.png"),
+            (JudgementType.Miss,       "judge-miss.png"),
         };
 
         private readonly string[] skinFiles;
@@ -95,7 +95,7 @@ namespace ProjectOdyssey.Skinning
             }
         }
 
-        // Loading helpers 
+        // ---------- Loading helpers ----------
 
         private static string[] ListSkinFiles(string? skinDirectory)
         {

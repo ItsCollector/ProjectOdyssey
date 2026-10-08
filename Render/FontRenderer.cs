@@ -61,6 +61,9 @@ namespace ProjectOdyssey.Render
         // Renders a string using a preloaded glyph set
         public void Draw(GlyphSet glyphs, string text, float x, float y, Vector4 colour)
         {
+            shader.Use();
+            GL.BindVertexArray(vao);
+
             foreach (char c in text)
             {
                 if (!glyphs.TryGetGlyph(c, out FreeTypeGlyph glyph))

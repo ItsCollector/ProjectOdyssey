@@ -12,8 +12,9 @@ namespace ProjectOdyssey.Screens
     public class ScreenManager : IDisposable
     {
         private readonly AudioManager audioManager;
-        private SkinManager? skinManager;   // created in Initialise(): it needs a live GL context
+        private SkinManager? skinManager;  
         private readonly Stack<IGameScreen> screens = new();
+        private readonly List<IGameScreen> renderScratch = new(); 
         private int viewportWidth;
         private int viewportHeight;
 
@@ -30,7 +31,9 @@ namespace ProjectOdyssey.Screens
         public void Initialise(string? skinDirectory)
         {
             if (skinManager != null)
+            {
                 throw new InvalidOperationException("ScreenManager is already initialised; live screens hold references to the skin's textures.");
+            }
 
             skinManager = new SkinManager(skinDirectory);
         }
@@ -74,8 +77,20 @@ namespace ProjectOdyssey.Screens
 
         public void Render()
         {
-            if (screens.Count > 0)
-                screens.Peek().Render();
+            renderScratch.Clear();
+
+            // Stack<T> enumerates top -> bottom. Collect until we hit an opaque screen (inclusive).
+            foreach (var screen in screens)
+            {
+                renderScratch.Add(screen);
+                if (!screen.DrawsScreenBeneath) break;
+            }
+
+            // Draw bottom -> top so the pause menu lands over gameplay.
+            for (int i = renderScratch.Count - 1; i >= 0; i--)
+            {
+                renderScratch[i].Render();
+            }
         }
 
         // Resizes every screen on the stack, not just the top one, so a

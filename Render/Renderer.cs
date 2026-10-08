@@ -71,8 +71,20 @@ namespace ProjectOdyssey.Render
             GL.ActiveTexture(TextureUnit.Texture0);
         }
 
+        // Every draw binds this renderer's own program + mesh. Uniform setters act on whichever
+        // program is currently active, and several renderers (plus FontRenderer) now draw in the
+        // same frame, so nothing can assume "my program is still bound from Initialise".
+        private void BindForDraw()
+        {
+            shader.Use();
+            GL.BindVertexArray(vao);
+            GL.ActiveTexture(TextureUnit.Texture0);
+        }
+
         public void Draw(Texture? texture, float xPosition, float yPosition, float width = -1, float height = -1)
         {
+            BindForDraw();
+
             if (texture == null)
             {
                 shader.SetInt("uUseTexture", 0);
@@ -96,6 +108,8 @@ namespace ProjectOdyssey.Render
 
         public void DrawQuad(Texture? texture, float xPosition, float yPosition, float width = -1, float height = -1, Vector4? colour = null)
         {
+            BindForDraw();
+
             if (texture == null)
             {
                 shader.SetInt("uUseTexture", 0);
@@ -149,6 +163,10 @@ namespace ProjectOdyssey.Render
         public virtual void Resize(int width, int height)
         {
             projection = Matrix4.CreateOrthographicOffCenter(0f, width, height, 0f, -1f, 1f);
+
+            // Upload to THIS renderer's program (the uniform call targets the active program)
+            shader.Use();
+            shader.SetMatrix4("projection", projection);
         }
 
         // Releases only the GL objects this renderer created. Skin textures and glyphs are
