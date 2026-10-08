@@ -1,4 +1,4 @@
-﻿using ProjectOdyssey.Engine;
+using ProjectOdyssey.Engine;
 using ProjectOdyssey.Skinning;
 
 namespace ProjectOdyssey.Render
@@ -32,8 +32,12 @@ namespace ProjectOdyssey.Render
         // Other
         private TargetType targetType;
 
-        public GameplayRenderer(GameplaySkinConfig skinConfig, SkinAssets skinAssets)
+        // All textures are borrowed from the SkinManager (it owns and disposes them),
+        // so this renderer has nothing of its own to dispose beyond the base class.
+        public GameplayRenderer(GameplaySkin skin)
         {
+            GameplaySkinConfig skinConfig = skin.Config;
+
             noteWidth = skinConfig.NoteWidth;
             hitPositionX = skinConfig.HitPositionX;
             hitPositionY = skinConfig.HitPositionY;
@@ -46,20 +50,18 @@ namespace ProjectOdyssey.Render
 
             CalculateColumnPositions();
 
-            Texture[] tapVariants = skinAssets.TapNotePaths.Select(LoadTexture).ToArray();
-            Texture[] lnHeadVariants = skinAssets.LnHeadPaths.Select(LoadTexture).ToArray();
-
+            // Fewer variants than columns? Cycle through them.
             for (int i = 0; i < 7; i++)
             {
-                tapNoteTextures[i] = tapVariants[i % tapVariants.Length];
-                lnHeadTextures[i] = lnHeadVariants[i % lnHeadVariants.Length];
+                tapNoteTextures[i] = skin.TapNotes[i % skin.TapNotes.Length];
+                lnHeadTextures[i] = skin.LnHeads[i % skin.LnHeads.Length];
             }
 
-            lnBodyTexture = LoadTexture(skinAssets.LnBodyPath);
-            lnTailTexture = LoadTexture(skinAssets.LnTailPath);
-            judgementLineTexture = LoadTexture(skinAssets.JudgementLinePath);
-            receptorUpTexture = LoadTexture(skinAssets.ReceptorUpPath);
-            receptorDownTexture = LoadTexture(skinAssets.ReceptorDownPath);
+            lnBodyTexture = skin.LnBody;
+            lnTailTexture = skin.LnTail;
+            judgementLineTexture = skin.JudgementLine;
+            receptorUpTexture = skin.ReceptorUp;
+            receptorDownTexture = skin.ReceptorDown;
         }
 
         /*  Something to return to later, the note height value is unused because I use a circle skin and the images are square.
@@ -127,4 +129,4 @@ namespace ProjectOdyssey.Render
             }
         }
     }
-}
+}

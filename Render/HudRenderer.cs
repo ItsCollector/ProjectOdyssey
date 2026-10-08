@@ -1,18 +1,14 @@
-﻿using OpenTK.Mathematics;
+using OpenTK.Mathematics;
 using ProjectOdyssey.Engine;
-using ProjectOdyssey.Screens;
 using ProjectOdyssey.Skinning;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace ProjectOdyssey.Render
 {
     public class HudRenderer : Renderer
     {
+        private readonly HudSkin skin;   // borrowed: owned and disposed by the SkinManager
         private FontRenderer fontRenderer = new FontRenderer();
-        private Dictionary<char, FreeTypeGlyph> glyphs_40;
         private Vector4 primaryTextColour = new Vector4(1f, 1f, 1f, 1f);
-
-        private Dictionary<JudgementType, Texture> judgementTextures = new();
 
         private int cachedCombo = 0;
         private string comboString = "";
@@ -38,17 +34,9 @@ namespace ProjectOdyssey.Render
             { JudgementType.Miss, new Vector4(0.90f, 0.20f, 0.25f, 1f) },
         };
 
-        public HudRenderer()
+        public HudRenderer(HudSkin skin)
         {
-            glyphs_40 = fontRenderer.LoadGlyphs(40);
-
-            string baseDir = AppContext.BaseDirectory;
-            judgementTextures.Add(JudgementType.Marvellous, LoadTexture(Path.Combine(baseDir, "Assets\\Judgements\\judge-marv.png")));
-            judgementTextures.Add(JudgementType.Perfect, LoadTexture(Path.Combine(baseDir, "Assets\\Judgements\\judge-perfect.png")));
-            judgementTextures.Add(JudgementType.Great, LoadTexture(Path.Combine(baseDir, "Assets\\Judgements\\judge-great.png")));
-            judgementTextures.Add(JudgementType.Good, LoadTexture(Path.Combine(baseDir, "Assets\\Judgements\\judge-good.png")));
-            judgementTextures.Add(JudgementType.Bad, LoadTexture(Path.Combine(baseDir, "Assets\\Judgements\\judge-bad.png")));
-            judgementTextures.Add(JudgementType.Miss, LoadTexture(Path.Combine(baseDir, "Assets\\Judgements\\judge-miss.png")));
+            this.skin = skin;
         }
 
         public void Initialise()
@@ -65,7 +53,7 @@ namespace ProjectOdyssey.Render
 
             if (resultAge >= 0f && resultAge <= JudgementDisplayDurationMs)
             {
-                Draw(judgementTextures[currentResult.Type], 960, 480);
+                Draw(skin.Judgements[currentResult.Type], 960, 480);
             }
 
             if (incomingCombo > 0)
@@ -76,7 +64,7 @@ namespace ProjectOdyssey.Render
                     comboString = incomingCombo.ToString();
                 }
 
-                fontRenderer.Draw(glyphs_40, comboString, 960 - (GlyphOffsetX(comboString, glyphs_40) / 2), 540, primaryTextColour);
+                fontRenderer.Draw(skin.Glyphs, comboString, 960 - (skin.Glyphs.MeasureText(comboString) / 2), 540, primaryTextColour);
             }
 
             if (incomingAccuracy != cachedAccuracy)
@@ -85,7 +73,7 @@ namespace ProjectOdyssey.Render
                 accuracyString = incomingAccuracy.ToString();
             }
 
-            fontRenderer.Draw(glyphs_40, accuracyString + "%", 50, 50, primaryTextColour);
+            fontRenderer.Draw(skin.Glyphs, accuracyString + "%", 50, 50, primaryTextColour);
 
             foreach (var result in recentJudgementResults)
             {
@@ -100,22 +88,6 @@ namespace ProjectOdyssey.Render
             }
         }
 
-        // Helper function to calculate the total width of a string in pixels based on the glyphs
-        public int GlyphOffsetX(string text, Dictionary<char, FreeTypeGlyph> glyphs)
-        {
-            int totalWidth = 0;
-
-            foreach (char c in text)
-            {
-                if (glyphs.ContainsKey(c))
-                {
-                    totalWidth += glyphs[c].Advance;
-                }
-            }
-
-            return totalWidth;
-        }
-
         public override void Resize(int width, int height)
         {
             base.Resize(width, height);
@@ -124,18 +96,7 @@ namespace ProjectOdyssey.Render
 
         public override void Dispose()
         {
-            fontRenderer.Dispose();
-
-            foreach (var glyph in glyphs_40.Values)
-            {
-                glyph.Dispose();
-            }
-
-            foreach (var texture in judgementTextures.Values)
-            {
-                texture.Dispose();
-            }
-
+            fontRenderer.Dispose();   // skin textures/glyphs belong to the SkinManager
             base.Dispose();
         }
     }

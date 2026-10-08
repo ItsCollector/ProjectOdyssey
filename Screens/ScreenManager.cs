@@ -1,6 +1,7 @@
-﻿using OpenTK.Windowing.GraphicsLibraryFramework;
+using OpenTK.Windowing.GraphicsLibraryFramework;
 using OpenTK.Windowing.Common;
 using ProjectOdyssey.Audio;
+using ProjectOdyssey.Skinning;
 
 namespace ProjectOdyssey.Screens
 {
@@ -8,9 +9,10 @@ namespace ProjectOdyssey.Screens
     // should only ever talk to this class, never to a concrete IGameScreen -
     // that's what let MainWindow shrink down to just forwarding GameWindow
     // events instead of knowing about GameplayScreen/ChartManagerScreen etc.
-    public class ScreenManager
+    public class ScreenManager : IDisposable
     {
         private readonly AudioManager audioManager;
+        private SkinManager? skinManager;   // created in Initialise(): it needs a live GL context
         private readonly Stack<IGameScreen> screens = new();
         private int viewportWidth;
         private int viewportHeight;
@@ -22,13 +24,28 @@ namespace ProjectOdyssey.Screens
             this.audioManager = new AudioManager();
         }   
 
+        // Loads the skin (textures + glyphs). Call once from MainWindow.OnLoad, after the
+        // GL context exists and before the first Push. Constructing this earlier (e.g. in a
+        // field initialiser) runs GL calls with no context.
+        public void Initialise(string? skinDirectory)
+        {
+            if (skinManager != null)
+                throw new InvalidOperationException("ScreenManager is already initialised; live screens hold references to the skin's textures.");
+
+            skinManager = new SkinManager(skinDirectory);
+        }
+
         // Pushes a new screen on top of the stack (e.g. gameplay -> pause menu).
         // The screen underneath is left loaded but no longer updated/rendered
         // until this one is popped.
         public void Push(IGameScreen screen)
         {
+            if (skinManager == null)
+                throw new InvalidOperationException("Call Initialise() before pushing screens.");
+
             screen.ScreenManager = this;
             screen.AudioManager = audioManager;
+            screen.SkinManager = skinManager;
             screen.Load();
             screen.Resize(viewportWidth, viewportHeight);
             screens.Push(screen);
@@ -77,6 +94,16 @@ namespace ProjectOdyssey.Screens
         {
             while (screens.Count > 0)
                 screens.Pop().Unload();
+        }
+
+        // Unloads every screen first (they borrow from the skin), then frees the skin and audio.
+        // Call with the GL context still current.
+        public void Dispose()
+        {
+            UnloadAll();
+            skinManager?.Dispose();
+            skinManager = null;
+            audioManager.Dispose();
         }
 
         public void OnKeyDown(Keys key)

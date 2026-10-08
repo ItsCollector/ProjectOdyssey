@@ -1,43 +1,17 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 using ProjectOdyssey.Common;
 
 namespace ProjectOdyssey.Skinning
 {
+    // File discovery + config parsing only. Deciding what to do when something is
+    // missing (fall back to defaults) is the SkinManager's job.
     public static class GameplaySkinParser
     {
-        public static Result<(GameplaySkinConfig, SkinAssets)> LoadSkin()
-        {
-            string skinDirectory = Path.Combine(AppContext.BaseDirectory, "skins/Skin 1");
-
-            // Get the skin files from the skin directory
-            var filesResult = GetFiles(skinDirectory);
-            if (!filesResult.IsSuccess)
-            {
-                return Result<(GameplaySkinConfig, SkinAssets)>.Err(filesResult.Error);
-            }
-
-            // Load the skin config 
-            var configResult = ParseSkinConfig(filesResult.Value);
-            if (!configResult.IsSuccess)
-            {
-                return Result<(GameplaySkinConfig, SkinAssets)>.Err(configResult.Error);
-            }
-
-            // Load skin assets
-            var assetsResult = DiscoverAssets(filesResult.Value);
-            if (!assetsResult.IsSuccess)
-            {
-                return Result<(GameplaySkinConfig, SkinAssets)>.Err(assetsResult.Error);
-            }
-
-            return Result<(GameplaySkinConfig, SkinAssets)>.Ok((configResult.Value, assetsResult.Value));
-        }
-
-        public static Result<string[]> GetFiles(string skinDirectory)
+        public static Result<string[]> GetFiles(string directory)
         {
             try
             {
-                return Result<string[]>.Ok(Directory.GetFiles(skinDirectory));
+                return Result<string[]>.Ok(Directory.GetFiles(directory));
             }
             catch (Exception ex)
             {
@@ -59,6 +33,9 @@ namespace ProjectOdyssey.Skinning
                         if (skin == null)
                             return Result<GameplaySkinConfig>.Err("config.json was empty or invalid.");
 
+                        if (skin.NoteWidth <= 0 || skin.NoteHeight <= 0)
+                            return Result<GameplaySkinConfig>.Err("config.json: NoteWidth and NoteHeight must be positive.");
+
                         return Result<GameplaySkinConfig>.Ok(skin);
                     }
                 }
@@ -69,43 +46,6 @@ namespace ProjectOdyssey.Skinning
             {
                 return Result<GameplaySkinConfig>.Err($"Error parsing skin config: {ex.Message}");
             }
-        }
-
-        // Discovers every required skin component and returns them as one bundle,
-        // or the first missing-component error encountered.
-        public static Result<SkinAssets> DiscoverAssets(string[] files)
-        {
-            var tapNotes = FindImageVariants(files, "tap_note");
-            if (!tapNotes.IsSuccess) return Result<SkinAssets>.Err(tapNotes.Error);
-
-            var lnHeads = FindImageVariants(files, "ln_head");
-            if (!lnHeads.IsSuccess) return Result<SkinAssets>.Err(lnHeads.Error);
-
-            var lnBody = FindImage(files, "ln_body");
-            if (!lnBody.IsSuccess) return Result<SkinAssets>.Err(lnBody.Error);
-
-            var lnTail = FindImage(files, "ln_tail");
-            if (!lnTail.IsSuccess) return Result<SkinAssets>.Err(lnTail.Error);
-
-            var judgementLine = FindImage(files, "judgement_line");
-            if (!judgementLine.IsSuccess) return Result<SkinAssets>.Err(judgementLine.Error);
-
-            var receptorUp = FindImage(files, "receptor_up");
-            if (!receptorUp.IsSuccess) return Result<SkinAssets>.Err(receptorUp.Error);
-
-            var receptorDown = FindImage(files, "receptor_down");
-            if (!receptorDown.IsSuccess) return Result<SkinAssets>.Err(receptorDown.Error);
-
-            return Result<SkinAssets>.Ok(new SkinAssets
-            {
-                TapNotePaths = tapNotes.Value,
-                LnHeadPaths = lnHeads.Value,
-                LnBodyPath = lnBody.Value,
-                LnTailPath = lnTail.Value,
-                JudgementLinePath = judgementLine.Value,
-                ReceptorUpPath = receptorUp.Value,
-                ReceptorDownPath = receptorDown.Value
-            });
         }
 
         // Finds every "{baseName}_N.png" file, sorted by N. At least one must exist.
@@ -129,22 +69,10 @@ namespace ProjectOdyssey.Skinning
             return Result<string[]>.Ok(matches);
         }
 
-        // Finds a single required file, "{name}.png".
-        public static Result<string> FindImage(string[] files, string name)
-        {
-            foreach (string filePath in files)
-            {
-                if (Path.GetFileName(filePath).Equals($"{name}.png", StringComparison.OrdinalIgnoreCase))
-                    return Result<string>.Ok(filePath);
-            }
-
-            return Result<string>.Err($"Missing required image '{name}.png'");
-        }
-
         private static int? ParseTrailingNumber(string fileName, string baseName)
         {
             string prefix = baseName + "_";
-            if (!fileName.StartsWith(prefix)) return null;
+            if (!fileName.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)) return null;
 
             string suffix = fileName.Substring(prefix.Length);
             return int.TryParse(suffix, out int n) ? n : null;

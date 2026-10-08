@@ -1,4 +1,4 @@
-﻿using OpenTK.Windowing.Common;
+using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using ProjectOdyssey.Audio;
 using ProjectOdyssey.Engine;
@@ -17,14 +17,13 @@ namespace ProjectOdyssey.Screens
         private GameSession session = null!;
         private GameplayRenderer gameplayRenderer = null!;
         private HudRenderer hudRenderer = null!;
-        private GameplaySkinConfig skinConfig = null!;
-        private SkinAssets skinAssets = null!;
         private string songPath;
         private bool audioStarted = false;
         private bool isPaused = false;
 
         public ScreenManager ScreenManager { private get; set; }
         public AudioManager AudioManager { private get; set; }
+        public SkinManager SkinManager { private get; set; }
 
         public GameplayScreen(ChartData chartData, string songPath, InputHistory inputHistory)
         {
@@ -35,11 +34,10 @@ namespace ProjectOdyssey.Screens
 
         public void Load()
         {
-            (skinConfig, skinAssets) = GameplaySkinParser.LoadSkin().Value;
             session = new GameSession(inputHistory, chartData);
-            gameplayRenderer = new GameplayRenderer(skinConfig, skinAssets);
+            gameplayRenderer = new GameplayRenderer(SkinManager.Gameplay);
             gameplayRenderer.Intitialise();
-            hudRenderer = new HudRenderer();
+            hudRenderer = new HudRenderer(SkinManager.Hud);
             hudRenderer.Initialise();
             AudioManager.ReadAudioFile(songPath);
             session.Start(chartData);

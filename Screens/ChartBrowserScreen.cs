@@ -6,6 +6,7 @@ using ProjectOdyssey.Input;
 using ProjectOdyssey.Input.Native;
 using ProjectOdyssey.IO;
 using ProjectOdyssey.Render;
+using ProjectOdyssey.Skinning;
 
 namespace ProjectOdyssey.Screens
 {
@@ -20,6 +21,7 @@ namespace ProjectOdyssey.Screens
 
         public ScreenManager ScreenManager { private get; set; }
         public AudioManager AudioManager { private get; set; }
+        public SkinManager SkinManager { private get; set; }
 
         public ChartBrowserScreen(InputHistory inputHistory)
         {
@@ -28,7 +30,7 @@ namespace ProjectOdyssey.Screens
 
         public void Load()
         {
-            browserRenderer = new ChartBrowserRenderer();
+            browserRenderer = new ChartBrowserRenderer(SkinManager.ChartBrowser);
             browserRenderer.Initialise();
 
             var charts = ChartDatabase.GetChartsForBrowsing();
@@ -70,8 +72,9 @@ namespace ProjectOdyssey.Screens
 
         public void Unload()
         {
-            browserRenderer.Dispose();
+            // Unsubscribe first so nothing can call into a disposed renderer
             session.SelectionChanged -= browserRenderer.LoadBackgroundTexture;
+            browserRenderer.Dispose();
         }
 
         private void CommitSelection()

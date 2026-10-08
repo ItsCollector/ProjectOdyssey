@@ -1,10 +1,9 @@
-﻿using OpenTK.Graphics.OpenGL4;
+using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
-using StbImageSharp;
 
 namespace ProjectOdyssey.Render
 {
-    public class Renderer
+    public class Renderer : IDisposable
     {
         private int vao;
         private int vbo;
@@ -13,6 +12,7 @@ namespace ProjectOdyssey.Render
         private Matrix4 projection;
         private int viewportWidth = 1920;
         private int viewportHeight = 1080;
+        private bool disposed;
 
         public Renderer()
         {
@@ -69,71 +69,6 @@ namespace ProjectOdyssey.Render
             shader.SetVector4("uColor", new Vector4(1.0f, 1.0f, 1.0f, 1.0f));
 
             GL.ActiveTexture(TextureUnit.Texture0);
-        }
-
-        // Creates Texture object based on image file at given path
-        public Texture LoadTexture(string path)
-        {
-            int texHandle = GL.GenTexture();
-            GL.BindTexture(TextureTarget.Texture2D, texHandle);
-
-            using var stream = File.OpenRead(path);
-            var image = ImageResult.FromStream(stream, ColorComponents.RedGreenBlueAlpha);
-
-            GL.TexImage2D(
-                TextureTarget.Texture2D,
-                0,
-                PixelInternalFormat.Rgba,
-                image.Width,
-                image.Height,
-                0,
-                PixelFormat.Rgba,
-                PixelType.UnsignedByte,
-                image.Data
-            );
-
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
-
-            return new Texture(texHandle, image.Width, image.Height, path);
-        }
-
-        // Loads multiple textures from a list of paths, returning a list of Texture objects
-        public List<Texture> LoadTextures(string[] paths)
-        {
-            List<Texture> textures = new List<Texture>();
-
-            foreach (string path in paths)
-            {
-                int texHandle = GL.GenTexture();
-                GL.BindTexture(TextureTarget.Texture2D, texHandle);
-
-                using var stream = File.OpenRead(path);
-                var image = ImageResult.FromStream(stream, ColorComponents.RedGreenBlueAlpha);
-
-                GL.TexImage2D(
-                    TextureTarget.Texture2D,
-                    0,
-                    PixelInternalFormat.Rgba,
-                    image.Width,
-                    image.Height,
-                    0,
-                    PixelFormat.Rgba,
-                    PixelType.UnsignedByte,
-                    image.Data
-                );
-
-                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
-                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
-                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
-                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
-
-                textures.Add(new Texture(texHandle, image.Width, image.Height, path));
-            }
-
-            return textures;
         }
 
         public void Draw(Texture? texture, float xPosition, float yPosition, float width = -1, float height = -1)
@@ -216,10 +151,16 @@ namespace ProjectOdyssey.Render
             projection = Matrix4.CreateOrthographicOffCenter(0f, width, height, 0f, -1f, 1f);
         }
 
+        // Releases only the GL objects this renderer created. Skin textures and glyphs are
+        // borrowed from the SkinManager and must NOT be disposed here (or in subclasses).
         public virtual void Dispose()
         {
+            if (disposed) return;
+            disposed = true;
+
             shader.Dispose();
             GL.DeleteBuffer(vbo);
+            GL.DeleteBuffer(ebo);   // was leaking
             GL.DeleteVertexArray(vao);
         }
     }

@@ -1,10 +1,10 @@
-﻿using NAudio.Vorbis;
+using NAudio.Vorbis;
 using NAudio.Wave;
 using NAudio.Wave.SampleProviders;
 
 namespace ProjectOdyssey.Audio
 {
-    public class AudioManager
+    public class AudioManager : IDisposable
     {
         private WasapiOut outputDevice;
         private WaveStream? reader;

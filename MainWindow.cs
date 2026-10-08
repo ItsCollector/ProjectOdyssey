@@ -1,4 +1,4 @@
-﻿using OpenTK.Graphics.OpenGL4;
+using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
@@ -7,6 +7,7 @@ using ProjectOdyssey.Input;
 using ProjectOdyssey.Input.Native;
 using ProjectOdyssey.IO;
 using ProjectOdyssey.Screens;
+using ProjectOdyssey.Skinning;
 
 namespace ProjectOdyssey
 {
@@ -46,6 +47,9 @@ namespace ProjectOdyssey
             inputListener.Initialise((IntPtr)WindowPtr, WndProcHook);
             inputListener.OnInputEvent += inputHistory.RecordInputEvent;
 
+            // Loads all skin textures/glyphs once. Needs the GL context, so it can't happen in the constructor.
+            screenManager.Initialise(Path.Combine(AppContext.BaseDirectory, "Skins", "Skin 1"));
+
             // ScreenManager needs to know the viewport before the first
             // screen is pushed, so Resize() is used here instead of it
             // reading ClientSize on its own.
@@ -84,7 +88,7 @@ namespace ProjectOdyssey
         {
             base.OnUnload();
 
-            screenManager.UnloadAll();
+            screenManager.Dispose();   // unloads screens, then the skin, then audio
             inputListener.Dispose((IntPtr)WindowPtr);
         }
 

@@ -1,6 +1,7 @@
 ﻿using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using ProjectOdyssey.Audio;
+using ProjectOdyssey.Skinning;
 
 namespace ProjectOdyssey.Screens
 {
@@ -8,6 +9,7 @@ namespace ProjectOdyssey.Screens
     {
         ScreenManager ScreenManager { set; }
         AudioManager AudioManager { set; }
+        SkinManager SkinManager { set; }
 
         // Called once when the ScreenManager pushes this screen. Do expensive
         // setup here (loading skins, starting sessions, etc.) rather than in
