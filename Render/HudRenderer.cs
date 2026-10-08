@@ -91,7 +91,7 @@ namespace ProjectOdyssey.Render
 
         public override void Resize(int width, int height)
         {
-            base.Resize(width, height);
+            base.Resize(1920, 1080);
             fontRenderer.Resize(1920, 1080);
         }
 
