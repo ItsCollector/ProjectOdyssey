@@ -9,6 +9,7 @@ namespace ProjectOdyssey.Engine
     public class JudgementResultBuffer
     {
         private readonly JudgementResult[] buffer;
+        private int capacity => buffer.Length;
         private readonly object bufferLock = new();
         private int writeIndex = 0;
         private int count = 0;
@@ -16,6 +17,19 @@ namespace ProjectOdyssey.Engine
         public JudgementResultBuffer(int capacity)
         {
             buffer = new JudgementResult[capacity];
+        }
+
+        public int CopyTo(JudgementResult[] destination)
+        {
+            lock (bufferLock)
+            {
+                for (int i = 0; i < count; i++)
+                {
+                    destination[i] = buffer[(writeIndex - count + i + buffer.Length) % buffer.Length];
+                }
+
+                return count;
+            }
         }
 
         public void Add(JudgementResult result)

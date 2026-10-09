@@ -1,6 +1,7 @@
 using OpenTK.Mathematics;
 using ProjectOdyssey.Engine;
 using ProjectOdyssey.Skinning;
+using System.Globalization;
 
 namespace ProjectOdyssey.Render
 {
@@ -48,7 +49,7 @@ namespace ProjectOdyssey.Render
         // currentResult = the result to draw as feedback for the player's worst hit
         // recentJudgementResults = all recent results to use to draw the error graph
         // currentSongTimeMs = the song time "now", used to age out stale results
-        public void DrawHud(int incomingCombo, JudgementResult currentResult, JudgementResult[] recentJudgementResults, float currentSongTimeMs, float incomingAccuracy)
+        public void DrawHud(int incomingCombo, JudgementResult currentResult, ReadOnlySpan<JudgementResult> recentJudgementResults, float currentSongTimeMs, float incomingAccuracy)
         {
             float resultAge = currentSongTimeMs - currentResult.JudgedAtMs;
 
@@ -68,13 +69,14 @@ namespace ProjectOdyssey.Render
                 fontRenderer.Draw(skin.Glyphs, comboString, 960 - (skin.Glyphs.MeasureText(comboString) / 2), 540, primaryTextColour);
             }
 
-            if (incomingAccuracy != cachedAccuracy)
+            float roundedAccuracy = (float)Math.Round(incomingAccuracy, 2);
+            if (roundedAccuracy != cachedAccuracy)
             {
-                cachedAccuracy = (float)Math.Round(incomingAccuracy, 2);
-                accuracyString = incomingAccuracy.ToString();
+                cachedAccuracy = roundedAccuracy;
+                accuracyString = roundedAccuracy.ToString("F2", CultureInfo.InvariantCulture) + "%";
             }
 
-            fontRenderer.Draw(skin.Glyphs, accuracyString + "%", 50, 50, primaryTextColour);
+            fontRenderer.Draw(skin.Glyphs, accuracyString, 50, 50, primaryTextColour);
 
             foreach (var result in recentJudgementResults)
             {

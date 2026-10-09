@@ -113,11 +113,11 @@ namespace ProjectOdyssey
 
             string path = Path.Combine(dir, $"frametimes_{DateTime.Now:yyyyMMdd_HHmmss}.csv");
             using var w = new StreamWriter(path);
-            w.WriteLine("frame,frame_ms,allocated_bytes,gen2_count");
+            w.WriteLine("frame,frame_ms,allocated_bytes,gen2_count,screen");
 
             for (int i = 0; i < frameIndex; i++)
             {
-                w.WriteLine($"{i},{frameTimesMs[i]:F4},{allocatedBytes[i]},{gen2Counts[i]}");
+                w.WriteLine($"{i},{frameTimesMs[i]:F4},{allocatedBytes[i]},{gen2Counts[i]},{screenManager.CurrentScreen}");
             }
 
             Console.WriteLine($"[INFO] Wrote {frameIndex} frames to {path}");

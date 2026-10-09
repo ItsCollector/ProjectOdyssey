@@ -6,6 +6,7 @@ namespace ProjectOdyssey.Render
     public class Shader
     {
         private int handle;
+        private readonly Dictionary<string, int> uniformLocations = new();
 
         public Shader(string vertexShaderPath, string fragmentShaderPath)
         {
@@ -54,28 +55,35 @@ namespace ProjectOdyssey.Render
             return program;
         }
 
+        private int GetLocation(string name)
+        {
+            if (!uniformLocations.TryGetValue(name, out int location))
+            {
+                location = GL.GetUniformLocation(handle, name);
+                uniformLocations[name] = location;
+            }
+
+            return location;
+        }
+
         public void SetInt(string name, int value)
         {
-            int location = GL.GetUniformLocation(handle, name);
-            GL.Uniform1(location, value);
+            GL.Uniform1(GetLocation(name), value);
         }
 
         public void SetMatrix4(string name, Matrix4 matrix)
         {
-            int location = GL.GetUniformLocation(handle, name);
-            GL.UniformMatrix4(location, false, ref matrix);
+            GL.UniformMatrix4(GetLocation(name), false, ref matrix);
         }
 
         public void SetVector2(string name, float x, float y)
         {
-            int location = GL.GetUniformLocation(handle, name);
-            GL.Uniform2(location, x, y);
+            GL.Uniform2(GetLocation(name), x, y);
         }
 
         public void SetVector4(string name, Vector4 value)
         {
-            int location = GL.GetUniformLocation(handle, name);
-            GL.Uniform4(location, value);
+            GL.Uniform4(GetLocation(name), value);
         }
 
         public void Use()

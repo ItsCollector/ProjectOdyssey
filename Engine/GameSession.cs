@@ -27,10 +27,10 @@ namespace ProjectOdyssey.Engine
         public Note[][] NotesByColumn { get; set; } // pass these into the function later chart loading is being implemented, and remove nullable
         public int[] ColumnCursors { get; set; } // construct cursors passed on the number of columns in the chart, and remove nullable
         public int Combo { get; private set; } = 0;
-        public JudgementResult[] GetRecentJudgementResults() => judgementResultBuffer.Snapshot();
         public JudgementResult CurrentJudgementResult { get; private set; } = new JudgementResult(JudgementType.Marvellous, 0f, float.NegativeInfinity);
 
         private JudgementResultBuffer judgementResultBuffer = new(300);
+        private readonly JudgementResult[] recentScratch = new JudgementResult[300];
         private int judgedNotesCount = 0;
         private float accuracyAccumulator = 0f;
         public float Accuracy { get; private set; } = 100f;
@@ -239,6 +239,12 @@ namespace ProjectOdyssey.Engine
                 76 => 6, // L
                 _ => throw new ArgumentException($"Invalid key code: {key}")
             };
+        }
+
+        public ReadOnlySpan<JudgementResult> GetRecentJudgementResults()
+        {
+            int n = judgementResultBuffer.CopyTo(recentScratch);
+            return recentScratch.AsSpan(0, n);
         }
     }
 }

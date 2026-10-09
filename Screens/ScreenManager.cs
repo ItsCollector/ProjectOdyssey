@@ -19,6 +19,7 @@ namespace ProjectOdyssey.Screens
         private int viewportHeight;
 
         public bool HasScreen => screens.Count > 0;
+        public IGameScreen? CurrentScreen => screens.Count > 0 ? screens.Peek() : null;
 
         public ScreenManager()
         {
