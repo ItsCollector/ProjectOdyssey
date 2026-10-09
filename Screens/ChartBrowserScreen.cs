@@ -19,6 +19,7 @@ namespace ProjectOdyssey.Screens
         private Vector2 lastMousePos;
         private InputHistory inputHistory;
 
+        public Renderer Renderer { private get; set; }
         public ScreenManager ScreenManager { private get; set; }
         public AudioManager AudioManager { private get; set; }
         public SkinManager SkinManager { private get; set; }
@@ -30,8 +31,7 @@ namespace ProjectOdyssey.Screens
 
         public void Load()
         {
-            browserRenderer = new ChartBrowserRenderer(SkinManager.MenuSkin);
-            browserRenderer.Initialise();
+            browserRenderer = new ChartBrowserRenderer(SkinManager.MenuSkin, Renderer);
 
             var charts = ChartDatabase.GetChartsForBrowsing();
 
@@ -67,14 +67,13 @@ namespace ProjectOdyssey.Screens
         {
             windowWidth = width;
             windowHeight = height;
-            browserRenderer.Resize(width, height);
         }
 
         public void Unload()
         {
             // Unsubscribe first so nothing can call into a disposed renderer
             session.SelectionChanged -= browserRenderer.LoadBackgroundTexture;
-            browserRenderer.Dispose();
+            browserRenderer.Dispose();   // frees the chart background texture it loaded
         }
 
         private void CommitSelection()

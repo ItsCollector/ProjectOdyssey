@@ -18,8 +18,9 @@ namespace ProjectOdyssey.Screens
         private GameplayRenderer gameplayRenderer = null!;
         private HudRenderer hudRenderer = null!;
         private string songPath;
-        private bool audioStarted = false;  
+        private bool audioStarted = false;
 
+        public Renderer Renderer { private get; set; }
         public ScreenManager ScreenManager { private get; set; }
         public AudioManager AudioManager { private get; set; }
         public SkinManager SkinManager { private get; set; }
@@ -34,10 +35,8 @@ namespace ProjectOdyssey.Screens
         public void Load()
         {
             session = new GameSession(inputHistory, chartData);
-            gameplayRenderer = new GameplayRenderer(SkinManager.Gameplay);
-            gameplayRenderer.Intitialise();
-            hudRenderer = new HudRenderer(SkinManager.Hud);
-            hudRenderer.Initialise();
+            gameplayRenderer = new GameplayRenderer(SkinManager.Gameplay, Renderer);
+            hudRenderer = new HudRenderer(SkinManager.Hud, Renderer);
             AudioManager.ReadAudioFile(songPath);
             session.Start(chartData);
         }
@@ -57,17 +56,9 @@ namespace ProjectOdyssey.Screens
             hudRenderer.DrawHud(session.Combo, session.CurrentJudgementResult, session.GetRecentJudgementResults(), session.CurrentSongTimeMs, session.Accuracy);
         }
 
-        public void Resize(int width, int height)
-        {
-            gameplayRenderer.UpdateViewportSize(width, height);
-            hudRenderer?.Resize(width, height);
-        }
-
         public void Unload()
         {
             session.Stop();
-            gameplayRenderer.Dispose();
-            hudRenderer.Dispose();
         }
 
         public void OnKeyDown(Keys key)

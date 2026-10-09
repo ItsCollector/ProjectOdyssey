@@ -1,27 +1,46 @@
-using OpenTK.Graphics.OpenGL4;
+﻿using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
+using System.Runtime.InteropServices;
 
 namespace ProjectOdyssey.Render
 {
+    // The only class that owns GL drawing resources. Screens queue commands during Render();
+    // MainWindow calls Flush() once per frame after every screen has queued.
+    // Textures and glyph sets are borrowed from the SkinManager: a command only holds a raw
+    // handle, so Flush must run before anything disposes the texture it refers to.
     public class Renderer : IDisposable
     {
+        private static readonly string shaderVertPath = Path.Combine(AppContext.BaseDirectory, "Render", "Shaders", "shader.vert");
+        private static readonly string shaderFragPath = Path.Combine(AppContext.BaseDirectory, "Render", "Shaders", "shader.frag");
+
+        // Everything draws in a fixed logical space; GL.Viewport scales it to the window.
+        private const float LogicalWidth = 1920f;
+        private const float LogicalHeight = 1080f;
+
         private int vao;
         private int vbo;
         private int ebo;
-        private Shader shader;
-        private Matrix4 projection;
-        private int viewportWidth = 1920;
-        private int viewportHeight = 1080;
+        private int baseTexture;    // 1x1 white, so flat quads are just "white * colour"
+        private readonly Shader shader;
+        private static readonly Vector4 FullUv = new(0f, 0f, 1f, 1f);
+        private readonly List<DrawCommand> queue = new(4096);
         private bool disposed;
 
+        // Needs a live GL context (construct after the window has loaded).
         public Renderer()
         {
             SetupMesh();
-            shader = new Shader("Render/Shaders/shader.vert", "Render/Shaders/shader.frag");
+            shader = new Shader(shaderVertPath, shaderFragPath);
 
-            Resize(1920, 1080);
+            shader.Use();
+            shader.SetMatrix4("projection", Matrix4.CreateOrthographicOffCenter(0f, LogicalWidth, LogicalHeight, 0f, -1f, 1f));
+            shader.SetInt("uTexture", 0);
+
+            GL.Enable(EnableCap.Blend);
+            GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
         }
 
+        // Unit quad centred on the origin, with UVs matching OpenGL's bottom-left origin
         private void SetupMesh()
         {
             float[] vertices =
@@ -49,136 +68,138 @@ namespace ProjectOdyssey.Render
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, ebo);
             GL.BufferData(BufferTarget.ElementArrayBuffer, indices.Length * sizeof(uint), indices, BufferUsageHint.StaticDraw);
 
-            // Vertex Position attribute
+            // Vertex position attribute
             GL.VertexAttribPointer(0, 2, VertexAttribPointerType.Float, false, 4 * sizeof(float), 0);
             GL.EnableVertexAttribArray(0);
 
             // UV attribute
             GL.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, 4 * sizeof(float), 2 * sizeof(float));
             GL.EnableVertexAttribArray(1);
+
+            // 1x1 white texture used for flat-colour quads
+            baseTexture = GL.GenTexture();
+            GL.BindTexture(TextureTarget.Texture2D, baseTexture);
+            byte[] white = { 255, 255, 255, 255 };
+            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, 1, 1, 0, PixelFormat.Rgba, PixelType.UnsignedByte, white);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
         }
 
-        public void Intitialise()
+        private void Queue(int textureHandle, float x, float y, float w, float h, Vector4 colour, Vector4? uv = null)
         {
+            queue.Add(new DrawCommand
+            {
+                TextureHandle = textureHandle,
+                X = x,
+                Y = y,
+                Width = w,
+                Height = h,
+                Colour = colour,
+                UvRect = uv ?? FullUv
+            });
+        }
+
+        // Textured quad centred on (x, y). Width/height default to the texture's own size.
+        // tint multiplies the texture; use alpha < 1 to fade it.
+        public void Draw(Texture texture, float x, float y, float width = -1, float height = -1, Vector4? tint = null)
+        {
+            Queue(texture.Handle, x, y,
+                  width == -1 ? texture.Width : width,
+                  height == -1 ? texture.Height : height,
+                  tint ?? Vector4.One);
+        }
+
+        // Flat-colour quad centred on (x, y)
+        public void DrawQuad(float x, float y, float width, float height, Vector4 colour)
+        {
+            Queue(baseTexture, x, y, width, height, colour);
+        }
+
+        // Queues one command per glyph. (x, y) is the top-left of the text line.
+        public void DrawText(GlyphSet glyphs, string text, float x, float y, Vector4 colour)
+        {
+            foreach (char c in text)
+            {
+                if (!glyphs.TryGetGlyph(c, out FreeTypeGlyph glyph))
+                {
+                    continue;
+                }
+
+                if (glyph.Width > 0 && glyph.Height > 0) // spaces have no bitmap, only an advance
+                {
+                    float left = x + glyph.BearingX;
+                    float top = y + (glyphs.Baseline - glyph.BearingY);
+
+                    Queue(glyph.TextureHandle,
+                          left + glyph.Width / 2f,    // quads are centre-based
+                          top + glyph.Height / 2f,
+                          glyph.Width,
+                          glyph.Height,
+                          colour);
+                }
+
+                x += glyph.Advance;
+            }
+        }
+
+        // Draws the part of the texture that sits at or above clipY (screen Y grows downward).
+        public void DrawClippedBelow(Texture texture, float x, float y, float width, float height, float clipY)
+        {
+            float top = y - height / 2f;
+            float visibleBottom = Math.Min(y + height / 2f, clipY);
+            float visibleHeight = visibleBottom - top;
+
+            if (visibleHeight <= 0f) return; // entirely clipped away
+
+            float v1 = visibleHeight / height; // fraction of the texture that survives
+            Queue(texture.Handle, 
+                  x, 
+                  top + visibleHeight / 2f, 
+                  width, 
+                  visibleHeight,
+                  Vector4.One, 
+                  new Vector4(0f, 0f, 1f, v1));
+        }
+
+        // Draws everything queued this frame, in the order it was queued, then empties the queue.
+        // Call exactly once per frame, after all screens have queued.
+        public void Flush()
+        {
+            if (queue.Count == 0) return;
+
             shader.Use();
             GL.BindVertexArray(vao);
-
-            shader.SetMatrix4("projection", projection);
-            shader.SetInt("uTexture", 0);
-            shader.SetInt("uUseTexture", 0);
-            shader.SetVector4("uColor", new Vector4(1.0f, 1.0f, 1.0f, 1.0f));
-
             GL.ActiveTexture(TextureUnit.Texture0);
-        }
 
-        // Every draw binds this renderer's own program + mesh. Uniform setters act on whichever
-        // program is currently active, and several renderers (plus FontRenderer) now draw in the
-        // same frame, so nothing can assume "my program is still bound from Initialise".
-        private void BindForDraw()
-        {
-            shader.Use();
-            GL.BindVertexArray(vao);
-            GL.ActiveTexture(TextureUnit.Texture0);
-        }
-
-        public void Draw(Texture? texture, float xPosition, float yPosition, float width = -1, float height = -1)
-        {
-            BindForDraw();
-
-            if (texture == null)
+            int boundTexture = -1;
+            foreach (ref readonly DrawCommand cmd in CollectionsMarshal.AsSpan(queue))
             {
-                shader.SetInt("uUseTexture", 0);
-                shader.SetVector2("uPosition", xPosition, yPosition);
-                shader.SetVector2("uSize", width, height);
-            }
-            else
-            {
-                float w = (width == -1) ? texture.Width : width;
-                float h = (height == -1) ? texture.Height : height;
+                if (cmd.TextureHandle != boundTexture) // only rebind when the texture changes
+                {
+                    GL.BindTexture(TextureTarget.Texture2D, cmd.TextureHandle);
+                    boundTexture = cmd.TextureHandle;
+                }
 
-                GL.BindTexture(TextureTarget.Texture2D, texture.Handle);
-                shader.SetInt("uUseTexture", 1);
+                shader.SetVector2("uPosition", cmd.X, cmd.Y);
+                shader.SetVector2("uSize", cmd.Width, cmd.Height);
+                shader.SetVector4("uColor", cmd.Colour);
+                shader.SetVector4("uUvRect", cmd.UvRect);
 
-                shader.SetVector2("uPosition", xPosition, yPosition);
-                shader.SetVector2("uSize", w, h);
+                GL.DrawElements(PrimitiveType.Triangles, 6, DrawElementsType.UnsignedInt, 0);
             }
 
-            GL.DrawElements(PrimitiveType.Triangles, 6, DrawElementsType.UnsignedInt, 0);
+            queue.Clear(); // keeps capacity: no reallocation next frame
         }
 
-        public void DrawQuad(Texture? texture, float xPosition, float yPosition, float width = -1, float height = -1, Vector4? colour = null)
-        {
-            BindForDraw();
-
-            if (texture == null)
-            {
-                shader.SetInt("uUseTexture", 0);
-                shader.SetVector4("uColor", colour ?? Vector4.One);
-                shader.SetVector2("uPosition", xPosition, yPosition);
-                shader.SetVector2("uSize", width, height);
-            }
-            else
-            {
-                float w = (width == -1) ? texture.Width : width;
-                float h = (height == -1) ? texture.Height : height;
-
-                GL.BindTexture(TextureTarget.Texture2D, texture.Handle);
-                shader.SetInt("uUseTexture", 1);
-
-                shader.SetVector2("uPosition", xPosition, yPosition);
-                shader.SetVector2("uSize", w, h);
-            }
-
-            GL.DrawElements(PrimitiveType.Triangles, 6, DrawElementsType.UnsignedInt, 0);
-        }
-
-        public void DrawClippedBelow(Texture texture, float x, float y, float width, float height, float clipBelowScreenY)
-        {
-            GL.Enable(EnableCap.ScissorTest);
-
-            const float logicalWidth = 1920f;
-            const float logicalHeight = 1080f;
-
-            float scaleX = viewportWidth / logicalWidth;
-            float scaleY = viewportHeight / logicalHeight;
-
-            int scissorBottomY = (int)Math.Max(0, viewportHeight - (clipBelowScreenY * scaleY));
-            int scissorHeight = Math.Max(0, viewportHeight - scissorBottomY);
-            int scissorX = (int)((x - width / 2) * scaleX);
-            int scissorWidth = Math.Max(0, (int)(width * scaleX) + 1);
-
-            GL.Scissor(scissorX, scissorBottomY, scissorWidth, scissorHeight);
-
-            Draw(texture, x, y, width, height);
-
-            GL.Disable(EnableCap.ScissorTest);
-        }
-
-        public void UpdateViewportSize(int width, int height)
-        {
-            viewportWidth = width;
-            viewportHeight = height;
-        }
-
-        public virtual void Resize(int width, int height)
-        {
-            projection = Matrix4.CreateOrthographicOffCenter(0f, width, height, 0f, -1f, 1f);
-
-            // Upload to THIS renderer's program (the uniform call targets the active program)
-            shader.Use();
-            shader.SetMatrix4("projection", projection);
-        }
-
-        // Releases only the GL objects this renderer created. Skin textures and glyphs are
-        // borrowed from the SkinManager and must NOT be disposed here (or in subclasses).
-        public virtual void Dispose()
+        public void Dispose()
         {
             if (disposed) return;
             disposed = true;
 
             shader.Dispose();
+            GL.DeleteTexture(baseTexture);
             GL.DeleteBuffer(vbo);
-            GL.DeleteBuffer(ebo);   // was leaking
+            GL.DeleteBuffer(ebo);
             GL.DeleteVertexArray(vao);
         }
     }

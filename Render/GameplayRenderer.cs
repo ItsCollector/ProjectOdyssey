@@ -1,10 +1,14 @@
 using ProjectOdyssey.Engine;
 using ProjectOdyssey.Skinning;
+using ProjectOdyssey.Render;
 
 namespace ProjectOdyssey.Render
 {
-    public class GameplayRenderer : Renderer
+    public class GameplayRenderer
     {
+        // Renderer instance that this class will use to draw textures
+        private Renderer renderer;
+
         // Gameplay Column Positions
         private int columnStartX;
         private int columnSpacing = 0;
@@ -34,9 +38,10 @@ namespace ProjectOdyssey.Render
 
         // All textures are borrowed from the SkinManager (it owns and disposes them),
         // so this renderer has nothing of its own to dispose beyond the base class.
-        public GameplayRenderer(GameplaySkin skin)
+        public GameplayRenderer(GameplaySkin skin, Renderer renderer)
         {
             GameplaySkinConfig skinConfig = skin.Config;
+            this.renderer = renderer;
 
             noteWidth = skinConfig.NoteWidth;
             hitPositionX = skinConfig.HitPositionX;
@@ -72,13 +77,13 @@ namespace ProjectOdyssey.Render
         {
             if (targetType == TargetType.Line)
             {
-                Draw(judgementLineTexture, hitPositionX, hitPositionY, hitPositionWidth, hitPositionHeight);
+                renderer.Draw(judgementLineTexture, hitPositionX, hitPositionY, hitPositionWidth, hitPositionHeight);
             }
             else
             {
                 for (int i = 0; i < notesByColumn.Length; i++)
                 {
-                    Draw(receptorDownTexture, columnStartX + (noteWidth * i) + (noteWidth / 2), hitPositionY - headOffset, noteWidth, noteWidth);
+                    renderer.Draw(receptorDownTexture, columnStartX + (noteWidth * i) + (noteWidth / 2), hitPositionY - headOffset, noteWidth, noteWidth);
                 }
             }
 
@@ -100,7 +105,7 @@ namespace ProjectOdyssey.Render
 
                     if (note.NoteType == NoteType.Tap)
                     {
-                        Draw(tapNoteTextures[i], x, note.HeadPosY - headOffset, noteWidth, noteWidth);
+                        renderer.Draw(tapNoteTextures[i], x, note.HeadPosY - headOffset, noteWidth, noteWidth);
                     }
                     else
                     {
@@ -113,9 +118,9 @@ namespace ProjectOdyssey.Render
                         float bodyHeight = headCenterY - tailBottomEdge;
                         float bodyPosY = (headCenterY + tailBottomEdge) / 2f;
 
-                        Draw(lnBodyTexture, x, bodyPosY, noteWidth, Math.Max(bodyHeight, 0f));
-                        DrawClippedBelow(lnTailTexture, x, tailCenterY, noteWidth, noteWidth, headCenterY);
-                        Draw(lnHeadTextures[i], x, headCenterY, noteWidth, noteWidth);
+                        renderer.Draw(lnBodyTexture, x, bodyPosY, noteWidth, Math.Max(bodyHeight, 0f));
+                        renderer.DrawClippedBelow(lnTailTexture, x, tailCenterY, noteWidth, noteWidth, headCenterY);
+                        renderer.Draw(lnHeadTextures[i], x, headCenterY, noteWidth, noteWidth);
                     }
                 }
             }
@@ -129,4 +134,4 @@ namespace ProjectOdyssey.Render
             }
         }
     }
-}
+}

@@ -5,12 +5,13 @@ using ProjectOdyssey.Skinning;
 
 namespace ProjectOdyssey.Render
 {
-    public class ChartBrowserRenderer : Renderer
+    public class ChartBrowserRenderer : IDisposable
     {
-        private const int CardTextPadding = 16;
+        // Renderer instance that this class will use to draw textures
+        private Renderer renderer;
 
+        private const int CardTextPadding = 16;
         private readonly MenuSkin skin;   // borrowed: owned and disposed by the SkinManager
-        private FontRenderer fontRenderer = new FontRenderer();
         private Vector4 primaryTextColour = new Vector4(1f, 1f, 1f, 1f);
 
         // Either skin.MissingBackground (borrowed) or a chart's own background (owned by this renderer).
@@ -18,9 +19,10 @@ namespace ProjectOdyssey.Render
         private bool ownsBackground;
         private string? requestedBackgroundPath;
 
-        public ChartBrowserRenderer(MenuSkin skin)
+        public ChartBrowserRenderer(MenuSkin skin, Renderer renderer)
         {
             this.skin = skin;
+            this.renderer = renderer;
             background = skin.MissingBackground;
         }
 
@@ -70,22 +72,18 @@ namespace ProjectOdyssey.Render
             ownsBackground = false;
         }
 
-        public void Initialise()
+        // Releases only the chart background this renderer loaded itself; skin textures
+        // belong to the SkinManager.
+        public void Dispose()
         {
-            base.Intitialise();   // the base program was never being set up before
-            fontRenderer.Intitialise();
-        }
-
-        public override void Resize(int width, int height)
-        {
-            base.Resize(1920, 1080);
-            fontRenderer.Resize(1920, 1080);
+            ReleaseBackground();
+            background = skin.MissingBackground;
         }
 
         // Converts from center-based coordinates to bottom-left origin coordinates and draws the texture
         private void DrawBottomLeftOrigin(Texture texture, CardRect rect)
         {
-            Draw(texture, rect.X + rect.Width / 2f, rect.Y + rect.Height / 2f, rect.Width, rect.Height);
+            renderer.Draw(texture, rect.X + rect.Width / 2f, rect.Y + rect.Height / 2f, rect.Width, rect.Height);
         }
 
         public void DrawChartBrowser(
@@ -98,6 +96,13 @@ namespace ProjectOdyssey.Render
             int hoveredChart)
         {
             DrawBottomLeftOrigin(background, new CardRect { X = 0, Y = 0, Width = 1920, Height = 1080 }); // Draw background
+
+            // Empty library (e.g. a fresh build folder with no chart_library.db contents)
+            if (chartSets.Count == 0)
+            {
+                renderer.DrawText(skin.Glyphs, "No charts found", 50, 50, primaryTextColour);
+                return;
+            }
 
             // Draw the set cards
             for (int i = 0; i < setCardRects.Count; i++)
@@ -113,7 +118,7 @@ namespace ProjectOdyssey.Render
                 float textY = rect.Y + (rect.Height - 40) / 2f; // vertically centre a single 40px line
 
                 // Draw the set title in text
-                fontRenderer.Draw(skin.Glyphs, set[0].Title, rect.X + CardTextPadding, textY, primaryTextColour);
+                renderer.DrawText(skin.Glyphs, set[0].Title, rect.X + CardTextPadding, textY, primaryTextColour);
             }
 
             // Draw the chart cards
@@ -131,21 +136,13 @@ namespace ProjectOdyssey.Render
                 float textY = rect.Y + (rect.Height - 40) / 2f;
 
                 // Draw the chart difficulty name in text
-                fontRenderer.Draw(skin.Glyphs, chart.DiffName, rect.X + CardTextPadding, textY, primaryTextColour);
+                renderer.DrawText(skin.Glyphs, chart.DiffName, rect.X + CardTextPadding, textY, primaryTextColour);
 
                 // Draw the key count in text
                 string keyText = chart.KeyCount + "K";
                 float keyTextWidth = skin.Glyphs.MeasureText(keyText);
-                fontRenderer.Draw(skin.Glyphs, keyText, rect.X + rect.Width - CardTextPadding - keyTextWidth, textY, primaryTextColour);
+                renderer.DrawText(skin.Glyphs, keyText, rect.X + rect.Width - CardTextPadding - keyTextWidth, textY, primaryTextColour);
             }
-        }
-
-        public override void Dispose()
-        {
-            fontRenderer.Dispose();
-            ReleaseBackground();   // only the chart background we loaded; skin textures/glyphs belong to the SkinManager
-
-            base.Dispose();
         }
     }
 }

@@ -2,6 +2,7 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 using OpenTK.Windowing.Common;
 using ProjectOdyssey.Audio;
 using ProjectOdyssey.Skinning;
+using ProjectOdyssey.Render;
 
 namespace ProjectOdyssey.Screens
 {
@@ -11,6 +12,7 @@ namespace ProjectOdyssey.Screens
     // events instead of knowing about GameplayScreen/ChartManagerScreen etc.
     public class ScreenManager : IDisposable
     {
+        private Renderer? renderer;        // created in Initialise(): it needs a live GL context
         private readonly AudioManager audioManager;
         private SkinManager? skinManager;  
         private readonly Stack<IGameScreen> screens = new();
@@ -36,7 +38,19 @@ namespace ProjectOdyssey.Screens
                 throw new InvalidOperationException("ScreenManager is already initialised; live screens hold references to the skin's textures.");
             }
 
-            skinManager = new SkinManager(skinDirectory);
+            renderer = new Renderer();
+
+            try
+            {
+                skinManager = new SkinManager(skinDirectory);
+            }
+            catch
+            {
+                // Don't leak the renderer's GL objects if a default asset is missing
+                renderer.Dispose();
+                renderer = null;
+                throw;
+            }
         }
 
         // Pushes a new screen on top of the stack (e.g. gameplay -> pause menu).
@@ -44,9 +58,10 @@ namespace ProjectOdyssey.Screens
         // until this one is popped.
         public void Push(IGameScreen screen)
         {
-            if (skinManager == null)
+            if (skinManager == null || renderer == null)
                 throw new InvalidOperationException("Call Initialise() before pushing screens.");
 
+            screen.Renderer = renderer;
             screen.ScreenManager = this;
             screen.AudioManager = audioManager;
             screen.SkinManager = skinManager;
@@ -99,6 +114,10 @@ namespace ProjectOdyssey.Screens
             {
                 renderScratch[i].Render();
             }
+
+            // Every screen has only queued its draw commands so far; this is the one place
+            // they actually get drawn. Exactly once per frame, after all screens have queued.
+            renderer?.Flush();
         }
 
         // Resizes every screen on the stack, not just the top one, so a
@@ -127,6 +146,8 @@ namespace ProjectOdyssey.Screens
             skinManager?.Dispose();
             skinManager = null;
             audioManager.Dispose();
+            renderer?.Dispose();
+            renderer = null;
         }
 
         public void OnKeyDown(Keys key)

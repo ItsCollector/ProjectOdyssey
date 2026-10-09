@@ -46,7 +46,7 @@ namespace ProjectOdyssey.Tests
             Assert.Equal(1, session.Combo);
             Assert.Equal(1, session.ColumnCursors[0]);
             Assert.Equal(JudgementType.Marvellous, session.CurrentJudgementResult.Type);
-            Assert.Single(session.GetRecentJudgementResults());
+            Assert.Single(session.GetRecentJudgementResults().ToArray());
         }
 
         [Fact]
@@ -71,7 +71,7 @@ namespace ProjectOdyssey.Tests
             session.HandleUnjudgedNotes(1200);
 
             Assert.Equal(0, session.ColumnCursors[0]);
-            Assert.Empty(session.GetRecentJudgementResults());
+            Assert.Empty(session.GetRecentJudgementResults().ToArray());
         }
 
         [Fact]
@@ -83,7 +83,7 @@ namespace ProjectOdyssey.Tests
 
             Assert.Equal(0, session.Combo);
             Assert.Equal(0, session.ColumnCursors[0]);
-            Assert.Empty(session.GetRecentJudgementResults());
+            Assert.Empty(session.GetRecentJudgementResults().ToArray());
         }
 
         [Fact]
@@ -109,7 +109,7 @@ namespace ProjectOdyssey.Tests
             Assert.Equal(0, session.Combo);
             Assert.Equal(0, session.ColumnCursors[0]);
             Assert.Equal(NoteState.ReleasedEarly, session.NotesByColumn[0][0].NoteState);
-            Assert.Single(session.GetRecentJudgementResults()); // only the head
+            Assert.Single(session.GetRecentJudgementResults().ToArray()); // only the head
         }
 
         [Fact]
@@ -151,7 +151,7 @@ namespace ProjectOdyssey.Tests
 
             Assert.Equal(2, session.Combo);
             Assert.Equal(1, session.ColumnCursors[0]);
-            Assert.Equal(2, session.GetRecentJudgementResults().Length);
+            Assert.Equal(2, session.GetRecentJudgementResults().ToArray().Length);
         }
 
         [Fact]
@@ -161,12 +161,12 @@ namespace ProjectOdyssey.Tests
 
             session.HandleUnjudgedNotes(1201);
             Assert.Equal(0, session.ColumnCursors[0]);
-            Assert.Single(session.GetRecentJudgementResults());
+            Assert.Single(session.GetRecentJudgementResults().ToArray());
 
             session.HandleUnjudgedNotes(2201);
             Assert.Equal(1, session.ColumnCursors[0]);
-            Assert.Equal(2, session.GetRecentJudgementResults().Length);
-            Assert.All(session.GetRecentJudgementResults(), r => Assert.Equal(JudgementType.Miss, r.Type));
+            Assert.Equal(2, session.GetRecentJudgementResults().ToArray().Length);
+            Assert.All(session.GetRecentJudgementResults().ToArray(), r => Assert.Equal(JudgementType.Miss, r.Type));
         }
 
         [Fact]
