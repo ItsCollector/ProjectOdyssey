@@ -23,6 +23,7 @@ namespace ProjectOdyssey
         private readonly double[] frameTimesMs = new double[MaxFrames];
         private readonly long[] allocatedBytes = new long[MaxFrames];
         private readonly int[] gen2Counts = new int[MaxFrames];
+        private readonly string[] screenNames = new string[MaxFrames];   // which screen was active each frame
         private int frameIndex;
 
         public MainWindow(int width, int height, string title, bool vsync = false)
@@ -96,6 +97,7 @@ namespace ProjectOdyssey
                 frameTimesMs[frameIndex] = args.Time * 1000.0;
                 allocatedBytes[frameIndex] = GC.GetTotalAllocatedBytes(false);
                 gen2Counts[frameIndex] = GC.CollectionCount(2);
+                screenNames[frameIndex] = screenManager.CurrentScreen?.GetType().Name ?? "";
                 frameIndex++;
             }
         }
@@ -107,6 +109,8 @@ namespace ProjectOdyssey
             screenManager.Dispose();   // unloads screens, then the skin, then audio
             inputListener.Dispose((IntPtr)WindowPtr);
 
+            if (!isProfilingEnabled || frameIndex == 0) return;
+
             // Write profiling data to a CSV file for analysis
             string dir = Path.Combine(AppContext.BaseDirectory, "Profiling");
             Directory.CreateDirectory(dir);   // does nothing if it already exists
@@ -117,7 +121,7 @@ namespace ProjectOdyssey
 
             for (int i = 0; i < frameIndex; i++)
             {
-                w.WriteLine($"{i},{frameTimesMs[i]:F4},{allocatedBytes[i]},{gen2Counts[i]},{screenManager.CurrentScreen}");
+                w.WriteLine($"{i},{frameTimesMs[i]:F4},{allocatedBytes[i]},{gen2Counts[i]},{screenNames[i]}");
             }
 
             Console.WriteLine($"[INFO] Wrote {frameIndex} frames to {path}");

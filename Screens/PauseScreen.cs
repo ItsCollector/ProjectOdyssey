@@ -14,6 +14,7 @@ namespace ProjectOdyssey.Screens
     {
         private PauseScreenRenderer pauseScreenRenderer;
 
+        public Renderer Renderer { private get; set; }
         public ScreenManager ScreenManager { private get; set; }
         public AudioManager AudioManager { private get; set; }
         public SkinManager SkinManager { private get; set; }
@@ -22,8 +23,7 @@ namespace ProjectOdyssey.Screens
 
         public void Load()
         {
-            pauseScreenRenderer = new PauseScreenRenderer(SkinManager.MenuSkin);
-            pauseScreenRenderer.Initialise();
+            pauseScreenRenderer = new PauseScreenRenderer(SkinManager.MenuSkin, Renderer);
         }
 
         public void Update(float deltaMs)
@@ -36,14 +36,9 @@ namespace ProjectOdyssey.Screens
             pauseScreenRenderer.DrawPauseScreen();
         }
 
-        public void Resize(int width, int height)
-        {
-            pauseScreenRenderer.Resize(width, height);
-        }
-
         public void Unload()
         {
-            pauseScreenRenderer.Dispose();
+            // Cleanup resources if needed
         }
 
         public void OnKeyDown(Keys key)

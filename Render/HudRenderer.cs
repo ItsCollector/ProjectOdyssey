@@ -5,17 +5,19 @@ using System.Globalization;
 
 namespace ProjectOdyssey.Render
 {
-    public class HudRenderer : Renderer
+    public class HudRenderer
     {
+        // Renderer instance that this class will use to draw textures
+        private Renderer renderer;
+
         private readonly HudSkin skin;   // borrowed: owned and disposed by the SkinManager
-        private FontRenderer fontRenderer = new FontRenderer();
         private Vector4 primaryTextColour = new Vector4(1f, 1f, 1f, 1f);
 
         private int cachedCombo = 0;
         private string comboString = "";
 
         private float cachedAccuracy = 100.00f;
-        private string accuracyString = "100.00";
+        private string accuracyString = "100.00%";
 
         private const float JudgementDisplayDurationMs = 500f;
         private const float ErrorTickDisplayDurationMs = 500f;
@@ -35,15 +37,10 @@ namespace ProjectOdyssey.Render
             { JudgementType.Miss, new Vector4(0.90f, 0.20f, 0.25f, 1f) },
         };
 
-        public HudRenderer(HudSkin skin)
+        public HudRenderer(HudSkin skin, Renderer renderer)
         {
             this.skin = skin;
-        }
-
-        public void Initialise()
-        {
-            base.Intitialise();  
-            fontRenderer.Intitialise();
+            this.renderer = renderer;
         }
 
         // currentResult = the result to draw as feedback for the player's worst hit
@@ -55,7 +52,7 @@ namespace ProjectOdyssey.Render
 
             if (resultAge >= 0f && resultAge <= JudgementDisplayDurationMs)
             {
-                Draw(skin.Judgements[currentResult.Type], 960, 480);
+                renderer.Draw(skin.Judgements[currentResult.Type], 960, 480);
             }
 
             if (incomingCombo > 0)
@@ -66,7 +63,7 @@ namespace ProjectOdyssey.Render
                     comboString = incomingCombo.ToString();
                 }
 
-                fontRenderer.Draw(skin.Glyphs, comboString, 960 - (skin.Glyphs.MeasureText(comboString) / 2), 540, primaryTextColour);
+                renderer.DrawText(skin.Glyphs, comboString, 960 - (skin.Glyphs.MeasureText(comboString) / 2), 540, primaryTextColour);
             }
 
             float roundedAccuracy = (float)Math.Round(incomingAccuracy, 2);
@@ -76,7 +73,7 @@ namespace ProjectOdyssey.Render
                 accuracyString = roundedAccuracy.ToString("F2", CultureInfo.InvariantCulture) + "%";
             }
 
-            fontRenderer.Draw(skin.Glyphs, accuracyString, 50, 50, primaryTextColour);
+            renderer.DrawText(skin.Glyphs, accuracyString, 50, 50, primaryTextColour);
 
             foreach (var result in recentJudgementResults)
             {
@@ -87,20 +84,8 @@ namespace ProjectOdyssey.Render
                 Vector4 colour = judgementColours[result.Type];
                 colour.W = 1f - (tickAge / ErrorTickDisplayDurationMs); // fade out as it ages
 
-                DrawQuad(null, tickX, ErrorGraphY, ErrorTickSize, ErrorTickSize, colour);
+                renderer.DrawQuad(tickX, ErrorGraphY, ErrorTickSize, ErrorTickSize, colour);
             }
-        }
-
-        public override void Resize(int width, int height)
-        {
-            base.Resize(1920, 1080);
-            fontRenderer.Resize(1920, 1080);
-        }
-
-        public override void Dispose()
-        {
-            fontRenderer.Dispose();   // skin textures/glyphs belong to the SkinManager
-            base.Dispose();
         }
     }
 }

@@ -2,11 +2,13 @@
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using ProjectOdyssey.Audio;
 using ProjectOdyssey.Skinning;
+using ProjectOdyssey.Render;
 
 namespace ProjectOdyssey.Screens
 {
     public interface IGameScreen
     {
+        Renderer Renderer { set; }
         ScreenManager ScreenManager { set; }
         AudioManager AudioManager { set; }
         SkinManager SkinManager { set; }
@@ -25,7 +27,9 @@ namespace ProjectOdyssey.Screens
 
         // Called on window resize / framebuffer resize, and once immediately
         // after Load() so the screen starts with a correct viewport.
-        void Resize(int width, int height);
+        // Default no-op; screens that care about the window size (e.g. mouse -> logical
+        // coordinates) override it. The ScreenManager forwards it to every screen.
+        void Resize(int width, int height) { }
 
         // Called once when the ScreenManager pops this screen. Release any
         // resources acquired in Load() here.

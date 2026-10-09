@@ -11,12 +11,19 @@ namespace ProjectOdyssey.Render
         public Shader(string vertexShaderPath, string fragmentShaderPath)
         {
             int vertexShader = CompileShader(ShaderType.VertexShader, vertexShaderPath);
-            int fragmentShader = CompileShader(ShaderType.FragmentShader, fragmentShaderPath);
+            int fragmentShader = 0;
 
-            handle = LinkProgram(vertexShader, fragmentShader);
-
-            GL.DeleteShader(vertexShader);
-            GL.DeleteShader(fragmentShader);
+            try
+            {
+                fragmentShader = CompileShader(ShaderType.FragmentShader, fragmentShaderPath);
+                handle = LinkProgram(vertexShader, fragmentShader);
+            }
+            finally
+            {
+                // Runs on success and failure, so a bad fragment shader can't leak the vertex shader
+                GL.DeleteShader(vertexShader);
+                if (fragmentShader != 0) GL.DeleteShader(fragmentShader);
+            }
         }
 
         private static int CompileShader(ShaderType shaderType, string shaderPath)
@@ -29,7 +36,9 @@ namespace ProjectOdyssey.Render
 
             if (success == 0)
             {
-                Console.WriteLine(GL.GetShaderInfoLog(shader));
+                string log = GL.GetShaderInfoLog(shader);
+                GL.DeleteShader(shader);
+                throw new InvalidOperationException($"{shaderType} failed to compile ({shaderPath}):\n{log}");
             }
 
             return shader;
@@ -46,7 +55,9 @@ namespace ProjectOdyssey.Render
 
             if (success == 0)
             {
-                Console.WriteLine(GL.GetProgramInfoLog(program));
+                string log = GL.GetProgramInfoLog(program);
+                GL.DeleteProgram(program);
+                throw new InvalidOperationException($"Shader program failed to link:\n{log}");
             }
 
             GL.DetachShader(program, vertexShader);
