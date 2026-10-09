@@ -18,8 +18,7 @@ namespace ProjectOdyssey.Screens
         private GameplayRenderer gameplayRenderer = null!;
         private HudRenderer hudRenderer = null!;
         private string songPath;
-        private bool audioStarted = false;
-        private bool isPaused = false;
+        private bool audioStarted = false;  
 
         public ScreenManager ScreenManager { private get; set; }
         public AudioManager AudioManager { private get; set; }
@@ -56,11 +55,6 @@ namespace ProjectOdyssey.Screens
         {
             gameplayRenderer.DrawGameplay(session.NotesByColumn, session.ColumnCursors);
             hudRenderer.DrawHud(session.Combo, session.CurrentJudgementResult, session.GetRecentJudgementResults(), session.CurrentSongTimeMs, session.Accuracy);
-
-            if (isPaused)
-            {
-
-            }
         }
 
         public void Resize(int width, int height)
@@ -84,19 +78,17 @@ namespace ProjectOdyssey.Screens
             }
         }
 
-        public void PauseGame()
+        private void PauseGame()
         {
-            if (isPaused)
-            {
-                session.Resume();
-                AudioManager.ResumeAudio();
-            }
-            else
-            {
-                session.Pause();
-                AudioManager.PauseAudio();
-            }
-            isPaused = !isPaused;
+            session.Pause();
+            AudioManager.PauseAudio();
+            ScreenManager.Push(new PauseScreen());
+        }
+
+        public void OnResume()
+        {
+            session.Resume();
+            AudioManager.ResumeAudio();
         }
     }
 }

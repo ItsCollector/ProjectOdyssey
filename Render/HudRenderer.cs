@@ -41,7 +41,7 @@ namespace ProjectOdyssey.Render
 
         public void Initialise()
         {
-            base.Intitialise();   // the base program was never being set up before
+            base.Intitialise();  
             fontRenderer.Intitialise();
         }
 

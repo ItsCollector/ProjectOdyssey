@@ -17,6 +17,14 @@ namespace ProjectOdyssey
         private Win32KeyInputListener inputListener = new Win32KeyInputListener();
         private InputHistory inputHistory = new InputHistory();
 
+        // Profiling
+        private bool isProfilingEnabled = true; 
+        private const int MaxFrames = 200_000;
+        private readonly double[] frameTimesMs = new double[MaxFrames];
+        private readonly long[] allocatedBytes = new long[MaxFrames];
+        private readonly int[] gen2Counts = new int[MaxFrames];
+        private int frameIndex;
+
         public MainWindow(int width, int height, string title, bool vsync = false)
             : base(
                 new GameWindowSettings
@@ -78,10 +86,18 @@ namespace ProjectOdyssey
         {
             base.OnRenderFrame(args);
             GL.Clear(ClearBufferMask.ColorBufferBit);
-
             screenManager.Render();
-
             SwapBuffers();
+
+            if (!isProfilingEnabled) return;
+
+            if (frameIndex < MaxFrames)
+            {
+                frameTimesMs[frameIndex] = args.Time * 1000.0;
+                allocatedBytes[frameIndex] = GC.GetTotalAllocatedBytes(false);
+                gen2Counts[frameIndex] = GC.CollectionCount(2);
+                frameIndex++;
+            }
         }
 
         protected unsafe override void OnUnload()
@@ -90,6 +106,21 @@ namespace ProjectOdyssey
 
             screenManager.Dispose();   // unloads screens, then the skin, then audio
             inputListener.Dispose((IntPtr)WindowPtr);
+
+            // Write profiling data to a CSV file for analysis
+            string dir = Path.Combine(AppContext.BaseDirectory, "Profiling");
+            Directory.CreateDirectory(dir);   // does nothing if it already exists
+
+            string path = Path.Combine(dir, $"frametimes_{DateTime.Now:yyyyMMdd_HHmmss}.csv");
+            using var w = new StreamWriter(path);
+            w.WriteLine("frame,frame_ms,allocated_bytes,gen2_count");
+
+            for (int i = 0; i < frameIndex; i++)
+            {
+                w.WriteLine($"{i},{frameTimesMs[i]:F4},{allocatedBytes[i]},{gen2Counts[i]}");
+            }
+
+            Console.WriteLine($"[INFO] Wrote {frameIndex} frames to {path}");
         }
 
         protected override void OnFramebufferResize(FramebufferResizeEventArgs args)

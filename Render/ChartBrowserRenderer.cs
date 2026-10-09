@@ -9,7 +9,7 @@ namespace ProjectOdyssey.Render
     {
         private const int CardTextPadding = 16;
 
-        private readonly ChartBrowserSkin skin;   // borrowed: owned and disposed by the SkinManager
+        private readonly MenuSkin skin;   // borrowed: owned and disposed by the SkinManager
         private FontRenderer fontRenderer = new FontRenderer();
         private Vector4 primaryTextColour = new Vector4(1f, 1f, 1f, 1f);
 
@@ -18,7 +18,7 @@ namespace ProjectOdyssey.Render
         private bool ownsBackground;
         private string? requestedBackgroundPath;
 
-        public ChartBrowserRenderer(ChartBrowserSkin skin)
+        public ChartBrowserRenderer(MenuSkin skin)
         {
             this.skin = skin;
             background = skin.MissingBackground;

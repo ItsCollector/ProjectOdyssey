@@ -30,7 +30,7 @@ namespace ProjectOdyssey.Screens
 
         public void Load()
         {
-            browserRenderer = new ChartBrowserRenderer(SkinManager.ChartBrowser);
+            browserRenderer = new ChartBrowserRenderer(SkinManager.MenuSkin);
             browserRenderer.Initialise();
 
             var charts = ChartDatabase.GetChartsForBrowsing();

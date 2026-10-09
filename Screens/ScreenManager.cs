@@ -57,6 +57,13 @@ namespace ProjectOdyssey.Screens
         // Pops the current screen, returning control to whatever is beneath it.
         public void Pop()
         {
+            PopInternal();
+            if (screens.Count > 0)
+                screens.Peek().OnResume();
+        }
+
+        private void PopInternal()
+        {
             if (screens.Count == 0) return;
             screens.Pop().Unload();
         }
@@ -65,7 +72,7 @@ namespace ProjectOdyssey.Screens
         // you don't want the previous screen kept around underneath.
         public void Replace(IGameScreen screen)
         {
-            Pop();
+            PopInternal();   // not Pop(): the screen underneath is about to be covered, not revealed
             Push(screen);
         }
 

@@ -1,4 +1,6 @@
+using OpenTK.Windowing.GraphicsLibraryFramework;
 using ProjectOdyssey.Audio;
+using ProjectOdyssey.Render;
 using ProjectOdyssey.Skinning;
 using System;
 using System.Collections.Generic;
@@ -10,29 +12,46 @@ namespace ProjectOdyssey.Screens
 {
     public class PauseScreen : IGameScreen
     {
+        private PauseScreenRenderer pauseScreenRenderer;
+
         public ScreenManager ScreenManager { private get; set; }
         public AudioManager AudioManager { private get; set; }
         public SkinManager SkinManager { private get; set; }
 
+        public bool DrawsScreenBeneath => true;
+
         public void Load()
         {
-            // Load pause screen resources here
+            pauseScreenRenderer = new PauseScreenRenderer(SkinManager.MenuSkin);
+            pauseScreenRenderer.Initialise();
         }
+
         public void Update(float deltaMs)
         {
             // Update pause screen logic here
         }
+
         public void Render()
         {
-            // Render pause screen here
+            pauseScreenRenderer.DrawPauseScreen();
         }
+
         public void Resize(int width, int height)
         {
-            // Handle resize for pause screen here
+            pauseScreenRenderer.Resize(width, height);
         }
+
         public void Unload()
         {
-            // Unload pause screen resources here
+            pauseScreenRenderer.Dispose();
+        }
+
+        public void OnKeyDown(Keys key)
+        {
+            if (key == Keys.Escape)
+            {
+                ScreenManager.Pop();
+            }
         }
     }
 }

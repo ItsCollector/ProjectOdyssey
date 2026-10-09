@@ -8,13 +8,14 @@ namespace ProjectOdyssey.Skinning
     // OWNERSHIP: the SkinManager owns every Texture and GlyphSet in here and is the
     // only thing that disposes them. Renderers borrow them and must never Dispose them.
 
-    public sealed class ChartBrowserSkin
+    public sealed class MenuSkin
     {
         public required Texture MissingBackground { get; init; }
         public required Texture SetCard { get; init; }
         public required Texture SetCardHover { get; init; }
         public required Texture ChartCard { get; init; }
         public required Texture ChartCardHover { get; init; }
+        public required Texture PausedBackground { get; init; }
         public required GlyphSet Glyphs { get; init; }
     }
 

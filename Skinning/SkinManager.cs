@@ -16,7 +16,7 @@ namespace ProjectOdyssey.Skinning
 
         private static readonly string AssetsDir = Path.Combine(AppContext.BaseDirectory, "Assets");
         private static readonly string DefaultFontPath = Path.Combine(AssetsDir, "Fonts", "Exo2.ttf");
-        private static readonly string DefaultChartBrowserDir = Path.Combine(AssetsDir, "Chart Browser");
+        private static readonly string DefaultChartBrowserDir = Path.Combine(AssetsDir, "Menus");
         private static readonly string DefaultGameplayDir = Path.Combine(AssetsDir, "Gameplay");
         private static readonly string DefaultJudgementDir = Path.Combine(AssetsDir, "Judgements");
 
@@ -40,7 +40,7 @@ namespace ProjectOdyssey.Skinning
         // Names of assets that fell back to the default (for logging / a future settings screen)
         public IReadOnlyList<string> DefaultedAssets => defaultedAssets;
 
-        public ChartBrowserSkin ChartBrowser { get; }
+        public MenuSkin MenuSkin { get; }
         public GameplaySkin Gameplay { get; }
         public HudSkin Hud { get; }
 
@@ -56,13 +56,14 @@ namespace ProjectOdyssey.Skinning
                 // renderer ever needs to open the font file at runtime.
                 GlyphSet glyphs = GetGlyphs(DefaultGlyphSize);
 
-                ChartBrowser = new ChartBrowserSkin
+                MenuSkin = new MenuSkin
                 {
                     MissingBackground = LoadTexture("missing_background_image.png", DefaultChartBrowserDir),
                     SetCard = LoadTexture("set_card.png", DefaultChartBrowserDir),
                     SetCardHover = LoadTexture("set_card_hover.png", DefaultChartBrowserDir),
                     ChartCard = LoadTexture("chart_card.png", DefaultChartBrowserDir),
                     ChartCardHover = LoadTexture("chart_card_hover.png", DefaultChartBrowserDir),
+                    PausedBackground = LoadTexture("paused_background.png", DefaultChartBrowserDir),
                     Glyphs = glyphs
                 };
 

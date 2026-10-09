@@ -81,10 +81,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="Assets\Chart Browser\chart_card.png">
+    <None Update="Assets\Menus\chart_card.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Assets\Chart Browser\chart_card_hover.png">
+    <None Update="Assets\Menus\chart_card_hover.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="Assets\Chart Browser\chart_card_hover_left.png">
@@ -93,13 +93,16 @@
     <None Update="Assets\Chart Browser\chart_card_left.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Assets\Chart Browser\missing_background_image.png">
+    <None Update="Assets\Menus\missing_background_image.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Assets\Chart Browser\set_card.png">
+    <None Update="Assets\Menus\paused_background.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Assets\Chart Browser\set_card_hover.png">
+    <None Update="Assets\Menus\set_card.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\Menus\set_card_hover.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="Assets\Chart Browser\set_card_left.png">
