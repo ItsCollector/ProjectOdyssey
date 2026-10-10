@@ -96,7 +96,7 @@ namespace ProjectOdyssey.Skinning
             }
         }
 
-        // ---------- Loading helpers ----------
+        // Loading helpers
 
         private static string[] ListSkinFiles(string? skinDirectory)
         {

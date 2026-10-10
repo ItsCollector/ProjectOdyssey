@@ -35,6 +35,7 @@ namespace ProjectOdyssey.Engine
         private float accuracyAccumulator = 0f;
         public float Accuracy { get; private set; } = 100f;
         private readonly RulesetMechanics mechanics;
+        private readonly int[] columnByVKey = new int[256];
 
         public GameSession(InputHistory inputHistory, ChartData chartData, IRuleset? ruleset = null)
         {
@@ -44,6 +45,35 @@ namespace ProjectOdyssey.Engine
 
             ruleset ??= new NativeRuleset();
             mechanics = ruleset.CreateMechanics();
+
+            var result = VirtualKeyMapper.GetManiaBindings(chartData.KeyCount);
+
+            if (!result.IsSuccess)
+            {
+                throw new Exception(result.Error);
+
+                // handle error gracefully later
+            }
+
+            ushort[] binds = result.Value;
+
+            // The bind list and the chart's columns must line up, otherwise a bound key could index past NotesByColumn
+            if (binds.Length != NotesByColumn.Length)
+            {
+                throw new InvalidOperationException($"Chart has {NotesByColumn.Length} columns but {binds.Length} key binds were found for {chartData.KeyCount}K.");
+            }
+
+            Array.Fill(columnByVKey, -1);
+
+            for (int column = 0; column < binds.Length; column++)
+            {
+                ushort vKey = binds[column];
+
+                if (vKey < columnByVKey.Length)
+                {
+                    columnByVKey[vKey] = column;
+                }
+            }
         }
 
         public void Start(ChartData chartData)
@@ -68,12 +98,15 @@ namespace ProjectOdyssey.Engine
 
         public void Resume()
         {
+            while (inputHistory.TryGetNextEvent(out _)) { } // drop input queued during the pause
             gameClock.Resume();
         }
 
         public void Run()
         {
             gameClock.Start(globalOffsetMs: 0);
+            while (inputHistory.TryGetNextEvent(out _)) { } // drop any input queued before the session started
+
             var stopwatch = Stopwatch.StartNew();
             double lastTime = stopwatch.Elapsed.TotalSeconds;
             const double targetDelta = 0.001; // 1000Hz tick rate
@@ -115,7 +148,9 @@ namespace ProjectOdyssey.Engine
         // Hand an input event to the mechanics for the note at the front of its column and apply the result
         public void JudgeNotes(InputEvent inputEvent, float inputSongTimeMs)
         {
-            int column = VkeyToColumn7k(inputEvent.VKey);
+            int column = inputEvent.VKey < columnByVKey.Length ? columnByVKey[inputEvent.VKey] : -1;
+            if (column < 0) return; // key isn't bound in this layout
+
             int cursor = ColumnCursors[column];
 
             if (cursor >= NotesByColumn[column].Length) return;
@@ -224,21 +259,6 @@ namespace ProjectOdyssey.Engine
             {
                 Accuracy = (accuracyAccumulator / judgedNotesCount) * 100f;
             }
-        }
-
-        private int VkeyToColumn7k(ushort key)
-        {
-            return key switch
-            {
-                83 => 0, // S
-                68 => 1, // D
-                70 => 2, // F
-                32 => 3, // Space
-                74 => 4, // J
-                75 => 5, // K
-                76 => 6, // L
-                _ => throw new ArgumentException($"Invalid key code: {key}")
-            };
         }
 
         public ReadOnlySpan<JudgementResult> GetRecentJudgementResults()

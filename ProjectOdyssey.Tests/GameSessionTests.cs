@@ -181,5 +181,43 @@ namespace ProjectOdyssey.Tests
             session.HandleUnjudgedNotes(2201);           // miss: contributes 0
             Assert.Equal(50f, session.Accuracy, 0.01f);
         }
+
+        private static GameSession CreateSessionWithKeyCount(byte keyCount, int columnCount, Action<Note[][]>? setup = null)
+        {
+            var columns = new Note[columnCount][];
+            for (int i = 0; i < columns.Length; i++) columns[i] = Array.Empty<Note>();
+            setup?.Invoke(columns);
+
+            var chart = new ChartData("t", "a", "n", "d", keyCount, columns);
+            return new GameSession(new InputHistory(), chart);
+        }
+
+        [Fact]
+        public void UnboundKey_IsIgnored()
+        {
+            var session = CreateSession(new[] { Tap(1000) });
+
+            Press(session, 65, 1000); // A is not bound in 7K
+
+            Assert.Equal(0, session.Combo);
+            Assert.Equal(0, session.ColumnCursors[0]);
+        }
+
+        [Fact]
+        public void EightKey_SemicolonMapsToLastColumn()
+        {
+            var session = CreateSessionWithKeyCount(8, 8, columns => columns[7] = new[] { Tap(1000) });
+
+            Press(session, 0xBA, 1000); // ; key
+
+            Assert.Equal(1, session.ColumnCursors[7]);
+            Assert.Equal(1, session.Combo);
+        }
+
+        [Fact]
+        public void ColumnCountNotMatchingKeyCount_Throws()
+        {
+            Assert.Throws<InvalidOperationException>(() => CreateSessionWithKeyCount(7, 6));
+        }
     }
 }
