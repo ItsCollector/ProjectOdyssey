@@ -22,7 +22,7 @@ namespace ProjectOdyssey.Engine
         private static readonly ushort[] defaultKeyBinds9k = [65, 83, 68, 70, VK_SPACE, 74, 75, 76, VK_OEM_1];  // A S D F _ J K L ;
         private static readonly ushort[] defaultKeyBinds10k = [81, 87, 69, 82, 86, 78, 85, 73, 79, 80];         // Q W E R V N U I O P 
 
-        public static Result<ushort[]> GetManiaBindings(ushort keyCount)
+        public static Result<ushort[]> GetManiaBindings(byte keyCount)
         {
             if (keyCount < 4 || keyCount > 10)
             {
@@ -49,22 +49,6 @@ namespace ProjectOdyssey.Engine
 
             // Should be unreachable, but just in case
             return Result<ushort[]>.Err($"[WARN] Unsupported key count: {keyCount}. Must be between 4 and 10.");
-        }
-
-        // old
-        private static int VkeyToColumn7k(ushort key)
-        {
-            return key switch
-            {
-                83 => 0, // S
-                68 => 1, // D
-                70 => 2, // F
-                32 => 3, // Space
-                74 => 4, // J
-                75 => 5, // K
-                76 => 6, // L
-                _ => throw new ArgumentException($"Invalid key code: {key}")
-            };
         }
     }
 }
