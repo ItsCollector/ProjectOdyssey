@@ -1,55 +1,35 @@
 using ProjectOdyssey.Engine;
 using ProjectOdyssey.Render;
-using System.Diagnostics.CodeAnalysis;
+using System.Diagnostics;
 
 namespace ProjectOdyssey.Skinning
 {
-    // Loads every skin resource ONCE, up front, falling back to the default asset for
-    // anything the skin is missing or that fails to load. After construction nothing
-    // here touches the disk, so deleting an image mid-game can't break a screen.
+    // Loads every skin resource ONCE, up front. The default skin is always loaded first so every
+    // key count has a gameplay skin; the chosen skin then overrides whichever key counts it defines.
+    // After construction nothing here touches the disk.
     //
     // Must be constructed and disposed with the GL context current.
     public sealed class SkinManager : IDisposable
     {
         public const int DefaultGlyphSize = 40;
-        private const string SkinFontFileName = "font.ttf";   // optional skin override
+        private const byte MinKeyCount = 4;
+        private const byte MaxKeyCount = 10;
 
-        private static readonly string AssetsDir = Path.Combine(AppContext.BaseDirectory, "Assets");
-        private static readonly string DefaultFontPath = Path.Combine(AssetsDir, "Fonts", "Exo2.ttf");
-        private static readonly string DefaultChartBrowserDir = Path.Combine(AssetsDir, "Menus");
-        private static readonly string DefaultGameplayDir = Path.Combine(AssetsDir, "Gameplay");
-        private static readonly string DefaultJudgementDir = Path.Combine(AssetsDir, "Judgements");
+        private static readonly string DefaultSkinDirectory = Path.Combine(AppContext.BaseDirectory, "Assets", "DefaultSkin");
+        private static readonly string DefaultFontPath = Path.Combine(DefaultSkinDirectory, "Fonts", "Exo2.ttf");
+        private static readonly string DefaultMenuPath = Path.Combine(DefaultSkinDirectory, "Menus");
 
-        private static readonly (JudgementType Type, string File)[] JudgementFiles =
-        {
-            (JudgementType.Marvellous, "judge-marv.png"),
-            (JudgementType.Perfect,    "judge-perfect.png"),
-            (JudgementType.Great,      "judge-great.png"),
-            (JudgementType.Good,       "judge-good.png"),
-            (JudgementType.Bad,        "judge-bad.png"),
-            (JudgementType.Miss,       "judge-miss.png"),
-        };
-
-        private readonly string[] skinFiles;
-        private readonly List<Texture> ownedTextures = new();
         private readonly Dictionary<int, GlyphSet> ownedGlyphSets = new();
-        private readonly List<string> defaultedAssets = new();
-        private string? customFontPath;
+        private readonly Dictionary<string, Texture> textureCache = new(StringComparer.OrdinalIgnoreCase); // owns every texture
         private bool disposed;
 
-        // Names of assets that fell back to the default (for logging / a future settings screen)
-        public IReadOnlyList<string> DefaultedAssets => defaultedAssets;
-
         public MenuSkin MenuSkin { get; }
-        public GameplaySkin Gameplay { get; }
-        public HudSkin Hud { get; }
+        public Dictionary<byte, GameplaySkin> GameplaySkins { get; } = new();
+        public Dictionary<byte, HudSkin> HudSkins { get; } = new();
 
         // skinDirectory = null means "use all defaults"
         public SkinManager(string? skinDirectory)
         {
-            skinFiles = ListSkinFiles(skinDirectory);
-            customFontPath = FindSkinFile(SkinFontFileName);
-
             try
             {
                 // One font for menus and gameplay. Sizes are loaded here, eagerly, so no
@@ -58,35 +38,40 @@ namespace ProjectOdyssey.Skinning
 
                 MenuSkin = new MenuSkin
                 {
-                    MissingBackground = LoadTexture("missing_background_image.png", DefaultChartBrowserDir),
-                    SetCard = LoadTexture("set_card.png", DefaultChartBrowserDir),
-                    SetCardHover = LoadTexture("set_card_hover.png", DefaultChartBrowserDir),
-                    ChartCard = LoadTexture("chart_card.png", DefaultChartBrowserDir),
-                    ChartCardHover = LoadTexture("chart_card_hover.png", DefaultChartBrowserDir),
-                    PausedBackground = LoadTexture("paused_background.png", DefaultChartBrowserDir),
+                    MissingBackground = LoadTexture(Path.Combine(DefaultMenuPath, "missing_background_image.png")),
+                    SetCard = LoadTexture(Path.Combine(DefaultMenuPath, "set_card.png")),
+                    SetCardHover = LoadTexture(Path.Combine(DefaultMenuPath, "set_card_hover.png")),
+                    ChartCard = LoadTexture(Path.Combine(DefaultMenuPath, "chart_card.png")),
+                    ChartCardHover = LoadTexture(Path.Combine(DefaultMenuPath, "chart_card_hover.png")),
+                    PausedBackground = LoadTexture(Path.Combine(DefaultMenuPath, "paused_background.png")),
                     Glyphs = glyphs
                 };
 
-                Gameplay = new GameplaySkin
+                // Default skin first: it must load, and it must define every key count
+                var defaultResult = GameplaySkinParser.ParseSkinConfig(DefaultSkinDirectory);
+
+                if (!defaultResult.IsSuccess)
                 {
-                    Config = LoadGameplayConfig(),
-                    TapNotes = LoadVariants("tap_note"),
-                    LnHeads = LoadVariants("ln_head"),
-                    LnBody = LoadTexture("ln_body.png", DefaultGameplayDir),
-                    LnTail = LoadTexture("ln_tail.png", DefaultGameplayDir),
-                    JudgementLine = LoadTexture("judgement_line.png", DefaultGameplayDir),
-                    ReceptorUp = LoadTexture("receptor_up.png", DefaultGameplayDir),
-                    ReceptorDown = LoadTexture("receptor_down.png", DefaultGameplayDir)
-                };
+                    throw new InvalidOperationException($"Default skin config is unreadable: {defaultResult.Error}");
+                }
 
-                var judgements = new Dictionary<JudgementType, Texture>();
-                foreach (var (type, file) in JudgementFiles)
-                    judgements[type] = LoadTexture(file, DefaultJudgementDir);
+                LoadSkin(defaultResult.Value, DefaultSkinDirectory, required: true);
+                EnsureAllKeyCountsLoaded();
 
-                Hud = new HudSkin { Judgements = judgements, Glyphs = glyphs };
+                // Chosen skin second: overrides the key counts it defines, anything broken keeps the default
+                if (skinDirectory != null)
+                {
+                    var result = GameplaySkinParser.ParseSkinConfig(skinDirectory);
 
-                if (defaultedAssets.Count > 0)
-                    Console.WriteLine($"[INFO] Skin fell back to defaults for: {string.Join(", ", defaultedAssets)}");
+                    if (result.IsSuccess)
+                    {
+                        LoadSkin(result.Value, skinDirectory, required: false);
+                    }
+                    else
+                    {
+                        Console.WriteLine($"[WARN] {result.Error} Using the default skin.");
+                    }
+                }
             }
             catch
             {
@@ -96,122 +81,146 @@ namespace ProjectOdyssey.Skinning
             }
         }
 
-        // Loading helpers
-
-        private static string[] ListSkinFiles(string? skinDirectory)
+        // required = true (default skin): any failure is fatal.
+        // required = false (chosen skin): a key count that fails to load is skipped and keeps the default.
+        private void LoadSkin(Skin skin, string directory, bool required)
         {
-            if (skinDirectory == null) return Array.Empty<string>();
-
-            var result = GameplaySkinParser.GetFiles(skinDirectory);
-            if (!result.IsSuccess)
+            foreach (GameplaySkinConfiguration config in skin.GameplaySkins)
             {
-                Console.WriteLine($"[WARN] Could not read skin directory '{skinDirectory}', using defaults. {result.Error}");
-                return Array.Empty<string>();
+                try
+                {
+                    // Build both before storing either, so a failure can't leave a key count half-replaced
+                    GameplaySkin gameplaySkin = BuildGameplaySkin(config, directory);
+                    HudSkin hudSkin = BuildHudSkin(config, directory);
+
+                    GameplaySkins[config.KeyCount] = gameplaySkin;
+                    HudSkins[config.KeyCount] = hudSkin;
+                }
+                catch (Exception ex) when (!required)
+                {
+                    Console.WriteLine($"[WARN] {config.KeyCount}K skin in '{directory}' failed to load, keeping the default: {ex.Message}");
+                }
             }
-            return result.Value;
         }
 
-        // Case-insensitive lookup in the skin directory (matches how config.json was already found)
-        private string? FindSkinFile(string fileName) =>
-            skinFiles.FirstOrDefault(p => Path.GetFileName(p).Equals(fileName, StringComparison.OrdinalIgnoreCase));
-
-        private Texture Own(Texture texture)
+        // The game looks skins up by the chart's key count, so a gap in the default skin would only show up mid-game
+        private void EnsureAllKeyCountsLoaded()
         {
-            ownedTextures.Add(texture);
+            var missing = new List<byte>();
+
+            for (byte keyCount = MinKeyCount; keyCount <= MaxKeyCount; keyCount++)
+            {
+                if (!GameplaySkins.ContainsKey(keyCount))
+                {
+                    missing.Add(keyCount);
+                }
+            }
+
+            if (missing.Count > 0)
+            {
+                throw new InvalidOperationException($"Default skin config has no entry for: {string.Join("K, ", missing)}K.");
+            }
+        }
+
+        // Only the images the target type actually uses are required
+        private GameplaySkin BuildGameplaySkin(GameplaySkinConfiguration config, string directory)
+        {
+            Texture? receptorUp = null;
+            Texture? receptorDown = null;
+            Texture? judgementLine = null;
+
+            if (config.TargetType == TargetType.Receptor)
+            {
+                receptorUp = LoadRequiredTexture(directory, config.KeyUpReceptorImage, "KeyUpReceptorImage");
+                receptorDown = LoadRequiredTexture(directory, config.KeyDownReceptorImage, "KeyDownReceptorImage");
+            }
+            else
+            {
+                judgementLine = LoadRequiredTexture(directory, config.JudgementLineImage, "JudgementLineImage");
+            }
+
+            return new GameplaySkin
+            {
+                KeyCount = config.KeyCount,
+                NoteWidth = config.NoteWidth,
+                NoteHeight = config.NoteHeight,
+                HitPositionX = config.HitPositionX,
+                HitPositionY = config.HitPositionY,
+                ColumnSpacing = config.ColumnSpacing,
+                TargetType = config.TargetType,
+                TapNotes = LoadColumnTextures(directory, config.TapNoteImage, config.KeyCount, "TapNoteImage"),
+                LnHeads = LoadColumnTextures(directory, config.LnHeadImage, config.KeyCount, "LnHeadImage"),
+                LnBodies = LoadColumnTextures(directory, config.LnBodyImage, config.KeyCount, "LnBodyImage"),
+                LnTails = LoadColumnTextures(directory, config.LnTailImage, config.KeyCount, "LnTailImage"),
+                ReceptorUp = receptorUp,
+                ReceptorDown = receptorDown,
+                JudgementLine = judgementLine
+            };
+        }
+
+        private HudSkin BuildHudSkin(GameplaySkinConfiguration config, string directory)
+        {
+            var judgements = new Dictionary<JudgementType, Texture>
+            {
+                [JudgementType.Marvellous] = LoadRequiredTexture(directory, config.JudgementMarvellousImage, "JudgementMarvellousImage"),
+                [JudgementType.Perfect] = LoadRequiredTexture(directory, config.JudgementPerfectImage, "JudgementPerfectImage"),
+                [JudgementType.Great] = LoadRequiredTexture(directory, config.JudgementGreatImage, "JudgementGreatImage"),
+                [JudgementType.Good] = LoadRequiredTexture(directory, config.JudgementGoodImage, "JudgementGoodImage"),
+                [JudgementType.Bad] = LoadRequiredTexture(directory, config.JudgementBadImage, "JudgementBadImage"),
+                [JudgementType.Miss] = LoadRequiredTexture(directory, config.JudgementMissImage, "JudgementMissImage"),
+            };
+
+            return new HudSkin { Judgements = judgements, Glyphs = GetGlyphs(DefaultGlyphSize) };
+        }
+
+        // One texture per column, so the view can index by column. A list shorter than the key count
+        // cycles, which means a single entry applies to every column.
+        private Texture[] LoadColumnTextures(string directory, List<string>? imagePaths, byte keyCount, string label)
+        {
+            if (imagePaths == null || imagePaths.Count == 0)
+                throw new InvalidOperationException($"{label} has no images.");
+
+            Texture[] loaded = imagePaths.Select(path => LoadTexture(Path.Combine(directory, path))).ToArray();
+
+            var perColumn = new Texture[keyCount];
+            for (int column = 0; column < keyCount; column++)
+                perColumn[column] = loaded[column % loaded.Length];
+
+            return perColumn;
+        }
+
+        private Texture LoadRequiredTexture(string directory, string? relativePath, string label)
+        {
+            if (string.IsNullOrWhiteSpace(relativePath))
+                throw new InvalidOperationException($"{label} is missing.");
+
+            return LoadTexture(Path.Combine(directory, relativePath));
+        }
+
+        // Loads a texture once per file. The cache owns it, so shared images only load onto the GPU once.
+        // Accepts either \ or / in paths, so a config.json written on Windows still works elsewhere.
+        private Texture LoadTexture(string path)
+        {
+            string fullPath = Path.GetFullPath(path.Replace('\\', Path.DirectorySeparatorChar));
+
+            if (textureCache.TryGetValue(fullPath, out Texture? cached)) return cached;
+
+            if (!File.Exists(fullPath))
+                throw new FileNotFoundException($"Texture file not found: {fullPath}", fullPath);
+
+            Texture texture = Texture.FromFile(fullPath);
+            textureCache[fullPath] = texture;
             return texture;
         }
 
-        private static bool TryLoadTexture(string path, [NotNullWhen(true)] out Texture? texture)
-        {
-            try
-            {
-                texture = Texture.FromFile(path);
-                return true;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[WARN] Bad skin file '{path}': {ex.Message}");
-                texture = null;
-                return false;
-            }
-        }
-
-        // Skin file if present and valid, otherwise the default (which throws if it's missing).
-        private Texture LoadTexture(string fileName, string defaultDirectory)
-        {
-            string? custom = FindSkinFile(fileName);
-            if (custom != null && TryLoadTexture(custom, out Texture? skinTexture))
-                return Own(skinTexture);
-
-            defaultedAssets.Add(fileName);
-            return Own(Texture.FromFile(Path.Combine(defaultDirectory, fileName)));
-        }
-
-        // "{baseName}_N.png" variants. Unloadable variants are skipped; if none survive,
-        // the default skin's variants are used.
-        private Texture[] LoadVariants(string baseName)
-        {
-            var found = GameplaySkinParser.FindImageVariants(skinFiles, baseName);
-            if (found.IsSuccess)
-            {
-                var loaded = new List<Texture>();
-                foreach (string path in found.Value)
-                {
-                    if (TryLoadTexture(path, out Texture? texture))
-                        loaded.Add(Own(texture));
-                }
-
-                if (loaded.Count > 0) return loaded.ToArray();
-            }
-
-            defaultedAssets.Add($"{baseName}_*.png");
-
-            var defaultFiles = GameplaySkinParser.GetFiles(DefaultGameplayDir);
-            if (!defaultFiles.IsSuccess)
-                throw new InvalidOperationException($"Default gameplay assets unreadable: {defaultFiles.Error}");
-
-            var defaults = GameplaySkinParser.FindImageVariants(defaultFiles.Value, baseName);
-            if (!defaults.IsSuccess)
-                throw new InvalidOperationException($"Default gameplay assets missing: {defaults.Error}");
-
-            return defaults.Value.Select(p => Own(Texture.FromFile(p))).ToArray();
-        }
-
-        private GameplaySkinConfig LoadGameplayConfig()
-        {
-            var result = GameplaySkinParser.ParseSkinConfig(skinFiles);
-            if (result.IsSuccess) return result.Value;
-
-            Console.WriteLine($"[WARN] {result.Error} Using default gameplay config.");
-            defaultedAssets.Add("config.json");
-            return new GameplaySkinConfig();
-        }
-
-        // Skin font if it has one and it loads, otherwise Exo2. Loaded once per size; the
-        // returned set is owned by this manager.
+        // Loaded once per size; the returned set is owned by this manager.
         private GlyphSet GetGlyphs(int size)
         {
             if (ownedGlyphSets.TryGetValue(size, out GlyphSet? cached)) return cached;
 
-            GlyphSet? set = null;
-
-            if (customFontPath != null)
-            {
-                try
-                {
-                    set = GlyphSet.Load(customFontPath, size);
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"[WARN] Bad skin font '{customFontPath}': {ex.Message}");
-                    customFontPath = null;   // stay on the default font for any later sizes too
-                    defaultedAssets.Add(SkinFontFileName);
-                }
-            }
-
-            set ??= GlyphSet.Load(DefaultFontPath, size);   // throws if the default is missing
-
+            var set = GlyphSet.Load(DefaultFontPath, size);
             ownedGlyphSets[size] = set;
+
             return set;
         }
 
@@ -223,8 +232,8 @@ namespace ProjectOdyssey.Skinning
             foreach (var set in ownedGlyphSets.Values) set.Dispose();
             ownedGlyphSets.Clear();
 
-            foreach (var texture in ownedTextures) texture.Dispose();
-            ownedTextures.Clear();
+            foreach (var texture in textureCache.Values) texture.Dispose();
+            textureCache.Clear();
         }
     }
 }

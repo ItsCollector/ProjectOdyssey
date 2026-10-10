@@ -1,0 +1,376 @@
+{
+    "Name": "Default Skin",
+    "GameplaySkins": [
+        {
+            "KeyCount": 4,
+            "NoteWidth": 150,
+            "NoteHeight": 150,
+            "HitPositionX": 960,
+            "HitPositionY": 1000,
+            "ColumnSpacing": 0,
+            "TargetType": "Receptor",
+            "TapNoteImage": [
+                "Gameplay/tap_note.png",
+                "Gameplay/tap_note.png",
+                "Gameplay/tap_note.png",
+                "Gameplay/tap_note.png"
+            ],
+            "LnHeadImage": [
+                "Gameplay/ln_head_1.png",
+                "Gameplay/ln_head_2.png",
+                "Gameplay/ln_head_2.png",
+                "Gameplay/ln_head_1.png"
+            ],
+            "LnBodyImage": [
+                "Gameplay/ln_body.png",
+                "Gameplay/ln_body.png",
+                "Gameplay/ln_body.png",
+                "Gameplay/ln_body.png"
+            ],
+            "LnTailImage": [
+                "Gameplay/ln_tail.png",
+                "Gameplay/ln_tail.png",
+                "Gameplay/ln_tail.png",
+                "Gameplay/ln_tail.png"
+            ],
+            "KeyUpReceptorImage": "Gameplay/receptor_up.png",
+            "KeyDownReceptorImage": "Gameplay/receptor_down.png",
+            "JudgementMarvellousImage": "Judgements/judge-marv.png",
+            "JudgementPerfectImage": "Judgements/judge-perf.png",
+            "JudgementGreatImage": "Judgements/judge-great.png",
+            "JudgementGoodImage": "Judgements/judge-good.png",
+            "JudgementBadImage": "Judgements/judge-bad.png",
+            "JudgementMissImage": "Judgements/judge-miss.png"
+        },
+        {
+            "KeyCount": 5,
+            "NoteWidth": 150,
+            "NoteHeight": 150,
+            "HitPositionX": 960,
+            "HitPositionY": 1000,
+            "ColumnSpacing": 0,
+            "TargetType": "Receptor",
+            "TapNoteImage": [
+                "Gameplay/tap_note.png",
+                "Gameplay/tap_note.png",
+                "Gameplay/tap_note.png",
+                "Gameplay/tap_note.png",
+                "Gameplay/tap_note.png"
+            ],
+            "LnHeadImage": [
+                "Gameplay/ln_head_1.png",
+                "Gameplay/ln_head_2.png",
+                "Gameplay/ln_head_3.png",
+                "Gameplay/ln_head_2.png",
+                "Gameplay/ln_head_1.png"
+            ],
+            "LnBodyImage": [
+                "Gameplay/ln_body.png",
+                "Gameplay/ln_body.png",
+                "Gameplay/ln_body.png",
+                "Gameplay/ln_body.png",
+                "Gameplay/ln_body.png"
+            ],
+            "LnTailImage": [
+                "Gameplay/ln_tail.png",
+                "Gameplay/ln_tail.png",
+                "Gameplay/ln_tail.png",
+                "Gameplay/ln_tail.png",
+                "Gameplay/ln_tail.png"
+            ],
+            "KeyUpReceptorImage": "Gameplay/receptor_up.png",
+            "KeyDownReceptorImage": "Gameplay/receptor_down.png",
+            "JudgementMarvellousImage": "Judgements/judge-marv.png",
+            "JudgementPerfectImage": "Judgements/judge-perf.png",
+            "JudgementGreatImage": "Judgements/judge-great.png",
+            "JudgementGoodImage": "Judgements/judge-good.png",
+            "JudgementBadImage": "Judgements/judge-bad.png",
+            "JudgementMissImage": "Judgements/judge-miss.png"
+        },
+        {
+            "KeyCount": 6,
+            "NoteWidth": 150,
+            "NoteHeight": 150,
+            "HitPositionX": 960,
+            "HitPositionY": 1000,
+            "ColumnSpacing": 0,
+            "TargetType": "Receptor",
+            "TapNoteImage": [
+                "Gameplay/tap_note.png",
+                "Gameplay/tap_note.png",
+                "Gameplay/tap_note.png",
+                "Gameplay/tap_note.png",
+                "Gameplay/tap_note.png",
+                "Gameplay/tap_note.png"
+            ],
+            "LnHeadImage": [
+                "Gameplay/ln_head_1.png",
+                "Gameplay/ln_head_2.png",
+                "Gameplay/ln_head_1.png",
+                "Gameplay/ln_head_1.png",
+                "Gameplay/ln_head_2.png",
+                "Gameplay/ln_head_1.png"
+            ],
+            "LnBodyImage": [
+                "Gameplay/ln_body.png",
+                "Gameplay/ln_body.png",
+                "Gameplay/ln_body.png",
+                "Gameplay/ln_body.png",
+                "Gameplay/ln_body.png",
+                "Gameplay/ln_body.png"
+            ],
+            "LnTailImage": [
+                "Gameplay/ln_tail.png",
+                "Gameplay/ln_tail.png",
+                "Gameplay/ln_tail.png",
+                "Gameplay/ln_tail.png",
+                "Gameplay/ln_tail.png",
+                "Gameplay/ln_tail.png"
+            ],
+            "KeyUpReceptorImage": "Gameplay/receptor_up.png",
+            "KeyDownReceptorImage": "Gameplay/receptor_down.png",
+            "JudgementMarvellousImage": "Judgements/judge-marv.png",
+            "JudgementPerfectImage": "Judgements/judge-perf.png",
+            "JudgementGreatImage": "Judgements/judge-great.png",
+            "JudgementGoodImage": "Judgements/judge-good.png",
+            "JudgementBadImage": "Judgements/judge-bad.png",
+            "JudgementMissImage": "Judgements/judge-miss.png"
+        },
+        {
+            "KeyCount": 7,
+            "NoteWidth": 150,
+            "NoteHeight": 150,
+            "HitPositionX": 960,
+            "HitPositionY": 1000,
+            "ColumnSpacing": 0,
+            "TargetType": "Receptor",
+            "TapNoteImage": [
+                "Gameplay/tap_note.png",
+                "Gameplay/tap_note.png",
+                "Gameplay/tap_note.png",
+                "Gameplay/tap_note.png",
+                "Gameplay/tap_note.png",
+                "Gameplay/tap_note.png",
+                "Gameplay/tap_note.png"
+            ],
+            "LnHeadImage": [
+                "Gameplay/ln_head_1.png",
+                "Gameplay/ln_head_2.png",
+                "Gameplay/ln_head_1.png",
+                "Gameplay/ln_head_3.png",
+                "Gameplay/ln_head_1.png",
+                "Gameplay/ln_head_2.png",
+                "Gameplay/ln_head_1.png"
+            ],
+            "LnBodyImage": [
+                "Gameplay/ln_body.png",
+                "Gameplay/ln_body.png",
+                "Gameplay/ln_body.png",
+                "Gameplay/ln_body.png",
+                "Gameplay/ln_body.png",
+                "Gameplay/ln_body.png",
+                "Gameplay/ln_body.png"
+            ],
+            "LnTailImage": [
+                "Gameplay/ln_tail.png",
+                "Gameplay/ln_tail.png",
+                "Gameplay/ln_tail.png",
+                "Gameplay/ln_tail.png",
+                "Gameplay/ln_tail.png",
+                "Gameplay/ln_tail.png",
+                "Gameplay/ln_tail.png"
+            ],
+            "KeyUpReceptorImage": "Gameplay/receptor_up.png",
+            "KeyDownReceptorImage": "Gameplay/receptor_down.png",
+            "JudgementMarvellousImage": "Judgements/judge-marv.png",
+            "JudgementPerfectImage": "Judgements/judge-perf.png",
+            "JudgementGreatImage": "Judgements/judge-great.png",
+            "JudgementGoodImage": "Judgements/judge-good.png",
+            "JudgementBadImage": "Judgements/judge-bad.png",
+            "JudgementMissImage": "Judgements/judge-miss.png"
+        },
+        {
+            "KeyCount": 8,
+            "NoteWidth": 150,
+            "NoteHeight": 150,
+            "HitPositionX": 960,
+            "HitPositionY": 1000,
+            "ColumnSpacing": 0,
+            "TargetType": "Receptor",
+            "TapNoteImage": [
+                "Gameplay/tap_note.png",
+                "Gameplay/tap_note.png",
+                "Gameplay/tap_note.png",
+                "Gameplay/tap_note.png",
+                "Gameplay/tap_note.png",
+                "Gameplay/tap_note.png",
+                "Gameplay/tap_note.png",
+                "Gameplay/tap_note.png"
+            ],
+            "LnHeadImage": [
+                "Gameplay/ln_head_1.png",
+                "Gameplay/ln_head_2.png",
+                "Gameplay/ln_head_1.png",
+                "Gameplay/ln_head_2.png",
+                "Gameplay/ln_head_2.png",
+                "Gameplay/ln_head_1.png",
+                "Gameplay/ln_head_2.png",
+                "Gameplay/ln_head_1.png"
+            ],
+            "LnBodyImage": [
+                "Gameplay/ln_body.png",
+                "Gameplay/ln_body.png",
+                "Gameplay/ln_body.png",
+                "Gameplay/ln_body.png",
+                "Gameplay/ln_body.png",
+                "Gameplay/ln_body.png",
+                "Gameplay/ln_body.png",
+                "Gameplay/ln_body.png"
+            ],
+            "LnTailImage": [
+                "Gameplay/ln_tail.png",
+                "Gameplay/ln_tail.png",
+                "Gameplay/ln_tail.png",
+                "Gameplay/ln_tail.png",
+                "Gameplay/ln_tail.png",
+                "Gameplay/ln_tail.png",
+                "Gameplay/ln_tail.png",
+                "Gameplay/ln_tail.png"
+            ],
+            "KeyUpReceptorImage": "Gameplay/receptor_up.png",
+            "KeyDownReceptorImage": "Gameplay/receptor_down.png",
+            "JudgementMarvellousImage": "Judgements/judge-marv.png",
+            "JudgementPerfectImage": "Judgements/judge-perf.png",
+            "JudgementGreatImage": "Judgements/judge-great.png",
+            "JudgementGoodImage": "Judgements/judge-good.png",
+            "JudgementBadImage": "Judgements/judge-bad.png",
+            "JudgementMissImage": "Judgements/judge-miss.png"
+        },
+        {
+            "KeyCount": 9,
+            "NoteWidth": 150,
+            "NoteHeight": 150,
+            "HitPositionX": 960,
+            "HitPositionY": 1000,
+            "ColumnSpacing": 0,
+            "TargetType": "Receptor",
+            "TapNoteImage": [
+                "Gameplay/tap_note.png",
+                "Gameplay/tap_note.png",
+                "Gameplay/tap_note.png",
+                "Gameplay/tap_note.png",
+                "Gameplay/tap_note.png",
+                "Gameplay/tap_note.png",
+                "Gameplay/tap_note.png",
+                "Gameplay/tap_note.png",
+                "Gameplay/tap_note.png"
+            ],
+            "LnHeadImage": [
+                "Gameplay/ln_head_1.png",
+                "Gameplay/ln_head_2.png",
+                "Gameplay/ln_head_1.png",
+                "Gameplay/ln_head_2.png",
+                "Gameplay/ln_head_3.png",
+                "Gameplay/ln_head_2.png",
+                "Gameplay/ln_head_1.png",
+                "Gameplay/ln_head_2.png",
+                "Gameplay/ln_head_1.png"
+            ],
+            "LnBodyImage": [
+                "Gameplay/ln_body.png",
+                "Gameplay/ln_body.png",
+                "Gameplay/ln_body.png",
+                "Gameplay/ln_body.png",
+                "Gameplay/ln_body.png",
+                "Gameplay/ln_body.png",
+                "Gameplay/ln_body.png",
+                "Gameplay/ln_body.png",
+                "Gameplay/ln_body.png"
+            ],
+            "LnTailImage": [
+                "Gameplay/ln_tail.png",
+                "Gameplay/ln_tail.png",
+                "Gameplay/ln_tail.png",
+                "Gameplay/ln_tail.png",
+                "Gameplay/ln_tail.png",
+                "Gameplay/ln_tail.png",
+                "Gameplay/ln_tail.png",
+                "Gameplay/ln_tail.png",
+                "Gameplay/ln_tail.png"
+            ],
+            "KeyUpReceptorImage": "Gameplay/receptor_up.png",
+            "KeyDownReceptorImage": "Gameplay/receptor_down.png",
+            "JudgementMarvellousImage": "Judgements/judge-marv.png",
+            "JudgementPerfectImage": "Judgements/judge-perf.png",
+            "JudgementGreatImage": "Judgements/judge-great.png",
+            "JudgementGoodImage": "Judgements/judge-good.png",
+            "JudgementBadImage": "Judgements/judge-bad.png",
+            "JudgementMissImage": "Judgements/judge-miss.png"
+        },
+        {
+            "KeyCount": 10,
+            "NoteWidth": 150,
+            "NoteHeight": 150,
+            "HitPositionX": 960,
+            "HitPositionY": 1000,
+            "ColumnSpacing": 0,
+            "TargetType": "Receptor",
+            "TapNoteImage": [
+                "Gameplay/tap_note.png",
+                "Gameplay/tap_note.png",
+                "Gameplay/tap_note.png",
+                "Gameplay/tap_note.png",
+                "Gameplay/tap_note.png",
+                "Gameplay/tap_note.png",
+                "Gameplay/tap_note.png",
+                "Gameplay/tap_note.png",
+                "Gameplay/tap_note.png",
+                "Gameplay/tap_note.png"
+            ],
+            "LnHeadImage": [
+                "Gameplay/ln_head_1.png",
+                "Gameplay/ln_head_2.png",
+                "Gameplay/ln_head_1.png",
+                "Gameplay/ln_head_2.png",
+                "Gameplay/ln_head_1.png",
+                "Gameplay/ln_head_1.png",
+                "Gameplay/ln_head_2.png",
+                "Gameplay/ln_head_1.png",
+                "Gameplay/ln_head_2.png",
+                "Gameplay/ln_head_1.png"
+            ],
+            "LnBodyImage": [
+                "Gameplay/ln_body.png",
+                "Gameplay/ln_body.png",
+                "Gameplay/ln_body.png",
+                "Gameplay/ln_body.png",
+                "Gameplay/ln_body.png",
+                "Gameplay/ln_body.png",
+                "Gameplay/ln_body.png",
+                "Gameplay/ln_body.png",
+                "Gameplay/ln_body.png",
+                "Gameplay/ln_body.png"
+            ],
+            "LnTailImage": [
+                "Gameplay/ln_tail.png",
+                "Gameplay/ln_tail.png",
+                "Gameplay/ln_tail.png",
+                "Gameplay/ln_tail.png",
+                "Gameplay/ln_tail.png",
+                "Gameplay/ln_tail.png",
+                "Gameplay/ln_tail.png",
+                "Gameplay/ln_tail.png",
+                "Gameplay/ln_tail.png",
+                "Gameplay/ln_tail.png"
+            ],
+            "KeyUpReceptorImage": "Gameplay/receptor_up.png",
+            "KeyDownReceptorImage": "Gameplay/receptor_down.png",
+            "JudgementMarvellousImage": "Judgements/judge-marv.png",
+            "JudgementPerfectImage": "Judgements/judge-perf.png",
+            "JudgementGreatImage": "Judgements/judge-great.png",
+            "JudgementGoodImage": "Judgements/judge-good.png",
+            "JudgementBadImage": "Judgements/judge-bad.png",
+            "JudgementMissImage": "Judgements/judge-miss.png"
+        }
+    ]
+}
