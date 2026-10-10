@@ -21,14 +21,20 @@ namespace ProjectOdyssey.Skinning
 
     public sealed class GameplaySkin
     {
-        public required GameplaySkinConfig Config { get; init; }
-        public required Texture[] TapNotes { get; init; }   // variants, at least 1
-        public required Texture[] LnHeads { get; init; }    // variants, at least 1
-        public required Texture LnBody { get; init; }
-        public required Texture LnTail { get; init; }
-        public required Texture JudgementLine { get; init; }
-        public required Texture ReceptorUp { get; init; }
-        public required Texture ReceptorDown { get; init; }
+        public byte KeyCount { get; set; }
+        public int NoteWidth { get; set; }
+        public int NoteHeight { get; set; }
+        public int HitPositionX { get; set; }
+        public int HitPositionY { get; set; }
+        public int ColumnSpacing { get; set; }
+        public TargetType TargetType { get; set; }
+        public required Texture[] TapNotes { get; init; }   
+        public required Texture[] LnHeads { get; init; }    
+        public required Texture[] LnBodies { get; init; }  
+        public required Texture[] LnTails { get; init; }   
+        public Texture? JudgementLine { get; init; }
+        public Texture? ReceptorUp { get; init; }
+        public Texture? ReceptorDown { get; init; }
     }
 
     public sealed class HudSkin

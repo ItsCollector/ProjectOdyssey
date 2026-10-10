@@ -7,63 +7,63 @@ namespace ProjectOdyssey.Render
     public class GameplayView
     {
         // Renderer instance that this class will use to draw textures
-        private Renderer renderer;
+        private readonly Renderer renderer;
 
         // Gameplay Column Positions
-        private int columnStartX;
-        private int columnSpacing = 0;
-        private int noteWidth = 80;
-        private int headOffset;
+        private readonly int keyCount;
+        private readonly int columnStartX;
+        private readonly int columnSpacing;
+        private readonly int noteWidth;
+        private readonly int headOffset;
 
-        private float[] colX = new float[7];
+        private readonly float[] colX;
         private bool notesOverflowPastJudgementLine = false;
 
         // Judgement Line Position
-        private int hitPositionX;
-        private int hitPositionY = 1000;
-        private int hitPositionWidth;
+        private readonly int hitPositionX;
+        private readonly int hitPositionY;
+        private readonly int hitPositionWidth;
         private int hitPositionHeight = 50;
 
-        // Textures
-        private Texture[] tapNoteTextures = new Texture[7];
-        private Texture[] lnHeadTextures = new Texture[7];
-        private Texture lnBodyTexture;
-        private Texture lnTailTexture;
-        private Texture judgementLineTexture;
-        private Texture receptorUpTexture;
-        private Texture receptorDownTexture;
+        // Textures, one per column (the SkinManager has already expanded them to the key count)
+        private readonly Texture[] tapNoteTextures;
+        private readonly Texture[] lnHeadTextures;
+        private readonly Texture[] lnBodyTextures;
+        private readonly Texture[] lnTailTextures;
+
+        // Only the ones the target type uses are loaded
+        private readonly Texture? judgementLineTexture;
+        private readonly Texture? receptorUpTexture;
+        private readonly Texture? receptorDownTexture;
 
         // Other
-        private TargetType targetType;
+        private readonly TargetType targetType;
 
         // All textures are borrowed from the SkinManager (it owns and disposes them),
         // so this renderer has nothing of its own to dispose beyond the base class.
-        public GameplayView(GameplaySkin skin, Renderer renderer, byte keyCount)
+        public GameplayView(GameplaySkin skin, Renderer renderer)
         {
-            GameplaySkinConfig skinConfig = skin.Config;
             this.renderer = renderer;
 
-            noteWidth = skinConfig.NoteWidth;
-            hitPositionX = skinConfig.HitPositionX;
-            hitPositionY = skinConfig.HitPositionY;
-            columnSpacing = skinConfig.ColumnSpacing;
-            targetType = skinConfig.TargetType;
+            keyCount = skin.KeyCount;
+            noteWidth = skin.NoteWidth;
+            hitPositionX = skin.HitPositionX;
+            hitPositionY = skin.HitPositionY;
+            columnSpacing = skin.ColumnSpacing;
+            targetType = skin.TargetType;
 
-            hitPositionWidth = noteWidth * keyCount;
+            hitPositionWidth = noteWidth * keyCount + columnSpacing * (keyCount - 1);
             headOffset = noteWidth / 2;
             columnStartX = hitPositionX - (hitPositionWidth / 2);
 
+            colX = new float[keyCount];
             CalculateColumnPositions();
 
-            // Fewer variants than columns? Cycle through them.
-            for (int i = 0; i < keyCount; i++)
-            {
-                tapNoteTextures[i] = skin.TapNotes[i % skin.TapNotes.Length];
-                lnHeadTextures[i] = skin.LnHeads[i % skin.LnHeads.Length];
-            }
+            tapNoteTextures = skin.TapNotes;
+            lnHeadTextures = skin.LnHeads;
+            lnBodyTextures = skin.LnBodies;
+            lnTailTextures = skin.LnTails;
 
-            lnBodyTexture = skin.LnBody;
-            lnTailTexture = skin.LnTail;
             judgementLineTexture = skin.JudgementLine;
             receptorUpTexture = skin.ReceptorUp;
             receptorDownTexture = skin.ReceptorDown;
@@ -77,13 +77,14 @@ namespace ProjectOdyssey.Render
         {
             if (targetType == TargetType.Line)
             {
-                renderer.Draw(judgementLineTexture, hitPositionX, hitPositionY, hitPositionWidth, hitPositionHeight);
+                if (judgementLineTexture != null)
+                    renderer.Draw(judgementLineTexture, hitPositionX, hitPositionY, hitPositionWidth, hitPositionHeight);
             }
-            else
+            else if (receptorDownTexture != null)
             {
                 for (int i = 0; i < notesByColumn.Length; i++)
                 {
-                    renderer.Draw(receptorDownTexture, columnStartX + (noteWidth * i) + (noteWidth / 2), hitPositionY - headOffset, noteWidth, noteWidth);
+                    renderer.Draw(receptorDownTexture, colX[i], hitPositionY - headOffset, noteWidth, noteWidth);
                 }
             }
 
@@ -118,17 +119,17 @@ namespace ProjectOdyssey.Render
                         float bodyHeight = headCenterY - tailBottomEdge;
                         float bodyPosY = (headCenterY + tailBottomEdge) / 2f;
 
-                        renderer.Draw(lnBodyTexture, x, bodyPosY, noteWidth, Math.Max(bodyHeight, 0f));
-                        renderer.DrawClippedBelow(lnTailTexture, x, tailCenterY, noteWidth, noteWidth, headCenterY);
+                        renderer.Draw(lnBodyTextures[i], x, bodyPosY, noteWidth, Math.Max(bodyHeight, 0f));
+                        renderer.DrawClippedBelow(lnTailTextures[i], x, tailCenterY, noteWidth, noteWidth, headCenterY);
                         renderer.Draw(lnHeadTextures[i], x, headCenterY, noteWidth, noteWidth);
                     }
                 }
             }
         }
 
-        public void CalculateColumnPositions()
+        private void CalculateColumnPositions()
         {
-            for (int i = 0; i < 7; i++)
+            for (int i = 0; i < keyCount; i++)
             {
                 colX[i] = columnStartX + (noteWidth + columnSpacing) * i + noteWidth / 2f;
             }

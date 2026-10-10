@@ -1,5 +1,6 @@
-using System.Text.Json;
 using ProjectOdyssey.Common;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace ProjectOdyssey.Skinning
 {
@@ -7,44 +8,37 @@ namespace ProjectOdyssey.Skinning
     // missing (fall back to defaults) is the SkinManager's job.
     public static class GameplaySkinParser
     {
-        public static Result<string[]> GetFiles(string directory)
+        private static readonly JsonSerializerOptions JsonOptions = new()
         {
-            try
-            {
-                return Result<string[]>.Ok(Directory.GetFiles(directory));
-            }
-            catch (Exception ex)
-            {
-                return Result<string[]>.Err($"[Error] {ex.Message}");
-            }
-        }
+            PropertyNameCaseInsensitive = true,
+            Converters = { new JsonStringEnumConverter() }
+        };
 
-        public static Result<GameplaySkinConfig> ParseSkinConfig(string[] files)
+        public static Result<Skin> ParseSkinConfig(string directory)
         {
             try
             {
-                foreach (string filePath in files)
+                foreach (string filePath in Directory.GetFiles(directory))
                 {
                     if (Path.GetFileName(filePath).Equals("config.json", StringComparison.OrdinalIgnoreCase))
                     {
                         string json = File.ReadAllText(filePath);
-                        GameplaySkinConfig? skin = JsonSerializer.Deserialize<GameplaySkinConfig>(json);
+                        Skin? skin = JsonSerializer.Deserialize<Skin>(json, JsonOptions);
 
                         if (skin == null)
-                            return Result<GameplaySkinConfig>.Err("config.json was empty or invalid.");
+                        {
+                            return Result<Skin>.Err("config.json was empty or invalid.");
+                        }
 
-                        if (skin.NoteWidth <= 0 || skin.NoteHeight <= 0)
-                            return Result<GameplaySkinConfig>.Err("config.json: NoteWidth and NoteHeight must be positive.");
-
-                        return Result<GameplaySkinConfig>.Ok(skin);
+                        return Result<Skin>.Ok(skin);
                     }
                 }
 
-                return Result<GameplaySkinConfig>.Err("No config.json found in skin directory.");
+                return Result<Skin>.Err("No config.json found in skin directory.");
             }
             catch (Exception ex)
             {
-                return Result<GameplaySkinConfig>.Err($"Error parsing skin config: {ex.Message}");
+                return Result<Skin>.Err($"Error parsing skin config: {ex.Message}");
             }
         }
 
