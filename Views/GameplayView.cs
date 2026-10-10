@@ -4,7 +4,7 @@ using ProjectOdyssey.Render;
 
 namespace ProjectOdyssey.Render
 {
-    public class GameplayRenderer
+    public class GameplayView
     {
         // Renderer instance that this class will use to draw textures
         private Renderer renderer;
@@ -38,7 +38,7 @@ namespace ProjectOdyssey.Render
 
         // All textures are borrowed from the SkinManager (it owns and disposes them),
         // so this renderer has nothing of its own to dispose beyond the base class.
-        public GameplayRenderer(GameplaySkin skin, Renderer renderer)
+        public GameplayView(GameplaySkin skin, Renderer renderer)
         {
             GameplaySkinConfig skinConfig = skin.Config;
             this.renderer = renderer;

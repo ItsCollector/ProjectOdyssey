@@ -5,7 +5,7 @@ using ProjectOdyssey.Skinning;
 
 namespace ProjectOdyssey.Render
 {
-    public class ChartBrowserRenderer : IDisposable
+    public class ChartBrowserView : IDisposable
     {
         // Renderer instance that this class will use to draw textures
         private Renderer renderer;
@@ -19,7 +19,7 @@ namespace ProjectOdyssey.Render
         private bool ownsBackground;
         private string? requestedBackgroundPath;
 
-        public ChartBrowserRenderer(MenuSkin skin, Renderer renderer)
+        public ChartBrowserView(MenuSkin skin, Renderer renderer)
         {
             this.skin = skin;
             this.renderer = renderer;

@@ -15,8 +15,8 @@ namespace ProjectOdyssey.Screens
         private readonly ChartData chartData;
         private readonly InputHistory inputHistory;
         private GameSession session = null!;
-        private GameplayRenderer gameplayRenderer = null!;
-        private HudRenderer hudRenderer = null!;
+        private GameplayView gameplayRenderer = null!;
+        private HudView hudRenderer = null!;
         private string songPath;
         private bool audioStarted = false;
 
@@ -35,8 +35,8 @@ namespace ProjectOdyssey.Screens
         public void Load()
         {
             session = new GameSession(inputHistory, chartData);
-            gameplayRenderer = new GameplayRenderer(SkinManager.Gameplay, Renderer);
-            hudRenderer = new HudRenderer(SkinManager.Hud, Renderer);
+            gameplayRenderer = new GameplayView(SkinManager.Gameplay, Renderer);
+            hudRenderer = new HudView(SkinManager.Hud, Renderer);
             AudioManager.ReadAudioFile(songPath);
             session.Start(chartData);
         }

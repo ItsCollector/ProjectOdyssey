@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 
 namespace ProjectOdyssey.Screens
 {
-    public class ChartBrowserSession
+    public class ChartBrowserState
     {
         private List<List<ChartBrowserRow>> chartSets = new(); // All chart sets, each set is a list of charts
         private AudioManager audioManager;
@@ -20,7 +20,7 @@ namespace ProjectOdyssey.Screens
         public List<(int Slot, CardRect Rect)> SetCardRects { get; } = new(); // Rectangle positions and dimensions of the set cards on screen
         public List<(int ChartIndex, CardRect Rect)> ChartCardRects { get; } = new(); // Rectangle positions and dimensions of the chart cards on screen
        
-        public ChartBrowserSession(List<ChartBrowserRow> charts, AudioManager audioManager)
+        public ChartBrowserState(List<ChartBrowserRow> charts, AudioManager audioManager)
         {
             this.audioManager = audioManager;   
 

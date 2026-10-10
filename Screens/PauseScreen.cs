@@ -12,7 +12,7 @@ namespace ProjectOdyssey.Screens
 {
     public class PauseScreen : IGameScreen
     {
-        private PauseScreenRenderer pauseScreenRenderer;
+        private PauseScreenView pauseScreenRenderer;
 
         public Renderer Renderer { private get; set; }
         public ScreenManager ScreenManager { private get; set; }
@@ -23,7 +23,7 @@ namespace ProjectOdyssey.Screens
 
         public void Load()
         {
-            pauseScreenRenderer = new PauseScreenRenderer(SkinManager.MenuSkin, Renderer);
+            pauseScreenRenderer = new PauseScreenView(SkinManager.MenuSkin, Renderer);
         }
 
         public void Update(float deltaMs)

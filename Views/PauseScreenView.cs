@@ -7,14 +7,14 @@ using System.Threading.Tasks;
 
 namespace ProjectOdyssey.Render
 {
-    public class PauseScreenRenderer
+    public class PauseScreenView
     {
         // Renderer instance that this class will use to draw textures
         private Renderer renderer;
 
         private readonly MenuSkin menuSkin;
 
-        public PauseScreenRenderer(MenuSkin menuSkin, Renderer renderer)
+        public PauseScreenView(MenuSkin menuSkin, Renderer renderer)
         {
             this.menuSkin = menuSkin;
             this.renderer = renderer;

@@ -5,7 +5,7 @@ using System.Globalization;
 
 namespace ProjectOdyssey.Render
 {
-    public class HudRenderer
+    public class HudView
     {
         // Renderer instance that this class will use to draw textures
         private Renderer renderer;
@@ -37,7 +37,7 @@ namespace ProjectOdyssey.Render
             { JudgementType.Miss, new Vector4(0.90f, 0.20f, 0.25f, 1f) },
         };
 
-        public HudRenderer(HudSkin skin, Renderer renderer)
+        public HudView(HudSkin skin, Renderer renderer)
         {
             this.skin = skin;
             this.renderer = renderer;

@@ -12,8 +12,8 @@ namespace ProjectOdyssey.Screens
 {
     class ChartBrowserScreen : IGameScreen
     {
-        private ChartBrowserRenderer browserRenderer = null!;
-        private ChartBrowserSession session = null!;
+        private ChartBrowserView browserRenderer = null!;
+        private ChartBrowserState session = null!;
 
         private int windowWidth = 1920, windowHeight = 1080;
         private Vector2 lastMousePos;
@@ -31,7 +31,7 @@ namespace ProjectOdyssey.Screens
 
         public void Load()
         {
-            browserRenderer = new ChartBrowserRenderer(SkinManager.MenuSkin, Renderer);
+            browserRenderer = new ChartBrowserView(SkinManager.MenuSkin, Renderer);
 
             var charts = ChartDatabase.GetChartsForBrowsing();
 
@@ -40,7 +40,7 @@ namespace ProjectOdyssey.Screens
                 Console.WriteLine("[WARN] No charts found to browse.");
             }
 
-            session = new ChartBrowserSession(charts, AudioManager);
+            session = new ChartBrowserState(charts, AudioManager);
             session.SelectionChanged += browserRenderer.LoadBackgroundTexture;
 
             if (charts.Count > 0)
