@@ -10,32 +10,43 @@ namespace ProjectOdyssey.Engine
 {
     public class GameSession
     {
-        private Thread? gameplayThread;
-        private GameClock gameClock = new();
-        private InputHistory inputHistory;
-        private volatile bool isRunning;
+        // Collaborators
+        private readonly InputHistory inputHistory;
+        private readonly RulesetMechanics mechanics;
+        private readonly GameClock gameClock = new();
 
-        private float approachTime = 420; // arbitrary values that should be moved to a config / skinning later
+        // Gameplay thread
+        private Thread? gameplayThread;
+        private volatile bool isRunning;
+        private volatile bool audioReadyToStart = false;
+
+        // Input mapping
+        // VK code -> column index, or -1 if that key isn't bound in this chart's layout.
+        // Built once in the constructor and read-only afterwards, so the gameplay thread can read it without locks.
+        private readonly int[] columnByVKey = new int[256];
+
+        // Note scrolling (arbitrary values that should be moved to a config / skinning later)
+        private float approachTime = 420;
         private float spawnPositionY = -100;
         private float hitPositionY = 1000;
-
         private bool notesOverflowPastJudgementLine = false;
 
-        private volatile bool audioReadyToStart = false;
+        // Judgement history
+        private readonly JudgementResultBuffer judgementResultBuffer = new(300);
+        private readonly JudgementResult[] recentScratch = new JudgementResult[300];
+
+        // Accuracy tracking
+        private int judgedNotesCount = 0;
+        private float accuracyAccumulator = 0f;
+
+        // Public state read by the screen / views
         public bool AudioReadyToStart => audioReadyToStart;
         public float CurrentSongTimeMs => (float)gameClock.CurrentSongTimeMs;
         public Note[][] NotesByColumn { get; set; } // pass these into the function later chart loading is being implemented, and remove nullable
         public int[] ColumnCursors { get; set; } // construct cursors passed on the number of columns in the chart, and remove nullable
         public int Combo { get; private set; } = 0;
-        public JudgementResult CurrentJudgementResult { get; private set; } = new JudgementResult(JudgementType.Marvellous, 0f, float.NegativeInfinity);
-
-        private JudgementResultBuffer judgementResultBuffer = new(300);
-        private readonly JudgementResult[] recentScratch = new JudgementResult[300];
-        private int judgedNotesCount = 0;
-        private float accuracyAccumulator = 0f;
         public float Accuracy { get; private set; } = 100f;
-        private readonly RulesetMechanics mechanics;
-        private readonly int[] columnByVKey = new int[256];
+        public JudgementResult CurrentJudgementResult { get; private set; } = new JudgementResult(JudgementType.Marvellous, 0f, float.NegativeInfinity);
 
         public GameSession(InputHistory inputHistory, ChartData chartData, IRuleset? ruleset = null)
         {
