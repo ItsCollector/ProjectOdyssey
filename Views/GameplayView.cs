@@ -38,7 +38,7 @@ namespace ProjectOdyssey.Render
 
         // All textures are borrowed from the SkinManager (it owns and disposes them),
         // so this renderer has nothing of its own to dispose beyond the base class.
-        public GameplayView(GameplaySkin skin, Renderer renderer)
+        public GameplayView(GameplaySkin skin, Renderer renderer, byte keyCount)
         {
             GameplaySkinConfig skinConfig = skin.Config;
             this.renderer = renderer;
@@ -49,14 +49,14 @@ namespace ProjectOdyssey.Render
             columnSpacing = skinConfig.ColumnSpacing;
             targetType = skinConfig.TargetType;
 
-            hitPositionWidth = noteWidth * 7;
+            hitPositionWidth = noteWidth * keyCount;
             headOffset = noteWidth / 2;
             columnStartX = hitPositionX - (hitPositionWidth / 2);
 
             CalculateColumnPositions();
 
             // Fewer variants than columns? Cycle through them.
-            for (int i = 0; i < 7; i++)
+            for (int i = 0; i < keyCount; i++)
             {
                 tapNoteTextures[i] = skin.TapNotes[i % skin.TapNotes.Length];
                 lnHeadTextures[i] = skin.LnHeads[i % skin.LnHeads.Length];

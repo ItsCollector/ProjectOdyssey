@@ -35,7 +35,7 @@ namespace ProjectOdyssey.Screens
         public void Load()
         {
             session = new GameSession(inputHistory, chartData);
-            gameplayRenderer = new GameplayView(SkinManager.Gameplay, Renderer);
+            gameplayRenderer = new GameplayView(SkinManager.Gameplay, Renderer, chartData.KeyCount);
             hudRenderer = new HudView(SkinManager.Hud, Renderer);
             AudioManager.ReadAudioFile(songPath);
             session.Start(chartData);

@@ -10,31 +10,43 @@ namespace ProjectOdyssey.Engine
 {
     public class GameSession
     {
-        private Thread? gameplayThread;
-        private GameClock gameClock = new();
-        private InputHistory inputHistory;
-        private volatile bool isRunning;
+        // Collaborators
+        private readonly InputHistory inputHistory;
+        private readonly RulesetMechanics mechanics;
+        private readonly GameClock gameClock = new();
 
-        private float approachTime = 420; // arbitrary values that should be moved to a config / skinning later
+        // Gameplay thread
+        private Thread? gameplayThread;
+        private volatile bool isRunning;
+        private volatile bool audioReadyToStart = false;
+
+        // Input mapping
+        // VK code -> column index, or -1 if that key isn't bound in this chart's layout.
+        // Built once in the constructor and read-only afterwards, so the gameplay thread can read it without locks.
+        private readonly int[] columnByVKey = new int[256];
+
+        // Note scrolling (arbitrary values that should be moved to a config / skinning later)
+        private float approachTime = 420;
         private float spawnPositionY = -100;
         private float hitPositionY = 1000;
-
         private bool notesOverflowPastJudgementLine = false;
 
-        private volatile bool audioReadyToStart = false;
+        // Judgement history
+        private readonly JudgementResultBuffer judgementResultBuffer = new(300);
+        private readonly JudgementResult[] recentScratch = new JudgementResult[300];
+
+        // Accuracy tracking
+        private int judgedNotesCount = 0;
+        private float accuracyAccumulator = 0f;
+
+        // Public state read by the screen / views
         public bool AudioReadyToStart => audioReadyToStart;
         public float CurrentSongTimeMs => (float)gameClock.CurrentSongTimeMs;
         public Note[][] NotesByColumn { get; set; } // pass these into the function later chart loading is being implemented, and remove nullable
         public int[] ColumnCursors { get; set; } // construct cursors passed on the number of columns in the chart, and remove nullable
         public int Combo { get; private set; } = 0;
-        public JudgementResult CurrentJudgementResult { get; private set; } = new JudgementResult(JudgementType.Marvellous, 0f, float.NegativeInfinity);
-
-        private JudgementResultBuffer judgementResultBuffer = new(300);
-        private readonly JudgementResult[] recentScratch = new JudgementResult[300];
-        private int judgedNotesCount = 0;
-        private float accuracyAccumulator = 0f;
         public float Accuracy { get; private set; } = 100f;
-        private readonly RulesetMechanics mechanics;
+        public JudgementResult CurrentJudgementResult { get; private set; } = new JudgementResult(JudgementType.Marvellous, 0f, float.NegativeInfinity);
 
         public GameSession(InputHistory inputHistory, ChartData chartData, IRuleset? ruleset = null)
         {
@@ -44,6 +56,35 @@ namespace ProjectOdyssey.Engine
 
             ruleset ??= new NativeRuleset();
             mechanics = ruleset.CreateMechanics();
+
+            var result = VirtualKeyMapper.GetManiaBindings(chartData.KeyCount);
+
+            if (!result.IsSuccess)
+            {
+                throw new Exception(result.Error);
+
+                // handle error gracefully later
+            }
+
+            ushort[] binds = result.Value;
+
+            // The bind list and the chart's columns must line up, otherwise a bound key could index past NotesByColumn
+            if (binds.Length != NotesByColumn.Length)
+            {
+                throw new InvalidOperationException($"Chart has {NotesByColumn.Length} columns but {binds.Length} key binds were found for {chartData.KeyCount}K.");
+            }
+
+            Array.Fill(columnByVKey, -1);
+
+            for (int column = 0; column < binds.Length; column++)
+            {
+                ushort vKey = binds[column];
+
+                if (vKey < columnByVKey.Length)
+                {
+                    columnByVKey[vKey] = column;
+                }
+            }
         }
 
         public void Start(ChartData chartData)
@@ -68,12 +109,15 @@ namespace ProjectOdyssey.Engine
 
         public void Resume()
         {
+            while (inputHistory.TryGetNextEvent(out _)) { } // drop input queued during the pause
             gameClock.Resume();
         }
 
         public void Run()
         {
             gameClock.Start(globalOffsetMs: 0);
+            while (inputHistory.TryGetNextEvent(out _)) { } // drop any input queued before the session started
+
             var stopwatch = Stopwatch.StartNew();
             double lastTime = stopwatch.Elapsed.TotalSeconds;
             const double targetDelta = 0.001; // 1000Hz tick rate
@@ -115,7 +159,9 @@ namespace ProjectOdyssey.Engine
         // Hand an input event to the mechanics for the note at the front of its column and apply the result
         public void JudgeNotes(InputEvent inputEvent, float inputSongTimeMs)
         {
-            int column = VkeyToColumn7k(inputEvent.VKey);
+            int column = inputEvent.VKey < columnByVKey.Length ? columnByVKey[inputEvent.VKey] : -1;
+            if (column < 0) return; // key isn't bound in this layout
+
             int cursor = ColumnCursors[column];
 
             if (cursor >= NotesByColumn[column].Length) return;
@@ -224,21 +270,6 @@ namespace ProjectOdyssey.Engine
             {
                 Accuracy = (accuracyAccumulator / judgedNotesCount) * 100f;
             }
-        }
-
-        private int VkeyToColumn7k(ushort key)
-        {
-            return key switch
-            {
-                83 => 0, // S
-                68 => 1, // D
-                70 => 2, // F
-                32 => 3, // Space
-                74 => 4, // J
-                75 => 5, // K
-                76 => 6, // L
-                _ => throw new ArgumentException($"Invalid key code: {key}")
-            };
         }
 
         public ReadOnlySpan<JudgementResult> GetRecentJudgementResults()
