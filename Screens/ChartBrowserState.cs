@@ -1,6 +1,5 @@
 using ProjectOdyssey.Audio;
 using ProjectOdyssey.IO;
-using System.Runtime.CompilerServices;
 
 namespace ProjectOdyssey.Screens
 {

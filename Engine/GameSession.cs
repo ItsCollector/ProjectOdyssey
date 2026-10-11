@@ -1,10 +1,10 @@
 ﻿using OpenTK.Mathematics;
-using System.Diagnostics;
-using ProjectOdyssey.Input;
-using ProjectOdyssey.IO;
-using System.Runtime.InteropServices.Marshalling;
 using ProjectOdyssey.Engine.Mechanics;
 using ProjectOdyssey.Engine.Rulesets;
+using ProjectOdyssey.Engine.Scoring;
+using ProjectOdyssey.Input;
+using ProjectOdyssey.IO;
+using System.Diagnostics;
 
 namespace ProjectOdyssey.Engine
 {
@@ -36,16 +36,15 @@ namespace ProjectOdyssey.Engine
         private readonly JudgementResult[] recentScratch = new JudgementResult[300];
 
         // Accuracy tracking
-        private int judgedNotesCount = 0;
-        private float accuracyAccumulator = 0f;
+        private ScoreManager Score;
+        public int Combo => Score.CurrentCombo;
+        public float Accuracy => Score.CurrentContinuousAccuracy;
 
         // Public state read by the screen / views
         public bool AudioReadyToStart => audioReadyToStart;
         public float CurrentSongTimeMs => (float)gameClock.CurrentSongTimeMs;
         public Note[][] NotesByColumn { get; set; } // pass these into the function later chart loading is being implemented, and remove nullable
         public int[] ColumnCursors { get; set; } // construct cursors passed on the number of columns in the chart, and remove nullable
-        public int Combo { get; private set; } = 0;
-        public float Accuracy { get; private set; } = 100f;
         public JudgementResult CurrentJudgementResult { get; private set; } = new JudgementResult(JudgementType.Marvellous, 0f, float.NegativeInfinity);
 
         public GameSession(InputHistory inputHistory, ChartData chartData, float hitPositionY, IRuleset? ruleset = null)
@@ -57,6 +56,7 @@ namespace ProjectOdyssey.Engine
 
             ruleset ??= new NativeRuleset();
             mechanics = ruleset.CreateMechanics();
+            Score = new ScoreManager(mechanics);
 
             var result = VirtualKeyMapper.GetManiaBindings(chartData.KeyCount);
 
@@ -227,49 +227,17 @@ namespace ProjectOdyssey.Engine
                 ColumnCursors[column]++;
             }
 
-            switch (outcome.Combo)
-            {
-                case ComboEffect.Increment:
-                    Combo++;
-                    break;
-                case ComboEffect.Break:
-                    Combo = 0;
-                    break;
-            }
+            Score.UpdateCombo(outcome.Combo);
 
             if (outcome.Judgement is JudgementType judgement)
             {
                 var result = new JudgementResult(judgement, outcome.HitDeviation, judgedAtMs);
                 judgementResultBuffer.Add(result);
                 CurrentJudgementResult = result;
-                CalculateAccuracyContinuous(outcome.HitDeviation);
-            }
-        }
 
-        // Calculate the accuracy of a hit using a continous hit deviation curve
-        public void CalculateAccuracyContinuous(float hitDeviation)
-        {
-            float absHitDeviation = Math.Abs(hitDeviation);
-            absHitDeviation = Math.Clamp(absHitDeviation, 0f, mechanics.GhostTapThreshold);
-
-            float decay = 0.3f;
-            float normalised = 1.0f - (absHitDeviation / mechanics.GhostTapThreshold);
-            float accuracyContribution = (float)Math.Pow(normalised, decay);
-
-            accuracyAccumulator += (float)Math.Round(accuracyContribution, 3);
-            judgedNotesCount++;
-            CalculateFinalAccuracy();
-        }
-
-        public void CalculateFinalAccuracy()
-        {
-            if (judgedNotesCount == 0)
-            {
-                Accuracy = 100f;
-            }
-            else
-            {
-                Accuracy = (accuracyAccumulator / judgedNotesCount) * 100f;
+                Score.AccumulateJudgement(result.Type);
+                Score.CalculateAccuracyContinuous(outcome.HitDeviation);
+                Score.CalculateAccuracyDiscrete(result.Type);
             }
         }
 
