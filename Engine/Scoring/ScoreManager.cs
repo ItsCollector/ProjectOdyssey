@@ -1,4 +1,5 @@
 ﻿using ProjectOdyssey.Engine.Mechanics;
+using ProjectOdyssey.Engine.Rulesets;
 
 namespace ProjectOdyssey.Engine.Scoring
 {
@@ -41,9 +42,9 @@ namespace ProjectOdyssey.Engine.Scoring
             JudgedNotesCount++;
         }
 
-        public void CalculateAccuracyContinuous(float hitDeviation)
+        public void CalculateAccuracyContinuous(JudgementType judgement, float hitDeviation)
         {
-            float absHitDeviation = Math.Abs(hitDeviation);
+            float absHitDeviation = Math.Max(Math.Abs(hitDeviation), mechanics.WindowStart(judgement));
             absHitDeviation = Math.Clamp(absHitDeviation, 0f, mechanics.GhostTapThreshold);
 
             float decay = 0.3f;
@@ -99,6 +100,35 @@ namespace ProjectOdyssey.Engine.Scoring
                     CurrentCombo = 0;
                     break;
             }
+        }
+
+        public ScoreData CompileScoreData()
+        {
+            return new ScoreData(
+                new Dictionary<JudgementType, int>(JudgementCounts),
+                JudgedNotesCount,
+                CurrentDiscreteAccuracy,
+                CurrentContinuousAccuracy,
+                HighestCombo
+            );
+        }
+    }
+
+    public struct ScoreData
+    {
+        public Dictionary<JudgementType, int> JudgementCounts { get; set; }
+        public int JudgedNotesCount { get; set; }
+        public float CurrentDiscreteAccuracy { get; set; }
+        public float CurrentContinuousAccuracy { get; set; }
+        public int HighestCombo { get; set; }
+
+        public ScoreData(Dictionary<JudgementType, int> judgementCounts, int judgedNotesCount, float currentDiscreteAccuracy, float currentContinuousAccuracy, int highestCombo)
+        {
+            JudgementCounts = judgementCounts;
+            JudgedNotesCount = judgedNotesCount;
+            CurrentDiscreteAccuracy = currentDiscreteAccuracy;
+            CurrentContinuousAccuracy = currentContinuousAccuracy;
+            HighestCombo = highestCombo;
         }
     }
 }

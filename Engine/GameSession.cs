@@ -26,7 +26,7 @@ namespace ProjectOdyssey.Engine
         private readonly int[] columnByVKey = new int[256];
 
         // Note scrolling (arbitrary values that should be moved to a config / skinning later)
-        public float ApproachTime = 420;
+        public float ApproachTime = 450;
         public float SpawnPositionY = 0;
         private float hitPositionY = 1000;
         private bool notesOverflowPastJudgementLine = false;
@@ -36,7 +36,7 @@ namespace ProjectOdyssey.Engine
         private readonly JudgementResult[] recentScratch = new JudgementResult[300];
 
         // Accuracy tracking
-        private ScoreManager Score;
+        public ScoreManager Score;
         public int Combo => Score.CurrentCombo;
         public float Accuracy => Score.CurrentContinuousAccuracy;
 
@@ -46,6 +46,8 @@ namespace ProjectOdyssey.Engine
         public Note[][] NotesByColumn { get; set; } // pass these into the function later chart loading is being implemented, and remove nullable
         public int[] ColumnCursors { get; set; } // construct cursors passed on the number of columns in the chart, and remove nullable
         public JudgementResult CurrentJudgementResult { get; private set; } = new JudgementResult(JudgementType.Marvellous, 0f, float.NegativeInfinity);
+        public int TotalNotes;
+        public int ResolvedNotes;
 
         public GameSession(InputHistory inputHistory, ChartData chartData, float hitPositionY, IRuleset? ruleset = null)
         {
@@ -85,6 +87,12 @@ namespace ProjectOdyssey.Engine
                 {
                     columnByVKey[vKey] = column;
                 }
+            }
+
+            // Calculate total notes
+            foreach (var column in NotesByColumn)
+            {
+                this.TotalNotes += column.Length;
             }
         }
 
@@ -193,6 +201,7 @@ namespace ProjectOdyssey.Engine
             if (outcome.AdvanceCursor)
             {
                 ColumnCursors[column]++;
+                ResolvedNotes++;
             }
 
             Score.UpdateCombo(outcome.Combo);
@@ -204,7 +213,7 @@ namespace ProjectOdyssey.Engine
                 CurrentJudgementResult = result;
 
                 Score.AccumulateJudgement(result.Type);
-                Score.CalculateAccuracyContinuous(outcome.HitDeviation);
+                Score.CalculateAccuracyContinuous(result.Type, outcome.HitDeviation);
                 Score.CalculateAccuracyDiscrete(result.Type);
             }
         }

@@ -7,8 +7,7 @@ namespace ProjectOdyssey.Screens
 {
     public class PauseScreen : IGameScreen
     {
-        private PauseScreenView pauseScreenRenderer;
-
+        private PauseView pauseScreenView;
         public Renderer Renderer { private get; set; }
         public ScreenManager ScreenManager { private get; set; }
         public AudioManager AudioManager { private get; set; }
@@ -18,7 +17,7 @@ namespace ProjectOdyssey.Screens
 
         public void Load()
         {
-            pauseScreenRenderer = new PauseScreenView(SkinManager.MenuSkin, Renderer);
+            pauseScreenView = new PauseView(SkinManager.MenuSkin, Renderer);
         }
 
         public void Update(float deltaMs)
@@ -28,7 +27,7 @@ namespace ProjectOdyssey.Screens
 
         public void Render()
         {
-            pauseScreenRenderer.DrawPauseScreen();
+            pauseScreenView.DrawPauseScreen();
         }
 
         public void Unload()

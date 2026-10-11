@@ -65,5 +65,19 @@ namespace ProjectOdyssey.Engine.Mechanics
         {
             return inputTimestamp - noteTime;
         }
+
+        // Smallest deviation that still maps to this judgement (the previous window's edge; 0 for the tightest)
+        public float WindowStart(JudgementType type)
+        {
+            float previous = 0f;
+
+            foreach (var judgement in windows)
+            {
+                if (judgement.Type == type) return previous;
+                previous = judgement.HitWindow;
+            }
+
+            return MissWindow + 1f; // Miss
+        }
     }
 }

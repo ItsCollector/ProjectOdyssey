@@ -58,6 +58,13 @@ namespace ProjectOdyssey.Screens
                 AudioManager.PlayAudio(songPath);
                 audioStarted = true;
             }
+
+            if (session.ResolvedNotes >= session.TotalNotes)
+            {
+                // Transition to results screen
+                var scoreData = session.Score.CompileScoreData();
+                ScreenManager.Replace(new ResultsScreen(scoreData));
+            }
         }
 
         public void Render()
