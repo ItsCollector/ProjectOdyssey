@@ -26,8 +26,8 @@ namespace ProjectOdyssey.Engine
         private readonly int[] columnByVKey = new int[256];
 
         // Note scrolling (arbitrary values that should be moved to a config / skinning later)
-        private float approachTime = 420;
-        private float spawnPositionY = 0;
+        public float ApproachTime = 420;
+        public float SpawnPositionY = 0;
         private float hitPositionY = 1000;
         private bool notesOverflowPastJudgementLine = false;
 
@@ -145,7 +145,6 @@ namespace ProjectOdyssey.Engine
                         }
 
                         HandleUnjudgedNotes(now);
-                        UpdateNotePositions(now);
                     }
 
                     lastTime = currentTime;
@@ -171,37 +170,6 @@ namespace ProjectOdyssey.Engine
             InputDirection direction = inputEvent.IsPressed ? InputDirection.Down : InputDirection.Up;
 
             ApplyOutcome(mechanics.OnInput(note, direction, inputSongTimeMs), note, column, inputSongTimeMs);
-        }
-
-        public void UpdateNotePositions(float now)
-        {
-            for (int i = 0; i < NotesByColumn.Length; i++) // Iterate through each column
-            {
-                for (int j = 0; j < (NotesByColumn[i].Length - ColumnCursors[i]); j++) // Iterate through each note in the column
-                {
-                    Note note = NotesByColumn[i][j + ColumnCursors[i]];
-                    float timeUntilHit = note.StartTime - now;
-                    float timeUntilEnd = note.EndTime - now;
-
-                    if (note.NoteType == NoteType.Tap)
-                    {
-                        float tHead = 1f - (timeUntilHit / approachTime);
-                        tHead = notesOverflowPastJudgementLine ? tHead : Math.Min(tHead, 1f);
-                        note.HeadPosY = MathHelper.Lerp(spawnPositionY, hitPositionY, tHead);
-                    }
-                    if (note.NoteType == NoteType.Long)
-                    {
-                        float tHead = 1f - (timeUntilHit / approachTime);
-                        float tTail = 1f - (timeUntilEnd / approachTime);
-
-                        tHead = notesOverflowPastJudgementLine ? tHead : Math.Min(tHead, 1f);
-                        tTail = notesOverflowPastJudgementLine ? tTail : Math.Min(tTail, 1f);
-
-                        note.HeadPosY = MathHelper.Lerp(spawnPositionY, hitPositionY, tHead);
-                        note.TailPosY = MathHelper.Lerp(spawnPositionY, hitPositionY, tTail);
-                    }
-                }
-            }
         }
 
         // Let the mechanics resolve notes that time has passed on without a (further) input:

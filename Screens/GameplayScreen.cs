@@ -32,9 +32,21 @@ namespace ProjectOdyssey.Screens
 
         public void Load()
         {
-            session = new GameSession(inputHistory, chartData, SkinManager.GameplaySkins[chartData.KeyCount].HitPositionY);
-            gameplayRenderer = new GameplayView(SkinManager.GameplaySkins[chartData.KeyCount], Renderer);
-            hudRenderer = new HudView(SkinManager.HudSkins[chartData.KeyCount], Renderer);
+            session = new GameSession(
+                inputHistory,
+                chartData,
+                SkinManager.GameplaySkins[chartData.KeyCount].HitPositionY);
+
+            gameplayRenderer = new GameplayView(
+                SkinManager.GameplaySkins[chartData.KeyCount],
+                Renderer,
+                session.ApproachTime,
+                session.SpawnPositionY);
+
+            hudRenderer = new HudView(
+                SkinManager.HudSkins[chartData.KeyCount],
+                Renderer);
+
             AudioManager.ReadAudioFile(songPath);
             session.Start(chartData);
         }
@@ -50,8 +62,9 @@ namespace ProjectOdyssey.Screens
 
         public void Render()
         {
-            gameplayRenderer.DrawGameplay(session.NotesByColumn, session.ColumnCursors);
-            hudRenderer.DrawHud(session.Combo, session.CurrentJudgementResult, session.GetRecentJudgementResults(), session.CurrentSongTimeMs, session.Accuracy);
+            float now = session.CurrentSongTimeMs;
+            gameplayRenderer.DrawGameplay(session.NotesByColumn, session.ColumnCursors, now);
+            hudRenderer.DrawHud(session.Combo, session.CurrentJudgementResult, session.GetRecentJudgementResults(), now, session.Accuracy);
         }
 
         public void Unload()

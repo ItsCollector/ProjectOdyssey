@@ -18,6 +18,11 @@ namespace ProjectOdyssey.Render
         private readonly float[] colX;
         private bool notesOverflowPastJudgementLine = false;
 
+        // Scrolling: note positions are worked out here, per frame, from one song-time sample
+        private readonly float approachTimeMs;
+        private readonly float spawnPositionY;
+
+
         // Judgement Line Position
         private readonly int hitPositionX;
         private readonly int hitPositionY;
@@ -40,9 +45,11 @@ namespace ProjectOdyssey.Render
 
         // All textures are borrowed from the SkinManager (it owns and disposes them),
         // so this renderer has nothing of its own to dispose beyond the base class.
-        public GameplayView(GameplaySkin skin, Renderer renderer)
+        public GameplayView(GameplaySkin skin, Renderer renderer, float approachTimeMs, float spawnPositionY)
         {
             this.renderer = renderer;
+            this.approachTimeMs = approachTimeMs;
+            this.spawnPositionY = spawnPositionY;
 
             keyCount = skin.KeyCount;
             noteWidth = skin.NoteWidth;
@@ -71,8 +78,7 @@ namespace ProjectOdyssey.Render
         /*  Something to return to later, the note height value is unused because I use a circle skin and the images are square.
          *  I haven't decided fully whether skins will specify height and use them, or add an offset value to 
          *  indicate that the bottom of the image is not the bottom of the note visually. */
-
-        public void DrawGameplay(Note[][] notesByColumn, int[] columnCursors)
+        public void DrawGameplay(Note[][] notesByColumn, int[] columnCursors, float now)
         {
             if (targetType == TargetType.Line)
             {
@@ -89,32 +95,36 @@ namespace ProjectOdyssey.Render
 
             for (int i = 0; i < notesByColumn.Length; i++)
             {
-                for (int j = 0; j < (notesByColumn[i].Length - columnCursors[i]); j++)
+                Note[] column = notesByColumn[i];
+                int cursor = columnCursors[i]; // read once: the gameplay thread advances it while we draw
+
+                for (int j = cursor; j < column.Length; j++)
                 {
-                    Note note = notesByColumn[i][j + columnCursors[i]];
+                    Note note = column[j];
+                    float headPosY = ScrollPosition(note.StartTime, now);
 
-                    if (note.HeadPosY <= 0) break;
-
-                    if (!notesOverflowPastJudgementLine)
-                    {
-                        if (note.NoteType == NoteType.Tap && note.HeadPosY >= hitPositionY) continue;
-                        if (note.NoteType == NoteType.Long && (note.TailPosY + noteWidth) >= hitPositionY) continue;
-                    }
+                    if (headPosY <= 0) break; // this note, and every later one, hasn't scrolled in yet
 
                     float x = colX[i];
 
                     if (note.NoteType == NoteType.Tap)
                     {
-                        renderer.Draw(tapNoteTextures[i], x, note.HeadPosY - headOffset, noteWidth, noteWidth);
+                        if (!notesOverflowPastJudgementLine && headPosY >= hitPositionY) continue;
+
+                        renderer.Draw(tapNoteTextures[i], x, headPosY - headOffset, noteWidth, noteWidth);
                     }
                     else
                     {
+                        float tailPosY = ScrollPosition(note.EndTime, now);
+
+                        if (!notesOverflowPastJudgementLine && (tailPosY + noteWidth) >= hitPositionY) continue;
+
                         bool anchorHead = notesOverflowPastJudgementLine && note.NoteState == NoteState.Holding;
-                        float effectiveHeadPosY = anchorHead ? Math.Min(note.HeadPosY, hitPositionY) : note.HeadPosY;
+                        float effectiveHeadPosY = anchorHead ? Math.Min(headPosY, hitPositionY) : headPosY;
 
                         float headCenterY = effectiveHeadPosY - headOffset;
-                        float tailCenterY = note.TailPosY + headOffset;
-                        float tailBottomEdge = note.TailPosY + noteWidth;
+                        float tailCenterY = tailPosY + headOffset;
+                        float tailBottomEdge = tailPosY + noteWidth;
                         float bodyHeight = headCenterY - tailBottomEdge;
                         float bodyPosY = (headCenterY + tailBottomEdge) / 2f;
 
@@ -124,6 +134,15 @@ namespace ProjectOdyssey.Render
                     }
                 }
             }
+        }
+
+
+        private float ScrollPosition(float noteTimeMs, float now)
+        {
+            float t = 1f - ((noteTimeMs - now) / approachTimeMs);
+            if (!notesOverflowPastJudgementLine) t = Math.Min(t, 1f);
+
+            return spawnPositionY + (hitPositionY - spawnPositionY) * t;
         }
 
         private void CalculateColumnPositions()
