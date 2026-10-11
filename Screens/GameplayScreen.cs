@@ -5,6 +5,7 @@ using ProjectOdyssey.Input;
 using ProjectOdyssey.IO;
 using ProjectOdyssey.Render;
 using ProjectOdyssey.Skinning;
+using ProjectOdyssey.Diagnostic;
 
 namespace ProjectOdyssey.Screens
 {
@@ -22,6 +23,7 @@ namespace ProjectOdyssey.Screens
         public ScreenManager ScreenManager { private get; set; }
         public AudioManager AudioManager { private get; set; }
         public SkinManager SkinManager { private get; set; }
+        private readonly SyncProbe syncProbe = new(isEnabled: false);
 
         public GameplayScreen(ChartData chartData, string songPath, InputHistory inputHistory)
         {
@@ -59,6 +61,11 @@ namespace ProjectOdyssey.Screens
                 audioStarted = true;
             }
 
+            if (audioStarted)
+            {
+                syncProbe.Sample(session.CurrentSongTimeMs, AudioManager.GetPlaybackPositionMs());
+            }
+
             if (session.ResolvedNotes >= session.TotalNotes)
             {
                 // Transition to results screen
@@ -76,7 +83,9 @@ namespace ProjectOdyssey.Screens
 
         public void Unload()
         {
+            syncProbe.WriteReport(Path.Combine(AppContext.BaseDirectory, "Profiling"));
             session.Stop();
+            AudioManager.StopAudio();
         }
 
         public void OnKeyDown(Keys key)

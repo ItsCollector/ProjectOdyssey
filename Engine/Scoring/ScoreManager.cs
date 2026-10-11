@@ -25,6 +25,11 @@ namespace ProjectOdyssey.Engine.Scoring
 
         public ScoreManager(RulesetMechanics mechanics)
         {
+            foreach (JudgementType type in Enum.GetValues<JudgementType>())
+            {
+                JudgementCounts[type] = 0;
+            }
+
             this.mechanics = mechanics;
         }
 

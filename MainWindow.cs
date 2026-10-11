@@ -2,10 +2,10 @@ using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
+using ProjectOdyssey.Diagnostic;
 using ProjectOdyssey.Input;
 using ProjectOdyssey.Input.Native;
 using ProjectOdyssey.Screens;
-using System.Diagnostics;
 
 namespace ProjectOdyssey
 {
@@ -14,22 +14,7 @@ namespace ProjectOdyssey
         private readonly ScreenManager screenManager = new();
         private Win32KeyInputListener inputListener = new Win32KeyInputListener();
         private InputHistory inputHistory = new InputHistory();
-
-        // Profiling
-        private bool isProfilingEnabled = false;
-        private const int MaxFrames = 200_000;
-        private static readonly double TicksToMs = 1000.0 / Stopwatch.Frequency;
-        private readonly double[] frameTimesMs = new double[MaxFrames];
-        private readonly long[] allocatedBytes = new long[MaxFrames];
-        private readonly int[] gen2Counts = new int[MaxFrames];
-        private readonly string[] screenNames = new string[MaxFrames];   // which screen was active each frame
-        private readonly double[] updateMs = new double[MaxFrames];      // time in OnUpdateFrame since the previous render
-        private readonly double[] renderMs = new double[MaxFrames];      // our own render work, before SwapBuffers
-        private readonly double[] swapMs = new double[MaxFrames];        // time spent inside SwapBuffers (driver / vsync wait)
-        private readonly int[] inputCounts = new int[MaxFrames];         // raw key events received since the previous render
-        private double updateMsSinceLastRender;
-        private int inputEventsSinceLastRender;
-        private int frameIndex;
+        private readonly FrameProfiler profiler = new(isEnabled: false);
 
         public MainWindow(int width, int height, string title, bool vsync = true)
             : base(
@@ -44,9 +29,9 @@ namespace ProjectOdyssey
                     APIVersion = new Version(4, 1)
                 })
         {
-            //WindowState = WindowState.Maximized;
+            WindowState = WindowState.Maximized;
 
-            WindowState = WindowState.Fullscreen;
+            //WindowState = WindowState.Fullscreen;
             Context.SwapInterval = vsync ? 1 : 0;
         }
 
@@ -60,7 +45,7 @@ namespace ProjectOdyssey
 
             inputListener.Initialise((IntPtr)WindowPtr, WndProcHook);
             inputListener.OnInputEvent += inputHistory.RecordInputEvent;
-            inputListener.OnInputEvent += _ => Interlocked.Increment(ref inputEventsSinceLastRender); // profiling only
+            inputListener.OnInputEvent += _ => profiler.CountInputEvent();
 
             // Loads all skin textures/glyphs once. Needs the GL context, so it can't happen in the constructor.
             screenManager.Initialise(Path.Combine(AppContext.BaseDirectory, "Skins", "Skin 1"));
@@ -85,42 +70,27 @@ namespace ProjectOdyssey
 
         protected override void OnUpdateFrame(FrameEventArgs args)
         {
-            long start = Stopwatch.GetTimestamp();
+            long start = FrameProfiler.Timestamp();
 
             base.OnUpdateFrame(args);
             screenManager.Update((float)args.Time * 1000f);
 
-            updateMsSinceLastRender += (Stopwatch.GetTimestamp() - start) * TicksToMs;
+            profiler.RecordUpdate(start);
         }
 
         protected override void OnRenderFrame(FrameEventArgs args)
         {
-            long renderStart = Stopwatch.GetTimestamp();
+            long renderStart = FrameProfiler.Timestamp();
 
             base.OnRenderFrame(args);
             GL.Clear(ClearBufferMask.ColorBufferBit);
             screenManager.Render();
 
-            long beforeSwap = Stopwatch.GetTimestamp();
+            long beforeSwap = FrameProfiler.Timestamp();
             SwapBuffers();
-            long afterSwap = Stopwatch.GetTimestamp();
+            long afterSwap = FrameProfiler.Timestamp();
 
-            if (!isProfilingEnabled) return;
-
-            if (frameIndex < MaxFrames)
-            {
-                frameTimesMs[frameIndex] = args.Time * 1000.0;
-                allocatedBytes[frameIndex] = GC.GetTotalAllocatedBytes(false);
-                gen2Counts[frameIndex] = GC.CollectionCount(2);
-                screenNames[frameIndex] = screenManager.CurrentScreen?.GetType().Name ?? "";
-                updateMs[frameIndex] = updateMsSinceLastRender;
-                renderMs[frameIndex] = (beforeSwap - renderStart) * TicksToMs;
-                swapMs[frameIndex] = (afterSwap - beforeSwap) * TicksToMs;
-                inputCounts[frameIndex] = Interlocked.Exchange(ref inputEventsSinceLastRender, 0);
-                frameIndex++;
-            }
-
-            updateMsSinceLastRender = 0;
+            profiler.RecordFrame(args.Time * 1000.0, screenManager.CurrentScreen, renderStart, beforeSwap, afterSwap);
         }
 
         protected unsafe override void OnUnload()
@@ -130,22 +100,7 @@ namespace ProjectOdyssey
             screenManager.Dispose();   // unloads screens, then the skin, then audio
             inputListener.Dispose((IntPtr)WindowPtr);
 
-            if (!isProfilingEnabled || frameIndex == 0) return;
-
-            // Write profiling data to a CSV file for analysis
-            string dir = Path.Combine(AppContext.BaseDirectory, "Profiling");
-            Directory.CreateDirectory(dir);   // does nothing if it already exists
-
-            string path = Path.Combine(dir, $"frametimes_{DateTime.Now:yyyyMMdd_HHmmss}.csv");
-            using var w = new StreamWriter(path);
-            w.WriteLine("frame,frame_ms,allocated_bytes,gen2_count,screen,update_ms,render_ms,swap_ms,input_events");
-
-            for (int i = 0; i < frameIndex; i++)
-            {
-                w.WriteLine($"{i},{frameTimesMs[i]:F4},{allocatedBytes[i]},{gen2Counts[i]},{screenNames[i]},{updateMs[i]:F4},{renderMs[i]:F4},{swapMs[i]:F4},{inputCounts[i]}");
-            }
-
-            Console.WriteLine($"[INFO] Wrote {frameIndex} frames to {path}");
+            profiler.WriteCsv(Path.Combine(AppContext.BaseDirectory, "Profiling"));
         }
 
         protected override void OnFramebufferResize(FramebufferResizeEventArgs args)

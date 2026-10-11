@@ -85,5 +85,14 @@ namespace ProjectOdyssey.Audio
             outputDevice?.Dispose();
             reader?.Dispose();
         }
+
+        // How far the output device has actually played, in ms (0 if stopped). Used for sync diagnostics.
+        public double GetPlaybackPositionMs()
+        {
+            var format = outputDevice.OutputWaveFormat;
+            if (format == null || format.AverageBytesPerSecond == 0) return 0;
+
+            return outputDevice.GetPosition() * 1000.0 / format.AverageBytesPerSecond;
+        }
     }
 }
