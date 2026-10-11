@@ -1,4 +1,3 @@
-using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using ProjectOdyssey.Audio;
 using ProjectOdyssey.Engine;
@@ -6,7 +5,6 @@ using ProjectOdyssey.Input;
 using ProjectOdyssey.IO;
 using ProjectOdyssey.Render;
 using ProjectOdyssey.Skinning;
-using System.Runtime.CompilerServices;
 
 namespace ProjectOdyssey.Screens
 {

@@ -27,7 +27,7 @@ namespace ProjectOdyssey.Tests
             if (column1 != null) columns[1] = column1;
 
             var chart = new ChartData("t", "a", "n", "d", 7, columns);
-            return new GameSession(new InputHistory(), chart, ruleset);
+            return new GameSession(new InputHistory(), chart, 1000f, ruleset);
         }
 
         private static void Press(GameSession session, ushort key, float time)
@@ -189,7 +189,7 @@ namespace ProjectOdyssey.Tests
             setup?.Invoke(columns);
 
             var chart = new ChartData("t", "a", "n", "d", keyCount, columns);
-            return new GameSession(new InputHistory(), chart);
+            return new GameSession(new InputHistory(), chart, 1000f);
         }
 
         [Fact]
