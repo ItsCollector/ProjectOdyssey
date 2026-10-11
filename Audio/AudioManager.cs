@@ -1,6 +1,5 @@
 using NAudio.Vorbis;
 using NAudio.Wave;
-using NAudio.Wave.SampleProviders;
 
 namespace ProjectOdyssey.Audio
 {

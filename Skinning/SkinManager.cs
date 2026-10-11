@@ -1,6 +1,5 @@
 using ProjectOdyssey.Engine;
 using ProjectOdyssey.Render;
-using System.Diagnostics;
 
 namespace ProjectOdyssey.Skinning
 {

@@ -2,12 +2,9 @@ using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
-using ProjectOdyssey.Audio;
 using ProjectOdyssey.Input;
 using ProjectOdyssey.Input.Native;
-using ProjectOdyssey.IO;
 using ProjectOdyssey.Screens;
-using ProjectOdyssey.Skinning;
 
 namespace ProjectOdyssey
 {
