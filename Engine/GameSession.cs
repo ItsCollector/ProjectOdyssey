@@ -27,7 +27,7 @@ namespace ProjectOdyssey.Engine
 
         // Note scrolling (arbitrary values that should be moved to a config / skinning later)
         private float approachTime = 420;
-        private float spawnPositionY = -100;
+        private float spawnPositionY = 0;
         private float hitPositionY = 1000;
         private bool notesOverflowPastJudgementLine = false;
 
@@ -48,9 +48,10 @@ namespace ProjectOdyssey.Engine
         public float Accuracy { get; private set; } = 100f;
         public JudgementResult CurrentJudgementResult { get; private set; } = new JudgementResult(JudgementType.Marvellous, 0f, float.NegativeInfinity);
 
-        public GameSession(InputHistory inputHistory, ChartData chartData, IRuleset? ruleset = null)
+        public GameSession(InputHistory inputHistory, ChartData chartData, float hitPositionY, IRuleset? ruleset = null)
         {
             this.inputHistory = inputHistory;
+            this.hitPositionY = hitPositionY;
             NotesByColumn = chartData.NotesByColumn;
             ColumnCursors = new int[NotesByColumn.Length];
 
