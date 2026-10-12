@@ -7,8 +7,8 @@ namespace ProjectOdyssey.Audio
     {
         private WasapiOut outputDevice;
         private WaveStream? reader;
-        private string? loadedPath;   // path currently loaded into the reader
-        private string? playingPath;  // path that PlayAudio last actually started
+        public string? LoadedPath { get; private set; }   // path currently loaded into the reader
+        public string? PlayingPath { get; private set; }  // path that PlayAudio last actually started
 
         public AudioManager()
         {
@@ -24,7 +24,7 @@ namespace ProjectOdyssey.Audio
 
         public void ReadAudioFile(string songPath)
         {
-            if (songPath == loadedPath) return;
+            if (songPath == LoadedPath) return;
 
             if (string.IsNullOrEmpty(songPath) || !File.Exists(songPath))
             {
@@ -41,19 +41,19 @@ namespace ProjectOdyssey.Audio
             {
                 reader = OpenAudioStream(songPath);
                 outputDevice.Init(reader);
-                loadedPath = songPath;
+                LoadedPath = songPath;
             }
             catch (Exception ex) 
             {
                 Console.WriteLine($"[Warning] Failed to load audio '{songPath}': {ex.GetType().Name} - {ex.Message}");
                 reader = null;
-                loadedPath = null;
+                LoadedPath = null;
             }
         }
 
         public void PlayAudio(string songPath)
         {
-            if (songPath == playingPath) return; // already playing this track; ignore
+            if (songPath == PlayingPath) return; // already playing this track; ignore
 
             if (reader != null)
             {
@@ -61,13 +61,13 @@ namespace ProjectOdyssey.Audio
             }
 
             outputDevice.Play();
-            playingPath = songPath;
+            PlayingPath = songPath;
         }
 
         public void StopAudio()
         {
             outputDevice.Stop();
-            playingPath = null; // nothing is playing now, so a later request for this same path shouldn't be ignored
+            PlayingPath = null; // nothing is playing now, so a later request for this same path shouldn't be ignored
         }
 
         public void PauseAudio()

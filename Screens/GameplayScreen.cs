@@ -70,6 +70,7 @@ namespace ProjectOdyssey.Screens
             {
                 // Transition to results screen
                 var scoreData = session.Score.CompileScoreData();
+                AudioManager.StopAudio();
                 ScreenManager.Replace(new ResultsScreen(scoreData));
             }
         }

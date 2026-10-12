@@ -48,7 +48,13 @@ namespace ProjectOdyssey.Screens
             }
         }
 
-        public void Update(float deltaMs) { }
+        public void Update(float deltaMs) 
+        {
+            if (AudioManager.PlayingPath == null)
+            {
+                session.RestartSelectedChartMusic();
+            }
+        }
 
         public void Render()
         {
@@ -82,7 +88,7 @@ namespace ProjectOdyssey.Screens
             var (chartData, songPath) = session.FinaliseChartSelection();
             if (chartData != null)
             {
-                ScreenManager.Replace(new GameplayScreen(chartData, songPath, inputHistory));
+                ScreenManager.Push(new GameplayScreen(chartData, songPath, inputHistory));
             }
         }
 

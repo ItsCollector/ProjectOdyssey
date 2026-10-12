@@ -3,11 +3,7 @@ using ProjectOdyssey.Engine.Scoring;
 using ProjectOdyssey.Render;
 using ProjectOdyssey.Skinning;
 using ProjectOdyssey.Views;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using OpenTK.Windowing.GraphicsLibraryFramework;
 
 namespace ProjectOdyssey.Screens
 {
@@ -44,9 +40,12 @@ namespace ProjectOdyssey.Screens
             // Cleanup resources if needed
         }
 
-        public void OnKeyDown()
+        public void OnKeyDown(Keys key)
         {
-
+            if (key == Keys.Escape)
+            {
+                ScreenManager.Pop();
+            }
         }
     }
 }

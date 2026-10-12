@@ -201,8 +201,18 @@ namespace ProjectOdyssey.Screens
         public void StopSelectedChartMusic()
         {
             if (chartSets.Count == 0) return;
+
             string audioPath = CurrentSet[ChartCursor].AudioPath;
             audioManager.StopAudio();
+        }
+
+        public void RestartSelectedChartMusic()
+        {
+            if (chartSets.Count == 0) return;
+            string audioPath = CurrentSet[ChartCursor].AudioPath;
+
+            audioManager.ReadAudioFile(audioPath);
+            audioManager.PlayAudio(audioPath);
         }
 
         public (ChartData, string) FinaliseChartSelection()

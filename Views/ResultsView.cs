@@ -1,5 +1,4 @@
-﻿using FreeTypeSharp;
-using OpenTK.Mathematics;
+﻿using OpenTK.Mathematics;
 using ProjectOdyssey.Engine;
 using ProjectOdyssey.Engine.Scoring;
 using ProjectOdyssey.Render;
