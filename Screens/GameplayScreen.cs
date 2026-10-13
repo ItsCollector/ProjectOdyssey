@@ -50,7 +50,7 @@ namespace ProjectOdyssey.Screens
                 Renderer);
 
             AudioManager.ReadAudioFile(songPath);
-            session.Start(chartData);
+            session.Start();
         }
 
         public void Update(float deltaMs)
@@ -108,6 +108,14 @@ namespace ProjectOdyssey.Screens
         {
             session.Resume();
             AudioManager.ResumeAudio();
+        }
+            
+        public void OnRestart()
+        {
+
+            AudioManager.StopAudio();
+            session.Restart();
+            audioStarted = false;
         }
     }
 }

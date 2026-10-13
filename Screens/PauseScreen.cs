@@ -22,9 +22,9 @@ namespace ProjectOdyssey.Screens
 
         public List<(int Slot, CardRect Rect)> ButtonRects { get; } = new()
         {
-            (0, new CardRect { X = 810, Y = 265, Width = 300, Height = 150 }), // Continue button
-            (1, new CardRect { X = 810, Y = 465, Width = 300, Height = 150 }), // Retry button
-            (2, new CardRect { X = 810, Y = 665, Width = 300, Height = 150 })  // Exit button
+            (0, CardRect.FromCenter(960, 340, 300, 150)), // Continue button
+            (1, CardRect.FromCenter(960, 540, 300, 150)), // Retry button
+            (2, CardRect.FromCenter(960, 740, 300, 150))  // Exit button
         };
 
         public bool DrawsScreenBeneath => true;
@@ -65,19 +65,16 @@ namespace ProjectOdyssey.Screens
 
         public void OnMouseDown(MouseButtonEventArgs e)
         {
-            Console.WriteLine($"[Pause] MouseDown button={e.Button} hovered={HoveredButton}");
-            Console.WriteLine($"[Pause] logical = {ToLogical(lastMousePos)}");
-
             if (e.Button != MouseButton.Left || HoveredButton == -1) return;
 
             if (HoveredButton == 0) // Continue chart by unpausing
             {
-                ScreenManager.Pop();
+                ScreenManager.Pop(popAction: PopAction.Resume);
                 return;
             }
             else if (HoveredButton == 1) // Retry chart
             {
-                // Restart the chart - unimplemented
+                ScreenManager.Pop(popAction: PopAction.Restart);
                 return;
             }
             else if (HoveredButton == 2) // Exit to chart browser
@@ -110,7 +107,6 @@ namespace ProjectOdyssey.Screens
             if (hovered != HoveredButton)
             {
                 HoveredButton = hovered;
-                Console.WriteLine($"Hovered button: {HoveredButton}"); // debug only; prints -1 on unhover
             }
         }
 

@@ -9,6 +9,14 @@
         public float EndTime { get; set; }
         public float HeadPosY { get; set; }
         public float TailPosY { get; set; }
+
+        public Note Clone() => new()
+        {
+            NoteType = NoteType,
+            Column = Column,
+            StartTime = StartTime,
+            EndTime = EndTime
+        };
     }
 
     public enum NoteType

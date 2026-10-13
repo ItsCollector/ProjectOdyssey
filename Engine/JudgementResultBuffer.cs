@@ -53,5 +53,15 @@
                 return result;
             }
         }
+
+        // Clear buffer
+        public void Clear()
+        {
+            lock (bufferLock)
+            {
+                writeIndex = 0;
+                count = 0;
+            }
+        }
     }
 }

@@ -15,5 +15,13 @@
 
             return insideHorizontally && insideVertically;
         }
+
+        public static CardRect FromCenter(float centerX, float centerY, float width, float height) => new()
+        {
+            X = centerX - width / 2f,
+            Y = centerY - height / 2f,
+            Width = width,
+            Height = height
+        };
     }
 }

@@ -45,5 +45,7 @@ namespace ProjectOdyssey.Screens
         void OnMouseWheel(MouseWheelEventArgs e) { }
 
         void OnResume() { }
+
+        void OnRestart() { }
     }
 }

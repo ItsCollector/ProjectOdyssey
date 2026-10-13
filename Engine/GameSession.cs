@@ -43,23 +43,61 @@ namespace ProjectOdyssey.Engine
         // Public state read by the screen / views
         public bool AudioReadyToStart => audioReadyToStart;
         public float CurrentSongTimeMs => (float)gameClock.CurrentSongTimeMs;
-        public Note[][] NotesByColumn { get; set; } // pass these into the function later chart loading is being implemented, and remove nullable
-        public int[] ColumnCursors { get; set; } // construct cursors passed on the number of columns in the chart, and remove nullable
+        private ChartData chartData; // Default, copy of notes by column is used to ensure this isn't changed
+
+        // Active copy of chart's note being worked on and active copy of cursors for chart's columns being used
+        // Reset these to default state with InitialiseSession() if you restart the chart 
+        public Note[][] NotesByColumn { get; set; } 
+        public int[] ColumnCursors { get; set; }
+
         public JudgementResult CurrentJudgementResult { get; private set; } = new JudgementResult(JudgementType.Marvellous, 0f, float.NegativeInfinity);
         public int TotalNotes;
         public int ResolvedNotes;
 
-        public GameSession(InputHistory inputHistory, ChartData chartData, float hitPositionY, IRuleset? ruleset = null)
+        public GameSession(InputHistory inputHistory, ChartData incomingChartData, float hitPositionY, IRuleset? ruleset = null)
         {
+            chartData = incomingChartData;
             this.inputHistory = inputHistory;
             this.hitPositionY = hitPositionY;
-            NotesByColumn = chartData.NotesByColumn;
-            ColumnCursors = new int[NotesByColumn.Length];
 
             ruleset ??= new NativeRuleset();
             mechanics = ruleset.CreateMechanics();
+
+            InitialiseSession();
+            LoadManiaBindings();
+        }
+
+        public void InitialiseSession()
+        {
+            // Fresh copy of the notes with default state
+            NotesByColumn = chartData.NotesByColumn
+                .Select(column => column.Select(note => note.Clone()).ToArray())
+                .ToArray();
+
+
+            // Initialise cursors
+            ColumnCursors = new int[NotesByColumn.Length];
+
+            // Calculate total notes
+            foreach (var column in NotesByColumn)
+            {
+                this.TotalNotes += column.Length;
+            }
+
+            // Scoring
+            ResolvedNotes = 0;
             Score = new ScoreManager(mechanics);
 
+            // Judgement buffer for HUD
+            judgementResultBuffer.Clear();
+            CurrentJudgementResult = new JudgementResult(JudgementType.Marvellous, 0f, float.NegativeInfinity);
+
+            // Mark audio not ready
+            audioReadyToStart = false;
+        }
+
+        public void LoadManiaBindings()
+        {
             var result = VirtualKeyMapper.GetManiaBindings(chartData.KeyCount);
 
             if (!result.IsSuccess)
@@ -88,15 +126,9 @@ namespace ProjectOdyssey.Engine
                     columnByVKey[vKey] = column;
                 }
             }
-
-            // Calculate total notes
-            foreach (var column in NotesByColumn)
-            {
-                this.TotalNotes += column.Length;
-            }
         }
 
-        public void Start(ChartData chartData)
+        public void Start()
         {
             isRunning = true;
             gameplayThread = new Thread(Run);
@@ -120,6 +152,13 @@ namespace ProjectOdyssey.Engine
         {
             while (inputHistory.TryGetNextEvent(out _)) { } // drop input queued during the pause
             gameClock.Resume();
+        }
+
+        public void Restart()
+        {
+            Stop();
+            InitialiseSession();
+            Start();
         }
 
         public void Run()
