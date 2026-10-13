@@ -16,6 +16,9 @@ namespace ProjectOdyssey.Skinning
         public required Texture ChartCard { get; init; }
         public required Texture ChartCardHover { get; init; }
         public required Texture PausedBackground { get; init; }
+        public required Texture ContinueButton { get; init; }
+        public required Texture RetryButton { get; init; }
+        public required Texture ExitButton { get; init; }
         public required GlyphSet Glyphs { get; init; }
     }
 

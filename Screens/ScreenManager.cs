@@ -71,11 +71,18 @@ namespace ProjectOdyssey.Screens
         }
 
         // Pops the current screen, returning control to whatever is beneath it.
-        public void Pop()
+        // ScreenManager
+        public void Pop(int count = 1)
         {
-            PopInternal();
+            for (int i = 0; i < count; i++)
+            {
+                PopInternal();
+            }
+
             if (screens.Count > 0)
+            {
                 screens.Peek().OnResume();
+            }
         }
 
         private void PopInternal()

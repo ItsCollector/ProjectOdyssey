@@ -43,6 +43,9 @@ namespace ProjectOdyssey.Skinning
                     ChartCard = LoadTexture(Path.Combine(DefaultMenuPath, "chart_card.png")),
                     ChartCardHover = LoadTexture(Path.Combine(DefaultMenuPath, "chart_card_hover.png")),
                     PausedBackground = LoadTexture(Path.Combine(DefaultMenuPath, "paused_background.png")),
+                    ContinueButton = LoadTexture(Path.Combine(DefaultMenuPath, "continue_button.png")),
+                    RetryButton = LoadTexture(Path.Combine(DefaultMenuPath, "retry_button.png")),
+                    ExitButton = LoadTexture(Path.Combine(DefaultMenuPath, "exit_button.png")),
                     Glyphs = glyphs
                 };
 

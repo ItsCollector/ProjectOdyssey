@@ -18,6 +18,11 @@ namespace ProjectOdyssey.Render
         {
             // Draw the pause screen background
             renderer.Draw(menuSkin.PausedBackground, 960, 540);
+
+            // Draw buttons
+            renderer.Draw(menuSkin.ContinueButton, 960, 340);
+            renderer.Draw(menuSkin.RetryButton, 960, 540); 
+            renderer.Draw(menuSkin.ExitButton, 960, 740);
         }
     }
 }
