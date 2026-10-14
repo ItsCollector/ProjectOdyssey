@@ -145,6 +145,7 @@ namespace ProjectOdyssey.Engine
         public void Pause()
         {
             gameClock.Pause();
+            Score.IncrementPauseCount();
             while (inputHistory.TryGetNextEvent(out _)) { } // drop input queued during the pause
         }
 

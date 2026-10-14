@@ -40,11 +40,11 @@ namespace ProjectOdyssey.Screens
             }
 
             session = new ChartBrowserState(charts, AudioManager);
-            session.SelectionChanged += browserRenderer.LoadBackgroundTexture;
+            session.SelectionChanged += browserRenderer.RequestBackgroundTexture;
 
             if (charts.Count > 0)
             {
-                browserRenderer.LoadBackgroundTexture(session.CurrentSet[session.ChartCursor].BackgroundPath);
+                browserRenderer.RequestBackgroundTexture(session.CurrentSet[session.ChartCursor].BackgroundPath);
             }
         }
 
@@ -77,7 +77,7 @@ namespace ProjectOdyssey.Screens
         public void Unload()
         {
             // Unsubscribe first so nothing can call into a disposed renderer
-            session.SelectionChanged -= browserRenderer.LoadBackgroundTexture;
+            session.SelectionChanged -= browserRenderer.RequestBackgroundTexture;
             browserRenderer.Dispose();   // frees the chart background texture it loaded
         }
 

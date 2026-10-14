@@ -1,4 +1,5 @@
-﻿using ProjectOdyssey.Engine.Mechanics;
+﻿using OpenTK.Graphics.OpenGL;
+using ProjectOdyssey.Engine.Mechanics;
 using ProjectOdyssey.Engine.Rulesets;
 
 namespace ProjectOdyssey.Engine.Scoring
@@ -22,6 +23,9 @@ namespace ProjectOdyssey.Engine.Scoring
         // Combo 
         public int CurrentCombo = 0;
         public int HighestCombo = 0;
+
+        // Pausing
+        public int PauseCount = 0;
 
         public ScoreManager(RulesetMechanics mechanics)
         {
@@ -107,6 +111,11 @@ namespace ProjectOdyssey.Engine.Scoring
             }
         }
 
+        public void IncrementPauseCount()
+        {
+            PauseCount++;
+        }
+
         public ScoreData CompileScoreData()
         {
             return new ScoreData(
@@ -114,7 +123,8 @@ namespace ProjectOdyssey.Engine.Scoring
                 JudgedNotesCount,
                 CurrentDiscreteAccuracy,
                 CurrentContinuousAccuracy,
-                HighestCombo
+                HighestCombo,
+                PauseCount
             );
         }
     }
@@ -127,13 +137,16 @@ namespace ProjectOdyssey.Engine.Scoring
         public float CurrentContinuousAccuracy { get; set; }
         public int HighestCombo { get; set; }
 
-        public ScoreData(Dictionary<JudgementType, int> judgementCounts, int judgedNotesCount, float currentDiscreteAccuracy, float currentContinuousAccuracy, int highestCombo)
+        public int PauseCount { get; set; }
+
+        public ScoreData(Dictionary<JudgementType, int> judgementCounts, int judgedNotesCount, float currentDiscreteAccuracy, float currentContinuousAccuracy, int highestCombo, int pauseCount)
         {
             JudgementCounts = judgementCounts;
             JudgedNotesCount = judgedNotesCount;
             CurrentDiscreteAccuracy = currentDiscreteAccuracy;
             CurrentContinuousAccuracy = currentContinuousAccuracy;
             HighestCombo = highestCombo;
+            PauseCount = pauseCount;
         }
     }
 }

@@ -2,6 +2,7 @@ using OpenTK.Mathematics;
 using ProjectOdyssey.IO;
 using ProjectOdyssey.Screens;
 using ProjectOdyssey.Skinning;
+using StbImageSharp;
 
 namespace ProjectOdyssey.Render
 {
@@ -17,7 +18,15 @@ namespace ProjectOdyssey.Render
         // Either skin.MissingBackground (borrowed) or a chart's own background (owned by this renderer).
         private Texture background;
         private bool ownsBackground;
-        private string? requestedBackgroundPath;
+        private string? loadedBgPath;      // what 'background' is currently showing
+        private string? requestedBgPath;   // what the most recent request asked for
+
+        // Background images are big, so they're decoded on a worker thread. OpenGL calls only work on the thread
+        // that owns the GL context, so the worker only produces pixels. The texture itself is created on the
+        // main thread, in UploadDecodedBackground().
+        private sealed record DecodedBackground(int RequestId, string Path, ImageResult? Image);
+        private DecodedBackground? decoded;   // handed from the worker to the main thread
+        private int latestRequestId;          // a result is only used if it belongs to the most recent request
 
         public ChartBrowserView(MenuSkin skin, Renderer renderer)
         {
@@ -26,44 +35,69 @@ namespace ProjectOdyssey.Render
             background = skin.MissingBackground;
         }
 
-        // Chart backgrounds are user content loaded at runtime, so this can legitimately fail
-        // (file deleted, corrupt image). Any failure falls back to the skin's missing-background
-        // texture instead of throwing.
-        public void LoadBackgroundTexture(string path)
+        // Call from the main thread whenever the selected chart changes. Cheap: the decoding happens on a worker.
+        public void RequestBackgroundTexture(string path)
         {
-            if (path == requestedBackgroundPath) return;
-            requestedBackgroundPath = path;
+            if (path == requestedBgPath) return;   // already showing, or already loading, exactly this
 
-            Texture? loaded = null;
+            requestedBgPath = path;
+            int requestId = Interlocked.Increment(ref latestRequestId);   // supersedes anything still decoding
 
-            if (File.Exists(path))
+            if (path == loadedBgPath) return;      // going back to what's on screen: the bump above cancels the stale load
+
+            Task.Run(() =>
             {
-                try
+                ImageResult? image = DecodeImage(path);   // CPU only: no GL calls on this thread
+
+                // If the selection moved on while we were decoding, drop the result
+                if (requestId == Volatile.Read(ref latestRequestId))
                 {
-                    loaded = Texture.FromFile(path);
+                    Interlocked.Exchange(ref decoded, new DecodedBackground(requestId, path, image));
                 }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"[Warning] Could not load background '{path}': {ex.Message}");
-                }
-            }
-            else
+            });
+        }
+
+        // Chart backgrounds are user content loaded at runtime, so this can legitimately fail
+        // (file deleted, corrupt image). A failure returns null, and the skin's missing-background is shown instead.
+        private static ImageResult? DecodeImage(string path)
+        {
+            if (!File.Exists(path))
             {
                 Console.WriteLine($"[Warning] Background image not found at {path}, using fallback.");
+                return null;
             }
 
-            // Only release the old texture once the new one is ready.
-            ReleaseBackground();
-
-            if (loaded != null)
+            try
             {
-                background = loaded;
+                return Texture.DecodeFile(path);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Warning] Could not load background '{path}': {ex.Message}");
+                return null;
+            }
+        }
+
+        // Main thread only (it makes GL calls). Picks up a finished decode, if there is one, and turns it into a texture.
+        private void UploadDecodedBackground()
+        {
+            DecodedBackground? ready = Interlocked.Exchange(ref decoded, null);
+
+            if (ready == null || ready.RequestId != Volatile.Read(ref latestRequestId)) return;
+
+            ReleaseBackground();   // only now that the replacement is ready
+
+            if (ready.Image != null)
+            {
+                background = Texture.FromImage(ready.Image, ready.Path);
                 ownsBackground = true;
             }
             else
             {
                 background = skin.MissingBackground;
             }
+
+            loadedBgPath = ready.Path;   // also set on failure, so a broken image isn't retried every time
         }
 
         private void ReleaseBackground()
@@ -76,6 +110,9 @@ namespace ProjectOdyssey.Render
         // belong to the SkinManager.
         public void Dispose()
         {
+            Interlocked.Increment(ref latestRequestId);   // any decode still running is now stale and will be dropped
+            Interlocked.Exchange(ref decoded, null);
+
             ReleaseBackground();
             background = skin.MissingBackground;
         }
@@ -95,6 +132,8 @@ namespace ProjectOdyssey.Render
             int hoveredSet,
             int hoveredChart)
         {
+            UploadDecodedBackground();
+
             DrawBottomLeftOrigin(background, new CardRect { X = 0, Y = 0, Width = 1920, Height = 1080 }); // Draw background
 
             // Empty library (e.g. a fresh build folder with no chart_library.db contents)

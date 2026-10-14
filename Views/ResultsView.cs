@@ -40,9 +40,10 @@ namespace ProjectOdyssey.Views
             renderer.DrawText(menuSkin.Glyphs, $"Bad: {scoreData.JudgementCounts[JudgementType.Bad]}", 30, 330, judgementColours[JudgementType.Bad]);
             renderer.DrawText(menuSkin.Glyphs, $"Miss: {scoreData.JudgementCounts[JudgementType.Miss]}", 30, 390, judgementColours[JudgementType.Miss]);
             renderer.DrawText(menuSkin.Glyphs, $"Max Combo: {scoreData.HighestCombo}", 30, 450, primaryTextColour);
+            renderer.DrawText(menuSkin.Glyphs, $"Pause Count: {scoreData.PauseCount}", 30, 510, primaryTextColour);
 
-            renderer.DrawText(menuSkin.Glyphs, $"Continuous Accuracy: {scoreData.CurrentContinuousAccuracy}%", 30, 510, primaryTextColour);
-            renderer.DrawText(menuSkin.Glyphs, $"Discrete Accuracy: {scoreData.CurrentDiscreteAccuracy}%", 30, 570, primaryTextColour);
+            renderer.DrawText(menuSkin.Glyphs, $"Continuous Accuracy: {scoreData.CurrentContinuousAccuracy}%", 30, 570, primaryTextColour);
+            renderer.DrawText(menuSkin.Glyphs, $"Discrete Accuracy: {scoreData.CurrentDiscreteAccuracy}%", 30, 630, primaryTextColour);
         }
     }
 }

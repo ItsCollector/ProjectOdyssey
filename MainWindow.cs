@@ -14,7 +14,7 @@ namespace ProjectOdyssey
         private readonly ScreenManager screenManager = new();
         private Win32KeyInputListener inputListener = new Win32KeyInputListener();
         private InputHistory inputHistory = new InputHistory();
-        private readonly FrameProfiler profiler = new(isEnabled: false);
+        private readonly FrameProfiler profiler = new(isEnabled: true);
 
         public MainWindow(int width, int height, string title, bool vsync = true)
             : base(

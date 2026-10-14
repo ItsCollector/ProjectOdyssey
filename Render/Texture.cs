@@ -18,11 +18,16 @@ namespace ProjectOdyssey.Render
             this.ImgPath = imgPath;
         }
 
-        public static Texture FromFile(string path)
+        public static ImageResult DecodeFile(string path)
         {
             using var stream = File.OpenRead(path);
-            var image = ImageResult.FromStream(stream, ColorComponents.RedGreenBlueAlpha);
+            return ImageResult.FromStream(stream, ColorComponents.RedGreenBlueAlpha);
+        }
 
+        public static Texture FromFile(string path) => FromImage(DecodeFile(path), path);
+
+        public static Texture FromImage(ImageResult image, string path)
+        {
             int handle = GL.GenTexture();
             GL.BindTexture(TextureTarget.Texture2D, handle);
             GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba,
