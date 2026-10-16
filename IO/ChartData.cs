@@ -4,6 +4,8 @@ namespace ProjectOdyssey.IO
 {
     public class ChartData
     {
+        public int SetId { get; set; }
+        public int ChartId { get; set; }
         public string Title { get; set; }
         public string Artist { get; set; }
         public string Noter { get; set; }
@@ -11,14 +13,16 @@ namespace ProjectOdyssey.IO
         public byte KeyCount { get; set; }
         public Note[][] NotesByColumn { get; set; }
 
-        public ChartData(string title, string artist, string noter, string diffName, byte keyCount, Note[][] notesByColumn)
+        public ChartData(int setId, int chartId, string title, string artist, string noter, string diffName, byte keyCount, Note[][] notesByColumn)
         {
-            this.Title = title;
-            this.Artist = artist;
-            this.Noter = noter;
-            this.DiffName = diffName;
-            this.KeyCount = keyCount;
-            this.NotesByColumn = notesByColumn;
+            SetId = setId;
+            ChartId = chartId;
+            Title = title;
+            Artist = artist;
+            Noter = noter;
+            DiffName = diffName;
+            KeyCount = keyCount;
+            NotesByColumn = notesByColumn;
         }
 
         public void DisplayInfo()

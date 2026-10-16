@@ -68,8 +68,22 @@ namespace ProjectOdyssey.Screens
 
             if (session.ResolvedNotes >= session.TotalNotes)
             {
-                // Transition to results screen
                 var scoreData = session.Score.CompileScoreData();
+
+                // Create replay (next)
+                string replayPath = "Placeholder";
+
+                // Add score to db
+                try
+                {
+                    ScoreDatabase.SaveScore(scoreData, chartData.SetId, chartData.ChartId, replayPath);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Failed to save score: {ex}");
+                }
+
+                // Transition to results screen
                 AudioManager.StopAudio();
                 ScreenManager.Replace(new ResultsScreen(scoreData));
             }

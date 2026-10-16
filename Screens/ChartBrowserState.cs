@@ -223,7 +223,7 @@ namespace ProjectOdyssey.Screens
         {
             // get chart data
             string selectedChartPath = CurrentSet[ChartCursor].BinaryFilePath;
-            ChartData chartData = ChartBinaryReader.ReadChartBinary(selectedChartPath);
+            ChartData chartData = ChartBinaryReader.ReadChartBinary(selectedChartPath, CurrentSet[ChartCursor].SetId, CurrentSet[ChartCursor].ChartId);
             
             // get song
             string selectedSongPath = CurrentSet[ChartCursor].AudioPath;

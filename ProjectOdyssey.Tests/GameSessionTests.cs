@@ -26,7 +26,7 @@ namespace ProjectOdyssey.Tests
             columns[0] = column0;
             if (column1 != null) columns[1] = column1;
 
-            var chart = new ChartData("t", "a", "n", "d", 7, columns);
+            var chart = new ChartData(0, 0, "t", "a", "n", "d", 7, columns);
             return new GameSession(new InputHistory(), chart, 1000f, ruleset);
         }
 
@@ -188,7 +188,7 @@ namespace ProjectOdyssey.Tests
             for (int i = 0; i < columns.Length; i++) columns[i] = Array.Empty<Note>();
             setup?.Invoke(columns);
 
-            var chart = new ChartData("t", "a", "n", "d", keyCount, columns);
+            var chart = new ChartData(0, 0, "t", "a", "n", "d", keyCount, columns);
             return new GameSession(new InputHistory(), chart, 1000f);
         }
 

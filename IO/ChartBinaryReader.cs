@@ -4,7 +4,7 @@ namespace ProjectOdyssey.IO
 {
     public static class ChartBinaryReader
     {
-        public static ChartData ReadChartBinary(string path)
+        public static ChartData ReadChartBinary(string path, int setId, int chartId)
         {
             using var stream = File.OpenRead(path);
             using var reader = new BinaryReader(stream);
@@ -29,7 +29,7 @@ namespace ProjectOdyssey.IO
                 }
             }
 
-            return new ChartData(title, artist, noter, diffName, keyCount, notesByColumn);
+            return new ChartData(setId, chartId, title, artist, noter, diffName, keyCount, notesByColumn);
         }
 
         private static Note ReadNote(BinaryReader reader)
