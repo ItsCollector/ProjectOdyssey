@@ -18,7 +18,11 @@ namespace ProjectOdyssey.Screens
         public List<List<ChartBrowserRow>> FilteredChartSets => chartSets; // The chart sets after filtering (currently no filtering applied)
         public List<(int Slot, CardRect Rect)> SetCardRects { get; } = new(); // Rectangle positions and dimensions of the set cards on screen
         public List<(int ChartIndex, CardRect Rect)> ChartCardRects { get; } = new(); // Rectangle positions and dimensions of the chart cards on screen
-       
+
+        private const float SettleDelayMs = 500;
+        private float msSinceSelectionChanged;
+        private bool selectionPending;
+
         public ChartBrowserState(List<ChartBrowserRow> charts, AudioManager audioManager)
         {
             this.audioManager = audioManager;   
@@ -185,8 +189,8 @@ namespace ProjectOdyssey.Screens
                 }
             }
 
-            SelectionChanged?.Invoke(CurrentSet[ChartCursor].BackgroundPath);
-            PlaySelectedChartMusic();
+            selectionPending = true;
+            msSinceSelectionChanged = 0f;
         }
 
         public void PlaySelectedChartMusic()
@@ -232,6 +236,25 @@ namespace ProjectOdyssey.Screens
         // move the cursor rather than commit anything.
         public bool IsHoveredChartAlreadySelected =>
             HoveredChart != -1 && ChartCardRects[HoveredChart].ChartIndex == ChartCursor;
+
+        // Call every frame. Runs the heavy selection work once the cursor has been still for SettleDelayMs.
+        public void Update(float deltaMs)
+        {
+            if (!selectionPending) return;
+
+            msSinceSelectionChanged += deltaMs;
+            if (msSinceSelectionChanged >= SettleDelayMs) SettleNow();
+        }
+
+        // Applies the current selection immediately (background + preview music)
+        public void SettleNow()
+        {
+            if (chartSets.Count == 0) return;
+
+            selectionPending = false;
+            SelectionChanged?.Invoke(CurrentSet[ChartCursor].BackgroundPath);
+            PlaySelectedChartMusic();
+        }
 
         private struct Row
         {

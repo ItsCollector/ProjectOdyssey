@@ -50,6 +50,8 @@ namespace ProjectOdyssey.Screens
 
         public void Update(float deltaMs) 
         {
+            session.Update(deltaMs);
+
             if (AudioManager.PlayingPath == null)
             {
                 session.RestartSelectedChartMusic();

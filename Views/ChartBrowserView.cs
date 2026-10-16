@@ -47,6 +47,8 @@ namespace ProjectOdyssey.Render
 
             Task.Run(() =>
             {
+                if (requestId != Volatile.Read(ref latestRequestId)) return;
+
                 ImageResult? image = DecodeImage(path);   // CPU only: no GL calls on this thread
 
                 // If the selection moved on while we were decoding, drop the result
