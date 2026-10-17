@@ -12,9 +12,10 @@ namespace ProjectOdyssey.Screens
     // events instead of knowing about GameplayScreen/ChartManagerScreen etc.
     public class ScreenManager : IDisposable
     {
-        private Renderer? renderer;        // created in Initialise(): it needs a live GL context
-        private readonly AudioManager audioManager;
-        private SkinManager? skinManager;  
+        public Renderer renderer { get; }
+        public AudioManager audioManager { get; }
+        public SkinManager skinManager { get; }
+
         private readonly Stack<IGameScreen> screens = new();
         private readonly List<IGameScreen> renderScratch = new(); 
         private int viewportWidth;
@@ -23,16 +24,13 @@ namespace ProjectOdyssey.Screens
         public bool HasScreen => screens.Count > 0;
         public IGameScreen? CurrentScreen => screens.Count > 0 ? screens.Peek() : null;
 
-        public ScreenManager()
+        public ScreenManager(string? skinDirectory)
         {
             this.audioManager = new AudioManager();
-        }   
 
-        // Loads the skin (textures + glyphs). Call once from MainWindow.OnLoad, after the
-        // GL context exists and before the first Push. Constructing this earlier (e.g. in a
-        // field initialiser) runs GL calls with no context.
-        public void Initialise(string? skinDirectory)
-        {
+            // Loads the skin (textures + glyphs). Call once from MainWindow.OnLoad, after the
+            // GL context exists and before the first Push. Constructing this earlier (e.g. in a
+            // field initialiser) runs GL calls with no context.
             if (skinManager != null)
             {
                 throw new InvalidOperationException("ScreenManager is already initialised; live screens hold references to the skin's textures.");
@@ -48,10 +46,9 @@ namespace ProjectOdyssey.Screens
             {
                 // Don't leak the renderer's GL objects if a default asset is missing
                 renderer.Dispose();
-                renderer = null;
                 throw;
             }
-        }
+        }   
 
         // Pushes a new screen on top of the stack (e.g. gameplay -> pause menu).
         // The screen underneath is left loaded but no longer updated/rendered
@@ -61,10 +58,6 @@ namespace ProjectOdyssey.Screens
             if (skinManager == null || renderer == null)
                 throw new InvalidOperationException("Call Initialise() before pushing screens.");
 
-            screen.Renderer = renderer;
-            screen.ScreenManager = this;
-            screen.AudioManager = audioManager;
-            screen.SkinManager = skinManager;
             screen.Load();
             screen.Resize(viewportWidth, viewportHeight);
             screens.Push(screen);
@@ -130,7 +123,7 @@ namespace ProjectOdyssey.Screens
 
             // Every screen has only queued its draw commands so far; this is the one place
             // they actually get drawn. Exactly once per frame, after all screens have queued.
-            renderer?.Flush();
+            renderer.Flush();
         }
 
         // Resizes every screen on the stack, not just the top one, so a
@@ -156,11 +149,9 @@ namespace ProjectOdyssey.Screens
         public void Dispose()
         {
             UnloadAll();
-            skinManager?.Dispose();
-            skinManager = null;
+            skinManager.Dispose();
             audioManager.Dispose();
-            renderer?.Dispose();
-            renderer = null;
+            renderer.Dispose();
         }
 
         public void OnKeyDown(Keys key)

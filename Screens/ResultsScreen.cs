@@ -16,28 +16,19 @@ namespace ProjectOdyssey.Screens
         public SkinManager SkinManager { private get; set; }
         private ScoreData scoreData;
 
-        public ResultsScreen(ScoreData scoreData)
+        public ResultsScreen(ScoreData scoreData, Renderer renderer, ScreenManager screenManager, AudioManager audioManager, SkinManager skinManager)
         {
             this.scoreData = scoreData;
-        }
-
-        public void Load()
-        {
+            Renderer = renderer;
+            ScreenManager = screenManager;
+            AudioManager = audioManager;
+            SkinManager = skinManager;
             resultsView = new ResultsView(SkinManager.MenuSkin, Renderer);
-        }
-
-        public void Update(float deltaMs)
-        {
-
         }
 
         public void Render()
         {
             resultsView.DrawResultsScreen(scoreData);
-        }
-        public void Unload()
-        {
-            // Cleanup resources if needed
         }
 
         public void OnKeyDown(Keys key)
@@ -47,5 +38,9 @@ namespace ProjectOdyssey.Screens
                 ScreenManager.Pop();
             }
         }
+
+        public void Load() { }
+        public void Update(float deltaMs) { }
+        public void Unload() { }
     }
 }

@@ -29,24 +29,18 @@ namespace ProjectOdyssey.Screens
 
         public bool DrawsScreenBeneath => true;
 
-        public void Load()
+        public PauseScreen(Renderer renderer, ScreenManager manager, AudioManager audioManager, SkinManager skinManager)
         {
+            Renderer = renderer;
+            ScreenManager = manager;
+            AudioManager = audioManager;
+            SkinManager = skinManager;
             pauseScreenView = new PauseView(SkinManager.MenuSkin, Renderer);
-        }
-
-        public void Update(float deltaMs)
-        {
-            // Update pause screen logic here
         }
 
         public void Render()
         {
             pauseScreenView.DrawPauseScreen();
-        }
-
-        public void Unload()
-        {
-            // Cleanup resources if needed
         }
 
         public void Resize(int width, int height)
@@ -110,7 +104,13 @@ namespace ProjectOdyssey.Screens
             }
         }
 
-        private Vector2 ToLogical(Vector2 windowPos) =>
-            new Vector2(windowPos.X * 1920f / windowWidth, windowPos.Y * 1080f / windowHeight);
+        private Vector2 ToLogical(Vector2 windowPos)
+        {
+            return new Vector2(windowPos.X * 1920f / windowWidth, windowPos.Y * 1080f / windowHeight);
+        }
+
+        public void Load() { }
+        public void Update(float deltaMs) { }
+        public void Unload() { }
     }
 }

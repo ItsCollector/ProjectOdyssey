@@ -25,11 +25,15 @@ namespace ProjectOdyssey.Screens
         public SkinManager SkinManager { private get; set; }
         private readonly SyncProbe syncProbe = new(isEnabled: false);
 
-        public GameplayScreen(ChartData chartData, string songPath, InputHistory inputHistory)
+        public GameplayScreen(ChartData chartData, string songPath, InputHistory inputHistory, Renderer renderer, ScreenManager screenManager, AudioManager audioManager, SkinManager skinManager)
         {
             this.chartData = chartData;
             this.songPath = songPath;
             this.inputHistory = inputHistory;
+            Renderer = renderer;
+            ScreenManager = screenManager;
+            AudioManager = audioManager;
+            SkinManager = skinManager;
         }
 
         public void Load()
@@ -76,16 +80,17 @@ namespace ProjectOdyssey.Screens
                 // Add score to db
                 try
                 {
+                    Console.WriteLine($"[INFO] Number of inputs read this play: {session.recordedInputs.Count}");
                     ScoreDatabase.SaveScore(scoreData, chartData.SetId, chartData.ChartId, replayPath);
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Failed to save score: {ex}");
+                    Console.WriteLine($"[WARN] Failed to save score: {ex}");
                 }
 
                 // Transition to results screen
                 AudioManager.StopAudio();
-                ScreenManager.Replace(new ResultsScreen(scoreData));
+                ScreenManager.Replace(new ResultsScreen(scoreData, Renderer, ScreenManager, AudioManager, SkinManager));
             }
         }
 
@@ -115,7 +120,7 @@ namespace ProjectOdyssey.Screens
         {
             session.Pause();
             AudioManager.PauseAudio();
-            ScreenManager.Push(new PauseScreen());
+            ScreenManager.Push(new PauseScreen(Renderer, ScreenManager, AudioManager, SkinManager));
         }
 
         public void OnResume()

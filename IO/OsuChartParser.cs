@@ -10,8 +10,6 @@ namespace ProjectOdyssey.IO
         // internally by ImportFromOsuLibrary once the path is resolved.
         public static Result<(ChartData chartData, string resolvedAudioPath, string resolvedBackgroundPath)> OsuToChartData(string filePath)
         {
-            int setId;
-            int chartId;
             string audioFileName = string.Empty;
             string backgroundFileName = string.Empty;
             string title = string.Empty;

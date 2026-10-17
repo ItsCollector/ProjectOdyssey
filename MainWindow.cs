@@ -11,28 +11,20 @@ namespace ProjectOdyssey
 {
     public class MainWindow : GameWindow
     {
-        private readonly ScreenManager screenManager = new();
+        private ScreenManager screenManager;
         private Win32KeyInputListener inputListener = new Win32KeyInputListener();
         private InputHistory inputHistory = new InputHistory();
         private readonly FrameProfiler profiler = new(isEnabled: true);
 
-        public MainWindow(int width, int height, string title, bool vsync = true)
-            : base(
-                new GameWindowSettings
-                {
-                    UpdateFrequency = vsync ? 0 : 240
-                },
-                new NativeWindowSettings
-                {
-                    ClientSize = new Vector2i(width, height),
-                    Title = title,
-                    APIVersion = new Version(4, 1)
-                })
-        {
-            WindowState = WindowState.Maximized;
+        // Game window settings
+        private bool vsyncOn = false;
 
-            //WindowState = WindowState.Fullscreen;
-            Context.SwapInterval = vsync ? 1 : 0;
+        public MainWindow(int width, int height, string title, bool vsyncOn = true): base(CreateGameWindowSettings(vsyncOn), CreateNativeWindowSettings(width, height, title))
+        {
+            screenManager = new ScreenManager(Path.Combine(AppContext.BaseDirectory, "Skins", "Skin 1"));
+
+            WindowState = WindowState.Maximized;
+            Context.SwapInterval = vsyncOn ? 1 : 0;
         }
 
         protected unsafe override void OnLoad()
@@ -47,21 +39,11 @@ namespace ProjectOdyssey
             inputListener.OnInputEvent += inputHistory.RecordInputEvent;
             inputListener.OnInputEvent += _ => profiler.CountInputEvent();
 
-            // Loads all skin textures/glyphs once. Needs the GL context, so it can't happen in the constructor.
-            screenManager.Initialise(Path.Combine(AppContext.BaseDirectory, "Skins", "Skin 1"));
-
             // ScreenManager needs to know the viewport before the first
             // screen is pushed, so Resize() is used here instead of it
             // reading ClientSize on its own.
             screenManager.Resize(ClientSize.X, ClientSize.Y);
-
-            string chartPath = ""; // put the path to your chart file here temporaily 
-            string songPath = "";
-            //ChartData chartData = ChartBinaryReader.ReadChartBinary(chartPath);
-
-            //screenManager.Push(new GameplayScreen(chartData, songPath, inputHistory, audioManager));
-            screenManager.Push(new ChartBrowserScreen(inputHistory));
-            //screenManager.Push(new ChartManagerScreen());
+            screenManager.Push(new ChartBrowserScreen(inputHistory, screenManager.renderer, screenManager, screenManager.audioManager, screenManager.skinManager));
 
             //Task.Run(() => ChartImportService.ImportChartsFromOsu()); // imports all charts from the osu! Songs directory into the Odyssey's own database
 
@@ -143,6 +125,33 @@ namespace ProjectOdyssey
             }
 
             return inputListener.CallNextWindowProc(hWnd, msg, wParam, lParam);
+        }
+
+        private void ToggleVsync()
+        {
+            vsyncOn = !vsyncOn;
+
+            VSync = vsyncOn
+                ? VSyncMode.On
+                : VSyncMode.Off;
+        }
+
+        private static GameWindowSettings CreateGameWindowSettings(bool vsyncOn)
+        {
+            return new GameWindowSettings
+            {
+                UpdateFrequency = vsyncOn ? 0 : 240
+            };
+        }
+
+        private static NativeWindowSettings CreateNativeWindowSettings(int width, int height, string title)
+        {
+            return new NativeWindowSettings
+            {
+                ClientSize = new Vector2i(width, height),
+                Title = title,
+                APIVersion = new Version(4, 1)
+            };
         }
     }
 }

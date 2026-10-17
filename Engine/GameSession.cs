@@ -1,10 +1,10 @@
-﻿using OpenTK.Mathematics;
-using ProjectOdyssey.Engine.Mechanics;
+﻿using ProjectOdyssey.Engine.Mechanics;
 using ProjectOdyssey.Engine.Rulesets;
 using ProjectOdyssey.Engine.Scoring;
 using ProjectOdyssey.Input;
 using ProjectOdyssey.IO;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 
 namespace ProjectOdyssey.Engine
 {
@@ -31,9 +31,14 @@ namespace ProjectOdyssey.Engine
         private float hitPositionY = 1000;
         private bool notesOverflowPastJudgementLine = false;
 
+        public JudgementResult CurrentJudgementResult { get; private set; } = new JudgementResult(JudgementType.Marvellous, 0f, float.NegativeInfinity);
+        public int TotalNotes;
+        public int ResolvedNotes;
+
         // Judgement history
         private readonly JudgementResultBuffer judgementResultBuffer = new(300);
         private readonly JudgementResult[] recentScratch = new JudgementResult[300];
+        public List<ReplayEvent> recordedInputs;
 
         // Accuracy tracking
         public ScoreManager Score;
@@ -50,10 +55,6 @@ namespace ProjectOdyssey.Engine
         public Note[][] NotesByColumn { get; set; } 
         public int[] ColumnCursors { get; set; }
 
-        public JudgementResult CurrentJudgementResult { get; private set; } = new JudgementResult(JudgementType.Marvellous, 0f, float.NegativeInfinity);
-        public int TotalNotes;
-        public int ResolvedNotes;
-
         public GameSession(InputHistory inputHistory, ChartData incomingChartData, float hitPositionY, IRuleset? ruleset = null)
         {
             chartData = incomingChartData;
@@ -67,6 +68,7 @@ namespace ProjectOdyssey.Engine
             LoadManiaBindings();
         }
 
+        [MemberNotNull(nameof(NotesByColumn), nameof(ColumnCursors), nameof(recordedInputs), nameof(Score))]
         public void InitialiseSession()
         {
             // Fresh copy of the notes with default state
@@ -78,11 +80,15 @@ namespace ProjectOdyssey.Engine
             // Initialise cursors
             ColumnCursors = new int[NotesByColumn.Length];
 
+            TotalNotes = 0;
+
             // Calculate total notes
             foreach (var column in NotesByColumn)
             {
                 this.TotalNotes += column.Length;
             }
+
+            recordedInputs = new List<ReplayEvent>(TotalNotes * 2 + 1024);
 
             // Scoring
             ResolvedNotes = 0;
@@ -189,6 +195,7 @@ namespace ProjectOdyssey.Engine
                         while (inputHistory.TryGetNextEvent(out InputEvent inputEvent))
                         {
                             float inputSongTimeMs = (float)gameClock.ToSongTimeMs(inputEvent.TimeStamp);
+                            recordedInputs.Add(new ReplayEvent(inputSongTimeMs, inputEvent.VKey, inputEvent.IsPressed));
                             JudgeNotes(inputEvent, inputSongTimeMs);
                         }
 

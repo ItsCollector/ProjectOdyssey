@@ -272,7 +272,6 @@
   <ItemGroup>
     <Folder Include="Assets\Judgements\" />
     <Folder Include="Charts\" />
-    <Folder Include="Input\" />
   </ItemGroup>
 
 </Project>

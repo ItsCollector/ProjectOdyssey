@@ -67,7 +67,7 @@ namespace ProjectOdyssey.IO
             using var connection = OpenConnection();
             using var transaction = connection.BeginTransaction();
 
-            Console.WriteLine($"Details: setID: {setId}, chartId: {chartId}, replayPath: {replayPath}");
+            Console.WriteLine($"[INFO] Details: setID: {setId}, chartId: {chartId}, replayPath: {replayPath}");
 
             try
             {

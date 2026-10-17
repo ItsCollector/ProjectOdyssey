@@ -6,6 +6,7 @@ using ProjectOdyssey.Input;
 using ProjectOdyssey.IO;
 using ProjectOdyssey.Render;
 using ProjectOdyssey.Skinning;
+using System.Diagnostics.CodeAnalysis;
 
 namespace ProjectOdyssey.Screens
 {
@@ -23,9 +24,13 @@ namespace ProjectOdyssey.Screens
         public AudioManager AudioManager { private get; set; }
         public SkinManager SkinManager { private get; set; }
 
-        public ChartBrowserScreen(InputHistory inputHistory)
+        public ChartBrowserScreen(InputHistory inputHistory, Renderer renderer, ScreenManager screenManager, AudioManager audioManager, SkinManager skinManager)
         {
             this.inputHistory = inputHistory;
+            Renderer = renderer;
+            ScreenManager = screenManager;
+            AudioManager = audioManager;
+            SkinManager = skinManager;
         }
 
         public void Load()
@@ -90,7 +95,7 @@ namespace ProjectOdyssey.Screens
             var (chartData, songPath) = session.FinaliseChartSelection();
             if (chartData != null)
             {
-                ScreenManager.Push(new GameplayScreen(chartData, songPath, inputHistory));
+                ScreenManager.Push(new GameplayScreen(chartData, songPath, inputHistory, Renderer, ScreenManager, AudioManager, SkinManager));
             }
         }
 
