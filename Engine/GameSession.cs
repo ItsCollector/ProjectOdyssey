@@ -23,7 +23,7 @@ namespace ProjectOdyssey.Engine
         // Input mapping
         // VK code -> column index, or -1 if that key isn't bound in this chart's layout.
         // Built once in the constructor and read-only afterwards, so the gameplay thread can read it without locks.
-        private readonly int[] columnByVKey = new int[256];
+        public readonly int[] ColumnByVKey = new int[256];
 
         // Note scrolling (arbitrary values that should be moved to a config / skinning later)
         public float ApproachTime = 420;
@@ -118,15 +118,15 @@ namespace ProjectOdyssey.Engine
                 throw new InvalidOperationException($"Chart has {NotesByColumn.Length} columns but {binds.Length} key binds were found for {chartData.KeyCount}K.");
             }
 
-            Array.Fill(columnByVKey, -1);
+            Array.Fill(ColumnByVKey, -1);
 
             for (int column = 0; column < binds.Length; column++)
             {
                 ushort vKey = binds[column];
 
-                if (vKey < columnByVKey.Length)
+                if (vKey < ColumnByVKey.Length)
                 {
-                    columnByVKey[vKey] = column;
+                    ColumnByVKey[vKey] = column;
                 }
             }
         }
@@ -184,6 +184,8 @@ namespace ProjectOdyssey.Engine
                     {
                         while (inputHistory.TryGetNextEvent(out InputEvent inputEvent))
                         {
+                            if (!IsBoundKey(inputEvent.VKey)) continue; // Ignore irrelevant keys
+
                             float inputSongTimeMs = (float)gameClock.ToSongTimeMs(inputEvent.TimeStamp);
                             recordedInputs.Add(new ReplayEvent(inputSongTimeMs, inputEvent.VKey, inputEvent.IsPressed));
                             JudgeNotes(inputEvent, inputSongTimeMs);
@@ -211,7 +213,7 @@ namespace ProjectOdyssey.Engine
         // Hand an input event to the mechanics for the note at the front of its column and apply the result
         public void JudgeNotes(InputEvent inputEvent, float inputSongTimeMs)
         {
-            int column = inputEvent.VKey < columnByVKey.Length ? columnByVKey[inputEvent.VKey] : -1;
+            int column = inputEvent.VKey < ColumnByVKey.Length ? ColumnByVKey[inputEvent.VKey] : -1;
             if (column < 0) return; // key isn't bound in this layout
 
             int cursor = ColumnCursors[column];
@@ -267,5 +269,7 @@ namespace ProjectOdyssey.Engine
             int n = judgementResultBuffer.CopyTo(recentScratch);
             return recentScratch.AsSpan(0, n);
         }
+
+        private bool IsBoundKey(ushort vKey) => vKey < ColumnByVKey.Length && ColumnByVKey[vKey] >= 0;
     }
 }

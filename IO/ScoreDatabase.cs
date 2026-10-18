@@ -90,7 +90,7 @@ namespace ProjectOdyssey.IO
                     insertScoreCommand.Parameters.AddWithValue("$highestCombo", scoreData.HighestCombo);
                     insertScoreCommand.Parameters.AddWithValue("$pauseCount", scoreData.PauseCount);
                     insertScoreCommand.Parameters.AddWithValue("$replayPath", replayPath);
-                    insertScoreCommand.Parameters.AddWithValue("$playedUtc", DateTime.UtcNow.Ticks);
+                    insertScoreCommand.Parameters.AddWithValue("$playedUtc", scoreData.SetTimeUtc);
                     insertScoreCommand.ExecuteNonQuery();
                 }
 

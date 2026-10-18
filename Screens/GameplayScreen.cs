@@ -80,7 +80,17 @@ namespace ProjectOdyssey.Screens
                 try
                 {
                     Console.WriteLine($"[INFO] Number of inputs read this play: {session.recordedInputs.Count}");
-                    ScoreDatabase.SaveScore(scoreData, chartData.SetId, chartData.ChartId, replayPath);
+                    ReplayData newReplayData = new ReplayData
+                    {
+                        SetId = chartData.SetId,
+                        ChartId = chartData.ChartId,
+                        ScoreData = scoreData,
+                        ReplayEvents = session.recordedInputs.ToArray(),
+                        ColumnByVKey = session.ColumnByVKey
+                    };
+
+                    string newReplayDataPath = ReplayService.WriteReplayBinary(newReplayData);
+                    ScoreDatabase.SaveScore(scoreData, chartData.SetId, chartData.ChartId, newReplayDataPath);
                 }
                 catch (Exception ex)
                 {

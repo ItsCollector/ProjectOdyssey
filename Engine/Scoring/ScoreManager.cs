@@ -136,8 +136,8 @@ namespace ProjectOdyssey.Engine.Scoring
         public float CurrentDiscreteAccuracy { get; set; }
         public float CurrentContinuousAccuracy { get; set; }
         public int HighestCombo { get; set; }
-
         public int PauseCount { get; set; }
+        public long SetTimeUtc {  get; set; }
 
         public ScoreData(Dictionary<JudgementType, int> judgementCounts, int judgedNotesCount, float currentDiscreteAccuracy, float currentContinuousAccuracy, int highestCombo, int pauseCount)
         {
@@ -147,6 +147,7 @@ namespace ProjectOdyssey.Engine.Scoring
             CurrentContinuousAccuracy = currentContinuousAccuracy;
             HighestCombo = highestCombo;
             PauseCount = pauseCount;
+            SetTimeUtc = DateTime.UtcNow.Ticks;
         }
     }
 }
