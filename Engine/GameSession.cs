@@ -26,10 +26,8 @@ namespace ProjectOdyssey.Engine
         private readonly int[] columnByVKey = new int[256];
 
         // Note scrolling (arbitrary values that should be moved to a config / skinning later)
-        public float ApproachTime = 450;
+        public float ApproachTime = 420;
         public float SpawnPositionY = 0;
-        private float hitPositionY = 1000;
-        private bool notesOverflowPastJudgementLine = false;
 
         public JudgementResult CurrentJudgementResult { get; private set; } = new JudgementResult(JudgementType.Marvellous, 0f, float.NegativeInfinity);
         public int TotalNotes;
@@ -55,11 +53,10 @@ namespace ProjectOdyssey.Engine
         public Note[][] NotesByColumn { get; set; } 
         public int[] ColumnCursors { get; set; }
 
-        public GameSession(InputHistory inputHistory, ChartData incomingChartData, float hitPositionY, IRuleset? ruleset = null)
+        public GameSession(InputHistory inputHistory, ChartData incomingChartData, IRuleset? ruleset = null)
         {
             chartData = incomingChartData;
             this.inputHistory = inputHistory;
-            this.hitPositionY = hitPositionY;
 
             ruleset ??= new NativeRuleset();
             mechanics = ruleset.CreateMechanics();
@@ -185,18 +182,18 @@ namespace ProjectOdyssey.Engine
                 {
                     if (!gameClock.IsPaused)
                     {
-                        float now = (float)gameClock.CurrentSongTimeMs;
-
-                        if (!audioReadyToStart && now >= 0f)
-                        {
-                            audioReadyToStart = true;
-                        }
-
                         while (inputHistory.TryGetNextEvent(out InputEvent inputEvent))
                         {
                             float inputSongTimeMs = (float)gameClock.ToSongTimeMs(inputEvent.TimeStamp);
                             recordedInputs.Add(new ReplayEvent(inputSongTimeMs, inputEvent.VKey, inputEvent.IsPressed));
                             JudgeNotes(inputEvent, inputSongTimeMs);
+                        }
+
+                        float now = (float)gameClock.CurrentSongTimeMs;
+
+                        if (!audioReadyToStart && now >= 0f)
+                        {
+                            audioReadyToStart = true;
                         }
 
                         HandleUnjudgedNotes(now);

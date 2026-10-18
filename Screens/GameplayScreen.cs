@@ -40,8 +40,7 @@ namespace ProjectOdyssey.Screens
         {
             session = new GameSession(
                 inputHistory,
-                chartData,
-                SkinManager.GameplaySkins[chartData.KeyCount].HitPositionY);
+                chartData);
 
             gameplayRenderer = new GameplayView(
                 SkinManager.GameplaySkins[chartData.KeyCount],
