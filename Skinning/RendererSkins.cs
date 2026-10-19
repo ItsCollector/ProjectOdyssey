@@ -15,6 +15,8 @@ namespace ProjectOdyssey.Skinning
         public required Texture SetCardHover { get; init; }
         public required Texture ChartCard { get; init; }
         public required Texture ChartCardHover { get; init; }
+        public required Texture ChartInfo { get; init; }
+        public required Texture ScorePanel { get; init; }
         public required Texture PausedBackground { get; init; }
         public required Texture ContinueButton { get; init; }
         public required Texture RetryButton { get; init; }

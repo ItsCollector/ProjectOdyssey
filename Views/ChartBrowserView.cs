@@ -28,6 +28,11 @@ namespace ProjectOdyssey.Render
         private DecodedBackground? decoded;   // handed from the worker to the main thread
         private int latestRequestId;          // a result is only used if it belongs to the most recent request
 
+        // Card rects
+        private CardRect backgroundRect = new CardRect { X = 0, Y = 0, Width = 1920, Height = 1080 };
+        private CardRect chartInfoRect = new CardRect { X = 0, Y = 0, Width = 750, Height = 350 };
+        private CardRect scorePanelRect = new CardRect { X = 0, Y = 450, Width = 650, Height = 100 };
+
         public ChartBrowserView(MenuSkin skin, Renderer renderer)
         {
             this.skin = skin;
@@ -120,7 +125,7 @@ namespace ProjectOdyssey.Render
         }
 
         // Converts from center-based coordinates to bottom-left origin coordinates and draws the texture
-        private void DrawBottomLeftOrigin(Texture texture, CardRect rect)
+        private void DrawTopLeftOrigin(Texture texture, CardRect rect)
         {
             renderer.Draw(texture, rect.X + rect.Width / 2f, rect.Y + rect.Height / 2f, rect.Width, rect.Height);
         }
@@ -136,7 +141,7 @@ namespace ProjectOdyssey.Render
         {
             UploadDecodedBackground();
 
-            DrawBottomLeftOrigin(background, new CardRect { X = 0, Y = 0, Width = 1920, Height = 1080 }); // Draw background
+            DrawTopLeftOrigin(background, backgroundRect); // Draw background
 
             // Empty library (e.g. a fresh build folder with no chart_library.db contents)
             if (chartSets.Count == 0)
@@ -145,21 +150,40 @@ namespace ProjectOdyssey.Render
                 return;
             }
 
+            DrawTopLeftOrigin(skin.ChartInfo, chartInfoRect); // Chart info panel
+            DrawTopLeftOrigin(skin.ScorePanel, scorePanelRect); // Score panel
+
+            var selectedSet = chartSets[chartSetCursor];
+            var selectedChart = selectedSet[chartCursor];
+
+            renderer.DrawText(skin.Glyphs, selectedChart.Title, chartInfoRect.X + CardTextPadding, chartInfoRect.Y + 20, primaryTextColour);
+            renderer.DrawText(skin.Glyphs, selectedChart.DiffName, chartInfoRect.X + CardTextPadding, chartInfoRect.Y + 70, primaryTextColour);
+            renderer.DrawText(skin.Glyphs, "View Score", scorePanelRect.X + CardTextPadding, scorePanelRect.Y + 30, primaryTextColour);
+
             // Draw the set cards
             for (int i = 0; i < setCardRects.Count; i++)
             {
-                var (slot, rect) = setCardRects[i];
+                (int slot, CardRect rect) = setCardRects[i];
                 bool isSelected = slot == 0;
                 bool isHovered = i == hoveredSet;
 
-                Texture tex = (isSelected || isHovered) ? skin.SetCardHover : skin.SetCard; // Select texture based on whether its being hovered over or not
-                DrawBottomLeftOrigin(tex, rect); // Draw the set card
+                Texture tex;
+                if (isSelected || isHovered) // Select texture based on whether its being hovered over or not
+                {
+                    tex = skin.SetCardHover;
+                }
+                else
+                {
+                    tex = skin.SetCard;
+                }
 
-                var set = chartSets[chartSetCursor + slot];
+                DrawTopLeftOrigin(tex, rect); // Draw the set card
+
+                List<ChartBrowserRow> chartSet = chartSets[chartSetCursor + slot];
                 float textY = rect.Y + (rect.Height - 40) / 2f; // vertically centre a single 40px line
 
                 // Draw the set title in text
-                renderer.DrawText(skin.Glyphs, set[0].Title, rect.X + CardTextPadding, textY, primaryTextColour);
+                renderer.DrawText(skin.Glyphs, chartSet[0].Title, rect.X + CardTextPadding, textY, primaryTextColour);
             }
 
             // Draw the chart cards
@@ -170,10 +194,19 @@ namespace ProjectOdyssey.Render
                 bool isSelected = chartIndex == chartCursor;
                 bool isHovered = i == hoveredChart;
 
-                Texture tex = (isSelected || isHovered) ? skin.ChartCardHover : skin.ChartCard; // Select texture based on whether its being hovered over or not
-                DrawBottomLeftOrigin(tex, rect); // Draw the chart card
+                Texture tex;
+                if (isSelected || isHovered) // Select texture based on whether its being hovered over or not
+                {
+                    tex = skin.ChartCardHover;
+                }
+                else
+                {
+                    tex = skin.ChartCard;
+                }
 
-                var chart = currentSet[chartIndex];
+                DrawTopLeftOrigin(tex, rect); // Draw the chart card
+
+                ChartBrowserRow chart = currentSet[chartIndex];
                 float textY = rect.Y + (rect.Height - 40) / 2f;
 
                 // Draw the chart difficulty name in text

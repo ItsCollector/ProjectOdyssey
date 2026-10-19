@@ -42,6 +42,8 @@ namespace ProjectOdyssey.Skinning
                     SetCardHover = LoadTexture(Path.Combine(DefaultMenuPath, "set_card_hover.png")),
                     ChartCard = LoadTexture(Path.Combine(DefaultMenuPath, "chart_card.png")),
                     ChartCardHover = LoadTexture(Path.Combine(DefaultMenuPath, "chart_card_hover.png")),
+                    ChartInfo = LoadTexture(Path.Combine(DefaultMenuPath, "chart_info_panel.png")),
+                    ScorePanel = LoadTexture(Path.Combine(DefaultMenuPath, "score_panel.png")),
                     PausedBackground = LoadTexture(Path.Combine(DefaultMenuPath, "paused_background.png")),
                     ContinueButton = LoadTexture(Path.Combine(DefaultMenuPath, "continue_button.png")),
                     RetryButton = LoadTexture(Path.Combine(DefaultMenuPath, "retry_button.png")),

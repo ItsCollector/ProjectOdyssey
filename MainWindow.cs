@@ -5,6 +5,7 @@ using OpenTK.Windowing.Desktop;
 using ProjectOdyssey.Diagnostic;
 using ProjectOdyssey.Input;
 using ProjectOdyssey.Input.Native;
+using ProjectOdyssey.IO;
 using ProjectOdyssey.Screens;
 
 namespace ProjectOdyssey
@@ -14,7 +15,7 @@ namespace ProjectOdyssey
         private ScreenManager screenManager;
         private Win32KeyInputListener inputListener = new Win32KeyInputListener();
         private InputHistory inputHistory = new InputHistory();
-        private readonly FrameProfiler profiler = new(isEnabled: true);
+        private readonly FrameProfiler profiler = new(isEnabled: false);
 
         // Game window settings
         private bool vsyncOn = false;
@@ -39,13 +40,13 @@ namespace ProjectOdyssey
             inputListener.OnInputEvent += inputHistory.RecordInputEvent;
             inputListener.OnInputEvent += _ => profiler.CountInputEvent();
 
+           // Task.Run(() => ChartImportService.ImportChartsFromOsu(maxSets: 10)); // imports all charts from the osu! Songs directory into the Odyssey's own database
+
             // ScreenManager needs to know the viewport before the first
             // screen is pushed, so Resize() is used here instead of it
             // reading ClientSize on its own.
             screenManager.Resize(ClientSize.X, ClientSize.Y);
             screenManager.Push(new ChartBrowserScreen(inputHistory, screenManager.renderer, screenManager, screenManager.audioManager, screenManager.skinManager));
-
-            //Task.Run(() => ChartImportService.ImportChartsFromOsu()); // imports all charts from the osu! Songs directory into the Odyssey's own database
 
             Console.WriteLine($"[INFO] ClientSize = {ClientSize.X} x {ClientSize.Y}");
         }
