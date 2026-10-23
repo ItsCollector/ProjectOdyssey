@@ -2,6 +2,8 @@ using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using ProjectOdyssey.Audio;
+using ProjectOdyssey.Common;
+using ProjectOdyssey.Engine.Scoring;
 using ProjectOdyssey.Input;
 using ProjectOdyssey.IO;
 using ProjectOdyssey.Render;
@@ -99,6 +101,31 @@ namespace ProjectOdyssey.Screens
             }
         }
 
+        private void ViewScore()
+        {
+            int chartId = session.CurrentSet[session.ChartCursor].ChartId;
+            Result<string> bestReplayPath = ScoreDatabase.GetBestReplayByChartId(chartId);
+
+            if (bestReplayPath.IsSuccess == false)
+            {
+                Console.WriteLine($"[ERROR] {bestReplayPath.Error}");
+                return;
+            }
+
+            ReplayData replayData;
+            try 
+            { 
+                replayData = ReplayService.ReadReplayBinary(bestReplayPath.Value); 
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] Could not read replay: {ex.Message}");
+                return;
+            }
+
+            ScreenManager.Push(new ResultsScreen(replayData.ScoreData, Renderer, ScreenManager, AudioManager, SkinManager));
+        }
+
         public void OnKeyDown(Keys key)
         {
             switch (key)
@@ -124,6 +151,12 @@ namespace ProjectOdyssey.Screens
             if (session.IsHoveredChartAlreadySelected)
             {
                 CommitSelection();
+                return;
+            }
+
+            if (session.ViewScoreHovered)
+            {
+                ViewScore();
                 return;
             }
 

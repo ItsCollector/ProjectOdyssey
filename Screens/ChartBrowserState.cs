@@ -13,11 +13,12 @@ namespace ProjectOdyssey.Screens
         public int ChartCursor { get; private set; } // Currently selected chart within the current set as an index
         public int HoveredSet { get; private set; } = -1; // The set card currently hovered by the mouse, or -1 if none
         public int HoveredChart { get; private set; } = -1; // The chart card currently hovered by the mouse, or -1 if none
-
+        public bool ViewScoreHovered { get; private set; } = false;
         public List<ChartBrowserRow> CurrentSet => chartSets[ChartSetCursor]; // The currently selected chart set
         public List<List<ChartBrowserRow>> FilteredChartSets => chartSets; // The chart sets after filtering (currently no filtering applied)
         public List<(int Slot, CardRect Rect)> SetCardRects { get; } = new(); // Rectangle positions and dimensions of the set cards on screen
         public List<(int ChartIndex, CardRect Rect)> ChartCardRects { get; } = new(); // Rectangle positions and dimensions of the chart cards on screen
+        public CardRect ViewScoreRect { get; } = new CardRect { X = 0, Y = 450, Width = 650, Height = 100 };
 
         private const float SettleDelayMs = 500;
         private float msSinceSelectionChanged;
@@ -98,6 +99,8 @@ namespace ProjectOdyssey.Screens
                     if (SetCardRects[i].Rect.Contains(logicalPos.X, logicalPos.Y)) { HoveredSet = i; break; }
                 }
             }
+
+            ViewScoreHovered = ViewScoreRect.Contains(logicalPos.X, logicalPos.Y);
         }
 
         // Returns the vertical spacing before a row, which is different for set cards and chart cards.

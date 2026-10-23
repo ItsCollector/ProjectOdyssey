@@ -1,6 +1,7 @@
 ﻿using ProjectOdyssey.Engine;
 using ProjectOdyssey.Engine.Scoring;
 using ProjectOdyssey.Input;
+using System.IO;
 
 namespace ProjectOdyssey.IO
 {
@@ -26,6 +27,7 @@ namespace ProjectOdyssey.IO
 
         public const string FileExtension = ".odr";
         private const byte FormatVersion = 1;
+        private const int EventSizeBytes = sizeof(float) + sizeof(ushort) + sizeof(bool);
 
         private static readonly string replayFolder = Path.Combine(AppContext.BaseDirectory, "Replays");
 
@@ -124,6 +126,86 @@ namespace ProjectOdyssey.IO
             }
 
             return path;
+        }
+
+        public static ReplayData ReadReplayBinary(string replayFilePath)
+        {
+            using var stream = File.OpenRead(replayFilePath);
+            using var reader = new BinaryReader(stream);
+
+            byte version = reader.ReadByte();
+            int setId = reader.ReadInt32();
+            int chartId = reader.ReadInt32();
+            long playedUtc = reader.ReadInt64();
+            float continuousAccuracy = reader.ReadSingle();
+            float discreteAccuracy = reader.ReadSingle();
+            int highestCombo = reader.ReadInt32();
+            int pauseCount = reader.ReadInt32();
+
+            // read the key count and the bindings used
+            byte keyCount = reader.ReadByte();
+            var columnByVKey = new int[256];
+            Array.Fill(columnByVKey, -1);
+
+            for (int column = 0; column < keyCount; column++)
+            {
+                ushort vKey = reader.ReadUInt16();
+
+                if (vKey < columnByVKey.Length)
+                {
+                    columnByVKey[vKey] = column;
+                }
+            }
+
+            // read all judgements and their counts
+            var judgementCounts = new Dictionary<JudgementType, int>();
+            int judgedNotes = 0;
+
+            foreach (JudgementType type in Enum.GetValues<JudgementType>())
+            {
+                int count = reader.ReadInt32();
+                judgementCounts[type] = count;
+                judgedNotes += count;
+            }
+
+            // read all replay events
+            int eventCount = reader.ReadInt32();
+            long bytesLeft = stream.Length - stream.Position;
+
+            if (eventCount < 0 || eventCount * (long)EventSizeBytes > bytesLeft)
+            {
+                throw new InvalidDataException($"Replay claims {eventCount} events but only {bytesLeft} bytes remain.");
+            }
+
+            var events = new ReplayEvent[eventCount];
+
+            for (int i = 0; i < eventCount; i++)
+            {
+                float songTimeMs = reader.ReadSingle();
+                ushort vKey = reader.ReadUInt16();
+                bool isPressed = reader.ReadBoolean();
+
+                events[i] = new ReplayEvent(songTimeMs, vKey, isPressed);
+            }
+
+            // Construct score data
+            ScoreData scoreData = new ScoreData
+            {
+                JudgementCounts = judgementCounts,
+                JudgedNotesCount = judgedNotes,          
+                CurrentDiscreteAccuracy = discreteAccuracy,
+                CurrentContinuousAccuracy = continuousAccuracy,
+                HighestCombo = highestCombo,
+                PauseCount = pauseCount,
+                SetTimeUtc = playedUtc
+            };
+
+            return new ReplayData
+            {
+                ScoreData = scoreData,
+                ReplayEvents = events,
+                ColumnByVKey = columnByVKey
+            };
         }
     }
 }
