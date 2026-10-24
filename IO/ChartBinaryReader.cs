@@ -29,7 +29,7 @@ namespace ProjectOdyssey.IO
                 }
             }
 
-            return new ChartData(setId, chartId, title, artist, noter, diffName, keyCount, notesByColumn);
+            return new ChartData(setId, chartId, title, artist, noter, diffName, keyCount, notesByColumn, "unassigned");
         }
 
         private static Note ReadNote(BinaryReader reader)

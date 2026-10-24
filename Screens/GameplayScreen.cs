@@ -73,22 +73,19 @@ namespace ProjectOdyssey.Screens
             {
                 var scoreData = session.Score.CompileScoreData();
 
-                // Create replay (next)
-                string replayPath = "Placeholder";
+                Console.WriteLine($"[INFO] Number of inputs read this play: {session.recordedInputs.Count}");
+                ReplayData newReplayData = new ReplayData
+                {
+                    SetId = chartData.SetId,
+                    ChartId = chartData.ChartId,
+                    ScoreData = scoreData,
+                    ReplayEvents = session.recordedInputs.ToArray(),
+                    ColumnByVKey = session.ColumnByVKey
+                };
 
                 // Add score to db
                 try
                 {
-                    Console.WriteLine($"[INFO] Number of inputs read this play: {session.recordedInputs.Count}");
-                    ReplayData newReplayData = new ReplayData
-                    {
-                        SetId = chartData.SetId,
-                        ChartId = chartData.ChartId,
-                        ScoreData = scoreData,
-                        ReplayEvents = session.recordedInputs.ToArray(),
-                        ColumnByVKey = session.ColumnByVKey
-                    };
-
                     string newReplayDataPath = ReplayService.WriteReplayBinary(newReplayData);
                     ScoreDatabase.SaveScore(scoreData, chartData.SetId, chartData.ChartId, newReplayDataPath);
                 }
@@ -99,7 +96,7 @@ namespace ProjectOdyssey.Screens
 
                 // Transition to results screen
                 AudioManager.StopAudio();
-                ScreenManager.Replace(new ResultsScreen(scoreData, Renderer, ScreenManager, AudioManager, SkinManager));
+                ScreenManager.Replace(new ResultsScreen(newReplayData, chartData, Renderer, ScreenManager, AudioManager, SkinManager));
             }
         }
 

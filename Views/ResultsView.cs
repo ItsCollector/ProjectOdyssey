@@ -44,6 +44,8 @@ namespace ProjectOdyssey.Views
 
             renderer.DrawText(menuSkin.Glyphs, $"Continuous Accuracy: {scoreData.CurrentContinuousAccuracy}%", 30, 570, primaryTextColour);
             renderer.DrawText(menuSkin.Glyphs, $"Discrete Accuracy: {scoreData.CurrentDiscreteAccuracy}%", 30, 630, primaryTextColour);
+
+            renderer.DrawText(menuSkin.Glyphs, $"Watch Replay - F2", 30, 1020, primaryTextColour);
         }
     }
 }

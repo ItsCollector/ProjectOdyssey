@@ -71,7 +71,7 @@ namespace ProjectOdyssey.Screens
             if (session.ResolvedNotes >= session.TotalNotes)
             {
                 AudioManager.StopAudio();
-                ScreenManager.Replace(new ResultsScreen(replayData.ScoreData, Renderer, ScreenManager, AudioManager, SkinManager));
+                ScreenManager.Replace(new ResultsScreen(replayData, chartData, Renderer, ScreenManager, AudioManager, SkinManager));
             }
         }
 

@@ -2,7 +2,7 @@
 
 namespace ProjectOdyssey.IO
 {
-    public class ChartData
+    public class ChartData 
     {
         public int SetId { get; set; }
         public int ChartId { get; set; }
@@ -12,8 +12,9 @@ namespace ProjectOdyssey.IO
         public string DiffName { get; set; }
         public byte KeyCount { get; set; }
         public Note[][] NotesByColumn { get; set; }
+        public string SongFilePath { get; set; }
 
-        public ChartData(int setId, int chartId, string title, string artist, string noter, string diffName, byte keyCount, Note[][] notesByColumn)
+        public ChartData(int setId, int chartId, string title, string artist, string noter, string diffName, byte keyCount, Note[][] notesByColumn, string songFilePath)
         {
             SetId = setId;
             ChartId = chartId;
@@ -23,6 +24,7 @@ namespace ProjectOdyssey.IO
             DiffName = diffName;
             KeyCount = keyCount;
             NotesByColumn = notesByColumn;
+            SongFilePath = songFilePath;
         }
 
         public void DisplayInfo()

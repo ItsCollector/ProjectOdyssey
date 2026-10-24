@@ -26,8 +26,8 @@ namespace ProjectOdyssey.Tests
             columns[0] = column0;
             if (column1 != null) columns[1] = column1;
 
-            var chart = new ChartData(0, 0, "t", "a", "n", "d", 7, columns);
-            return new GameSession(new InputHistory(), chart, 1000f, ruleset);
+            var chart = new ChartData(0, 0, "t", "a", "n", "d", 7, columns, "placeholder song file path");
+            return new GameSession(new InputHistory(), chart, ruleset);
         }
 
         private static void Press(GameSession session, ushort key, float time)
@@ -182,14 +182,14 @@ namespace ProjectOdyssey.Tests
             Assert.Equal(50f, session.Accuracy, 0.01f);
         }
 
-        private static GameSession CreateSessionWithKeyCount(byte keyCount, int columnCount, Action<Note[][]>? setup = null)
+        private static GameSession CreateSessionWithKeyCount(byte keyCount, int columnCount, Action<Note[][]>? setup = null, IRuleset? ruleset = null)
         {
             var columns = new Note[columnCount][];
             for (int i = 0; i < columns.Length; i++) columns[i] = Array.Empty<Note>();
             setup?.Invoke(columns);
 
-            var chart = new ChartData(0, 0, "t", "a", "n", "d", keyCount, columns);
-            return new GameSession(new InputHistory(), chart, 1000f);
+            var chart = new ChartData(0, 0, "t", "a", "n", "d", keyCount, columns, "placeholder song file path");
+            return new GameSession(new InputHistory(), chart, ruleset);
         }
 
         [Fact]

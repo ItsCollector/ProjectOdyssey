@@ -4,6 +4,8 @@ using ProjectOdyssey.Render;
 using ProjectOdyssey.Skinning;
 using ProjectOdyssey.Views;
 using OpenTK.Windowing.GraphicsLibraryFramework;
+using System.Runtime.CompilerServices;
+using ProjectOdyssey.IO;
 
 namespace ProjectOdyssey.Screens
 {
@@ -14,11 +16,15 @@ namespace ProjectOdyssey.Screens
         public ScreenManager ScreenManager { private get; set; }
         public AudioManager AudioManager { private get; set; }
         public SkinManager SkinManager { private get; set; }
+        private ChartData chartData;
+        private ReplayData replayData;
         private ScoreData scoreData;
 
-        public ResultsScreen(ScoreData scoreData, Renderer renderer, ScreenManager screenManager, AudioManager audioManager, SkinManager skinManager)
+        public ResultsScreen(ReplayData replayData, ChartData chartData, Renderer renderer, ScreenManager screenManager, AudioManager audioManager, SkinManager skinManager)
         {
-            this.scoreData = scoreData;
+            scoreData = replayData.ScoreData;
+            this.replayData = replayData;
+            this.chartData = chartData;
             Renderer = renderer;
             ScreenManager = screenManager;
             AudioManager = audioManager;
@@ -36,6 +42,11 @@ namespace ProjectOdyssey.Screens
             if (key == Keys.Escape)
             {
                 ScreenManager.Pop();
+            }
+
+            if (key == Keys.F2)
+            {
+                ScreenManager.Replace(new ReplayScreen(chartData, replayData, chartData.SongFilePath, Renderer, ScreenManager, AudioManager, SkinManager));
             }
         }
 

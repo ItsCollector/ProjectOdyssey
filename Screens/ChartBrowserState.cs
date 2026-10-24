@@ -230,6 +230,7 @@ namespace ProjectOdyssey.Screens
             
             // get song
             string selectedSongPath = CurrentSet[ChartCursor].AudioPath;
+            chartData.SongFilePath = selectedSongPath;
 
             return (chartData, selectedSongPath);
         }

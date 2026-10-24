@@ -123,7 +123,10 @@ namespace ProjectOdyssey.Screens
                 return;
             }
 
-            ScreenManager.Push(new ResultsScreen(replayData.ScoreData, Renderer, ScreenManager, AudioManager, SkinManager));
+            var (chartData, songPath) = session.FinaliseChartSelection();
+
+            AudioManager.StopAudio();
+            ScreenManager.Push(new ResultsScreen(replayData, chartData, Renderer, ScreenManager, AudioManager, SkinManager));
         }
 
         public void OnKeyDown(Keys key)

@@ -162,7 +162,7 @@ namespace ProjectOdyssey.IO
                 notesByColumn[i] = grouped[i].ToArray();
             }
 
-            var chartData = new ChartData(0, 0, title, artist, noter, diffName, keyCount, notesByColumn);
+            var chartData = new ChartData(0, 0, title, artist, noter, diffName, keyCount, notesByColumn, resolvedAudioPath);
             return Result<(ChartData chartData, string resolvedAudioPath, string resolvedBackgroundPath)>.Ok((chartData, resolvedAudioPath, resolvedBackgroundPath));
         }
 

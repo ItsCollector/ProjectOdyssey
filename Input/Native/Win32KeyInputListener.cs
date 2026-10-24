@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+﻿ using System.Diagnostics;
 using System.Runtime.InteropServices;
 
 namespace ProjectOdyssey.Input.Native
@@ -45,7 +45,7 @@ namespace ProjectOdyssey.Input.Native
             RAWINPUTDEVICE[] devices = new RAWINPUTDEVICE[1];
             devices[0].UsagePage = 0x01;
             devices[0].Usage = 0x06; // Keyboard
-            devices[0].Flags = Win32RawInputMethods.RIDEV_INPUTSINK;
+            devices[0].Flags = 0;
             devices[0].HwndTarget = targetHwnd;
 
             return Win32RawInputMethods.RegisterRawInputDevices(
