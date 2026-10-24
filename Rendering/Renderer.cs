@@ -10,8 +10,8 @@ namespace ProjectOdyssey.Render
     // handle, so Flush must run before anything disposes the texture it refers to.
     public class Renderer : IDisposable
     {
-        private static readonly string shaderVertPath = Path.Combine(AppContext.BaseDirectory, "Render", "Shaders", "shader.vert");
-        private static readonly string shaderFragPath = Path.Combine(AppContext.BaseDirectory, "Render", "Shaders", "shader.frag");
+        private static readonly string shaderVertPath = Path.Combine(AppContext.BaseDirectory, "Rendering", "Shaders", "shader.vert");
+        private static readonly string shaderFragPath = Path.Combine(AppContext.BaseDirectory, "Rendering", "Shaders", "shader.frag");
 
         // Everything draws in a fixed logical space; GL.Viewport scales it to the window.
         private const float LogicalWidth = 1920f;

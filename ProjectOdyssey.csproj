@@ -11,10 +11,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Charts\**" />
     <Compile Remove="ProjectOdyssey.Tests\**" />
+    <EmbeddedResource Remove="Charts\**" />
     <EmbeddedResource Remove="ProjectOdyssey.Tests\**" />
+    <None Remove="Charts\**" />
     <None Remove="ProjectOdyssey.Tests\**" />
-	<None Include="Test charts\**" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>
@@ -255,13 +257,10 @@
     <None Update="Assets\Judgements\judge-perfect.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Charts\test_single_long_note.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Render\Shaders\shader.frag">
+    <None Update="Rendering\Shaders\shader.frag">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Render\Shaders\shader.vert">
+    <None Update="Rendering\Shaders\shader.vert">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="shader.frag">
@@ -270,14 +269,10 @@
     <None Update="shader.vert">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Test charts\Ibuki Kido &amp; Erii Yamazaki - pupa (TV Size) (MapleSyrup-) [Metamorphosis].osu">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
   </ItemGroup>
 
   <ItemGroup>
     <Folder Include="Assets\Judgements\" />
-    <Folder Include="Charts\" />
   </ItemGroup>
 
 </Project>
