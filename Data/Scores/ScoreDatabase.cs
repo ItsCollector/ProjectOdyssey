@@ -1,10 +1,5 @@
 ﻿using Microsoft.Data.Sqlite;
 using ProjectOdyssey.Engine.Scoring;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using ProjectOdyssey.Engine;
 using ProjectOdyssey.Common;
 
@@ -130,6 +125,61 @@ namespace ProjectOdyssey.IO
             {
                 return Result<string>.Err($"Failed to retrieve score record with ChartID {chartId}: {ex}");
             }
+        }
+
+        public static List<ScoreRecord> GetScoresByChartId(int chartId)
+        {
+            var scores = new List<ScoreRecord>();
+
+            using var connection = OpenConnection();
+            using var command = connection.CreateCommand();
+            command.CommandText =
+            @"
+                SELECT * FROM Scores
+                WEHERE ChartId = $chartId
+                ORDER BY Accuracy DESC;
+            ";
+            command.Parameters.AddWithValue("$chartId", chartId);
+
+            using var reader = command.ExecuteReader();
+            while (reader.Read())
+            {
+                scores.Add(new ScoreRecord
+                {
+                    SetId = reader.GetInt32(0),
+                    ChartId = reader.GetInt32(1),
+                    Accuracy = reader.GetFloat(2),
+                    MarvCount = reader.GetInt32(3),
+                    PerfCount = reader.GetInt32(4),
+                    GreatCount = reader.GetInt32(5),
+                    GoodCount = reader.GetInt32(6),
+                    BadCount = reader.GetInt32(7),
+                    MissCount = reader.GetInt32(8),
+                    HighestCombo = reader.GetInt32(9),
+                    PauseCount = reader.GetInt32(10),
+                    ReplayPath = reader.GetString(11),
+                    PlayedUtc = reader.GetInt64(12)
+                });
+            }
+
+            return scores;
+        }
+
+        public class ScoreRecord
+        {
+            public int SetId { get; set; }
+            public int ChartId { get; set; }
+            public float Accuracy { get; set; }
+            public int MarvCount { get; set; }
+            public int PerfCount { get; set; }
+            public int GreatCount { get; set; }
+            public int GoodCount { get; set; }
+            public int BadCount { get; set; }
+            public int MissCount { get; set; }
+            public int HighestCombo { get; set; }
+            public int PauseCount { get; set; } 
+            public string ReplayPath { get; set; } = "";
+            public long PlayedUtc { get; set; }
         }
     }
 }

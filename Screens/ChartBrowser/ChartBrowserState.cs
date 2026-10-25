@@ -1,32 +1,53 @@
 using ProjectOdyssey.Audio;
+using ProjectOdyssey.Engine.Scoring;
 using ProjectOdyssey.IO;
+using OpenTK.Mathematics;
 
 namespace ProjectOdyssey.Screens
 {
     public class ChartBrowserState
     {
-        private List<List<ChartBrowserRow>> chartSets = new(); // All chart sets, each set is a list of charts
-        private AudioManager audioManager;
-        public event Action<string>? SelectionChanged;
+        public const int SetKind = 0;
+        public const int ChartKind = 1;   // what a StackItem represents (stored in StackItem.Kind)
 
-        public int ChartSetCursor { get; private set; } // Currently selected chart set index
-        public int ChartCursor { get; private set; } // Currently selected chart within the current set as an index
-        public int HoveredSet { get; private set; } = -1; // The set card currently hovered by the mouse, or -1 if none
-        public int HoveredChart { get; private set; } = -1; // The chart card currently hovered by the mouse, or -1 if none
-        public bool ViewScoreHovered { get; private set; } = false;
-        public List<ChartBrowserRow> CurrentSet => chartSets[ChartSetCursor]; // The currently selected chart set
-        public List<List<ChartBrowserRow>> FilteredChartSets => chartSets; // The chart sets after filtering (currently no filtering applied)
-        public List<(int Slot, CardRect Rect)> SetCardRects { get; } = new(); // Rectangle positions and dimensions of the set cards on screen
-        public List<(int ChartIndex, CardRect Rect)> ChartCardRects { get; } = new(); // Rectangle positions and dimensions of the chart cards on screen
-        public CardRect ViewScoreRect { get; } = new CardRect { X = 0, Y = 450, Width = 650, Height = 100 };
+        private const float SettleDelayMs = 500; // how long the cursor must be still before the background and preview music load
 
-        private const float SettleDelayMs = 500;
+        private List<List<ChartBrowserRow>> chartSets = new();  // all chart sets, each set is a list of charts
+        private readonly AudioManager audioManager;
+
         private float msSinceSelectionChanged;
         private bool selectionPending;
+        private Vector2 lastLogicalPos = new(-1, -1); // last mouse position, off-screen until the mouse first moves
+
+        public StackView chartsStackView = new StackView(1080f);
+
+        // TESTING - SCORES VIA STACK VIEW
+        public StackView scoreStackView = new StackView(600f);
+        public ScoreData scoreData;
+
+        public event Action<string>? SelectionChanged; // raised with the background path once the selection has settled
+
+        // Selection
+        public int ChartSetCursor { get; private set; } // currently selected chart set index
+        public int ChartCursor { get; private set; } // currently selected chart within the current set, as an index
+        public List<ChartBrowserRow> CurrentSet => chartSets[ChartSetCursor]; // the currently selected chart set
+        public List<List<ChartBrowserRow>> FilteredChartSets => chartSets; // the chart sets after filtering (currently no filtering applied)
+
+        // Layout
+        public IReadOnlyList<StackItem> Items => chartsStackView.Items; // the cards to draw, with their animated positions
+
+        // Hover
+        public StackItem? HoveredItem { get; private set; } // the card under the mouse, or null
+        public bool ViewScoreHovered { get; private set; } = false;
+        public CardRect ViewScoreRect { get; } = new CardRect { X = 0, Y = 450, Width = 650, Height = 100 };
+
+        // True when the mouse is hovering the chart that's already the active selection, as opposed to
+        // hovering a different chart, which should just move the cursor rather than commit anything.
+        public bool IsHoveredChartAlreadySelected => HoveredItem is { Kind: ChartKind } hovered && hovered.Tag == ChartCursor;
 
         public ChartBrowserState(List<ChartBrowserRow> charts, AudioManager audioManager)
         {
-            this.audioManager = audioManager;   
+            this.audioManager = audioManager;
 
             if (charts.Count == 0) return;
 
@@ -38,6 +59,28 @@ namespace ProjectOdyssey.Screens
 
             ChartSetCursor = Random.Shared.Next(chartSets.Count);
             RebuildLayout();
+        }
+
+        // Call every frame. Animates the cards, then runs the heavy selection work once the cursor has been still for SettleDelayMs.
+        public void Update(float deltaMs)
+        {
+            chartsStackView.Update(deltaMs);
+            UpdateHover(lastLogicalPos);   // cards move under a still mouse, so re-test every frame
+
+            if (!selectionPending) return;
+
+            msSinceSelectionChanged += deltaMs;
+            if (msSinceSelectionChanged >= SettleDelayMs) SettleNow();
+        }
+
+        // Applies the current selection immediately (background + preview music)
+        public void SettleNow()
+        {
+            if (chartSets.Count == 0) return;
+
+            selectionPending = false;
+            SelectionChanged?.Invoke(CurrentSet[ChartCursor].BackgroundPath);
+            PlaySelectedChartMusic();
         }
 
         // Moves the set cursor by delta (clamped to valid range), resets the chart cursor to 0, and rebuilds the layout.
@@ -65,135 +108,30 @@ namespace ProjectOdyssey.Screens
 
         public void MoveChart(int delta) => SelectChart(ChartCursor + delta);
 
-        // Acts on whatever UpdateHover last determined is hovered — a chart card
-        // takes priority over a set card underneath it.
-        public void SelectHovered()
-        {
-            if (HoveredChart != -1) 
-            { 
-                SelectChart(ChartCardRects[HoveredChart].ChartIndex); 
-                return;
-            }
-
-            if (HoveredSet != -1) 
-            { 
-                MoveSet(SetCardRects[HoveredSet].Slot); 
-                return; 
-            }
-        }
-
         // LogicalPos must already be in the fixed 1920x1080 space.
-        public void UpdateHover(OpenTK.Mathematics.Vector2 logicalPos)
+        public void UpdateHover(Vector2 logicalPos)
         {
-            HoveredChart = -1;
-            for (int i = 0; i < ChartCardRects.Count; i++)
-            {
-                if (ChartCardRects[i].Rect.Contains(logicalPos.X, logicalPos.Y)) { HoveredChart = i; break; }
-            }
+            lastLogicalPos = logicalPos;
+            HoveredItem = null;
 
-            HoveredSet = -1;
-            if (HoveredChart == -1)
+            foreach (var item in chartsStackView.Items)
             {
-                for (int i = 0; i < SetCardRects.Count; i++)
-                {
-                    if (SetCardRects[i].Rect.Contains(logicalPos.X, logicalPos.Y)) { HoveredSet = i; break; }
-                }
+                if (!item.Contains(logicalPos.X, logicalPos.Y)) continue;
+
+                HoveredItem = item;
+                if (item.Kind == ChartKind) break;   // a chart card wins over a set card it overlaps
             }
 
             ViewScoreHovered = ViewScoreRect.Contains(logicalPos.X, logicalPos.Y);
         }
 
-        // Returns the vertical spacing before a row, which is different for set cards and chart cards.
-        private static float SpacingBefore(Row row)
+        // Acts on whatever UpdateHover last determined is hovered. A chart card takes priority over a set card underneath it.
+        public void SelectHovered()
         {
-            if (row.IsChart)
-            {
-                return ChartBrowserLayout.ChartCardSpacing;
-            }
-            else 
-            {
-                return ChartBrowserLayout.SetCardSpacing;
-            }
-        }
+            if (HoveredItem == null) return;
 
-        // Builds the layout of set and chart cards, calculating their positions and sizes, and storing them in SetCardRects and ChartCardRects.
-        private void RebuildLayout()
-        {
-            SetCardRects.Clear();
-            ChartCardRects.Clear();
-
-            if (chartSets.Count == 0) return;
-
-            var rows = new List<Row>();
-
-            // Add rows for the selected set and its charts, plus a few sets above and below it.
-            for (int slot = -5; slot <= 5; slot++)
-            {
-                int index = ChartSetCursor + slot;
-                if (index < 0 || index >= chartSets.Count) continue;
-
-                // Adds a row for the set card
-                rows.Add(new Row { IsChart = false, SetSlot = slot, Height = ChartBrowserLayout.SetCardHeight });
-
-                // For identified set, add rows for each of its charts
-                if (index == ChartSetCursor)
-                {
-                    var set = chartSets[index];
-                    for (int c = 0; c < set.Count; c++)
-                    {
-                        rows.Add(new Row { IsChart = true, ChartIndex = c, Height = ChartBrowserLayout.ChartCardHeight });
-                    }
-                }
-            }
-
-            // Finds the index of the row corresponding to the currently selected chart, which will be vertically centred.
-            int anchorIndex = rows.FindIndex(r => r.IsChart && r.ChartIndex == ChartCursor);
-
-            // Calculates the Y positions of all rows, starting from the centered anchor row and moving outward.
-            float[] tops = new float[rows.Count];
-            tops[anchorIndex] = 1080 / 2f - rows[anchorIndex].Height / 2f;
-
-            for (int i = anchorIndex + 1; i < rows.Count; i++)
-            {
-                tops[i] = tops[i - 1] + rows[i - 1].Height + SpacingBefore(rows[i]);
-            }
-
-            for (int i = anchorIndex - 1; i >= 0; i--)
-            {
-                tops[i] = tops[i + 1] - rows[i].Height - SpacingBefore(rows[i + 1]);
-            }
-
-            float setX = ChartBrowserLayout.SetCardX(1920);
-            float chartX = ChartBrowserLayout.ChartCardX(1920);
-
-            // Creates the rectangles for each row, storing them in SetCardRects or ChartCardRects as appropriate.
-            for (int i = 0; i < rows.Count; i++)
-            {
-                var r = rows[i];
-                if (!r.IsChart)
-                {
-                    SetCardRects.Add((r.SetSlot, new CardRect
-                    {
-                        X = setX,
-                        Y = tops[i],
-                        Width = ChartBrowserLayout.SetCardWidth,
-                        Height = ChartBrowserLayout.SetCardHeight
-                    }));
-                }
-                else
-                {
-                    ChartCardRects.Add((r.ChartIndex, new CardRect
-                    {
-                        X = chartX,
-                        Y = tops[i],
-                        Width = ChartBrowserLayout.ChartCardWidth,
-                        Height = ChartBrowserLayout.ChartCardHeight
-                    }));
-                }
-            }
-
-            selectionPending = true;
-            msSinceSelectionChanged = 0f;
+            if (HoveredItem.Kind == ChartKind) SelectChart(HoveredItem.Tag);
+            else MoveSet(HoveredItem.Tag);       // a set row's tag is its slot, i.e. the delta from the cursor
         }
 
         public void PlaySelectedChartMusic()
@@ -205,21 +143,13 @@ namespace ProjectOdyssey.Screens
             audioManager.PlayAudio(audioPath);
         }
 
+        public void RestartSelectedChartMusic() => PlaySelectedChartMusic();
+
         public void StopSelectedChartMusic()
         {
             if (chartSets.Count == 0) return;
 
-            string audioPath = CurrentSet[ChartCursor].AudioPath;
             audioManager.StopAudio();
-        }
-
-        public void RestartSelectedChartMusic()
-        {
-            if (chartSets.Count == 0) return;
-            string audioPath = CurrentSet[ChartCursor].AudioPath;
-
-            audioManager.ReadAudioFile(audioPath);
-            audioManager.PlayAudio(audioPath);
         }
 
         public (ChartData, string) FinaliseChartSelection()
@@ -227,7 +157,7 @@ namespace ProjectOdyssey.Screens
             // get chart data
             string selectedChartPath = CurrentSet[ChartCursor].BinaryFilePath;
             ChartData chartData = ChartBinaryReader.ReadChartBinary(selectedChartPath, CurrentSet[ChartCursor].SetId, CurrentSet[ChartCursor].ChartId);
-            
+
             // get song
             string selectedSongPath = CurrentSet[ChartCursor].AudioPath;
             chartData.SongFilePath = selectedSongPath;
@@ -235,37 +165,62 @@ namespace ProjectOdyssey.Screens
             return (chartData, selectedSongPath);
         }
 
-        // True when the mouse is hovering the chart that's already the active
-        // selection — as opposed to hovering a different chart, which should just
-        // move the cursor rather than commit anything.
-        public bool IsHoveredChartAlreadySelected =>
-            HoveredChart != -1 && ChartCardRects[HoveredChart].ChartIndex == ChartCursor;
+        // Stack item keys must be unique within one stack: the high bit keeps a chart ID from colliding with a set ID.
+        private static long SetKey(int setId) => setId;
+        private static long ChartKey(int chartId) => (1L << 32) | (uint)chartId;
 
-        // Call every frame. Runs the heavy selection work once the cursor has been still for SettleDelayMs.
-        public void Update(float deltaMs)
+        // Describes the visible set and chart cards to the stack view, which works out their positions
+        // (chart under the cursor centred) and animates them there.
+        private void RebuildLayout()
         {
-            if (!selectionPending) return;
+            chartsStackView.Begin();
+            int anchorIndex = -1;
 
-            msSinceSelectionChanged += deltaMs;
-            if (msSinceSelectionChanged >= SettleDelayMs) SettleNow();
-        }
+            float setX = ChartBrowserLayout.SetCardX(1920);
+            float chartX = ChartBrowserLayout.ChartCardX(1920);
 
-        // Applies the current selection immediately (background + preview music)
-        public void SettleNow()
-        {
-            if (chartSets.Count == 0) return;
+            for (int slot = -5; slot <= 5; slot++)
+            {
+                int index = ChartSetCursor + slot;
+                if (index < 0 || index >= chartSets.Count) continue;
 
-            selectionPending = false;
-            SelectionChanged?.Invoke(CurrentSet[ChartCursor].BackgroundPath);
-            PlaySelectedChartMusic();
-        }
+                var set = chartSets[index];
+                
+                StackItem setItem = chartsStackView.Add(
+                    SetKey(set[0].SetId), 
+                    setX, 
+                    ChartBrowserLayout.SetCardWidth,
+                    ChartBrowserLayout.SetCardHeight, 
+                    ChartBrowserLayout.SetCardSpacing,
+                    tag: slot, 
+                    kind: SetKind);
 
-        private struct Row
-        {
-            public bool IsChart;
-            public int SetSlot;     // Set rows only: slot relative to ChartSetCursor
-            public int ChartIndex;  // Chart rows only: absolute index into CurrentSet
-            public float Height;
+                if (index != ChartSetCursor) continue;
+
+                for (int c = 0; c < set.Count; c++)
+                {
+                    if (c == ChartCursor)
+                    {
+                        anchorIndex = chartsStackView.Count;   // the index this chart is about to get
+                    }
+
+                    chartsStackView.Add(
+                        ChartKey(set[c].ChartId), 
+                        chartX, 
+                        ChartBrowserLayout.ChartCardWidth,
+                        ChartBrowserLayout.ChartCardHeight, 
+                        ChartBrowserLayout.ChartCardSpacing,
+                        tag: c, 
+                        kind: ChartKind,
+                        spawnFrom: setItem);
+                }
+            }
+
+            chartsStackView.End(anchorIndex);
+            UpdateHover(lastLogicalPos);
+
+            selectionPending = true;
+            msSinceSelectionChanged = 0f;
         }
     }
 }

@@ -68,13 +68,11 @@ namespace ProjectOdyssey.Screens
         public void Render()
         {
             browserRenderer.DrawChartBrowser(
-                session.SetCardRects,
-                session.ChartCardRects,
-                session.FilteredChartSets,
-                session.ChartSetCursor,
-                session.ChartCursor,
-                session.HoveredSet,
-                session.HoveredChart);
+                session.Items, 
+                session.FilteredChartSets,             
+                session.ChartSetCursor, 
+                session.ChartCursor, 
+                session.HoveredItem);
         }
 
         public void Resize(int width, int height)
