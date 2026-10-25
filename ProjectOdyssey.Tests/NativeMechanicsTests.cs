@@ -1,6 +1,7 @@
-﻿using ProjectOdyssey.Engine;
+﻿using ProjectOdyssey.Engine.Chart;
 using ProjectOdyssey.Engine.Mechanics;
 using ProjectOdyssey.Engine.Rulesets;
+using ProjectOdyssey.Engine.Scoring;
 
 namespace ProjectOdyssey.Tests
 {

@@ -1,7 +1,8 @@
-﻿using ProjectOdyssey.Engine;
+﻿using ProjectOdyssey.Engine.Chart;
 using ProjectOdyssey.Engine.Rulesets;
+using ProjectOdyssey.Engine.Scoring;
+using ProjectOdyssey.Engine.Sessions;
 using ProjectOdyssey.Input;
-using ProjectOdyssey.IO;
 
 namespace ProjectOdyssey.Tests
 {
