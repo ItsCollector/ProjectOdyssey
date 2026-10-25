@@ -2,7 +2,7 @@
 using OpenTK.Mathematics;
 using System.Runtime.InteropServices;
 
-namespace ProjectOdyssey.Render
+namespace ProjectOdyssey.Rendering
 {
     // The only class that owns GL drawing resources. Screens queue commands during Render();
     // MainWindow calls Flush() once per frame after every screen has queued.

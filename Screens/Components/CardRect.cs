@@ -1,4 +1,4 @@
-﻿namespace ProjectOdyssey.Screens
+﻿namespace ProjectOdyssey.Screens.Components
 {
     public struct CardRect
     {

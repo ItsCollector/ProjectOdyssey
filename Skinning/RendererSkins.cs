@@ -1,5 +1,7 @@
-using ProjectOdyssey.Engine;
-using ProjectOdyssey.Render;
+
+
+using ProjectOdyssey.Engine.Scoring;
+using ProjectOdyssey.Rendering;
 
 namespace ProjectOdyssey.Skinning
 {

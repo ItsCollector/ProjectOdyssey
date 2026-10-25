@@ -1,10 +1,9 @@
 ﻿using OpenTK.Mathematics;
-using ProjectOdyssey.Engine;
 using ProjectOdyssey.Engine.Scoring;
-using ProjectOdyssey.Render;
+using ProjectOdyssey.Rendering;
 using ProjectOdyssey.Skinning;
 
-namespace ProjectOdyssey.Views
+namespace ProjectOdyssey.Screens.Results
 {
     public class ResultsView
     {

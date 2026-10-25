@@ -1,6 +1,6 @@
 ﻿using OpenTK.Graphics.OpenGL4;
 
-namespace ProjectOdyssey.Render
+namespace ProjectOdyssey.Rendering
 {
     public class FreeTypeGlyph : IDisposable
     {

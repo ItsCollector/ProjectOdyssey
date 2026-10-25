@@ -1,16 +1,19 @@
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
+using ProjectOdyssey.App;
 using ProjectOdyssey.Audio;
 using ProjectOdyssey.Common;
-using ProjectOdyssey.Engine.Scoring;
+using ProjectOdyssey.Data.Charts;
+using ProjectOdyssey.Data.Replays;
+using ProjectOdyssey.Data.Scores;
 using ProjectOdyssey.Input;
-using ProjectOdyssey.IO;
-using ProjectOdyssey.Render;
+using ProjectOdyssey.Rendering;
+using ProjectOdyssey.Screens.Gameplay;
+using ProjectOdyssey.Screens.Results;
 using ProjectOdyssey.Skinning;
-using System.Diagnostics.CodeAnalysis;
 
-namespace ProjectOdyssey.Screens
+namespace ProjectOdyssey.Screens.ChartBrowser
 {
     class ChartBrowserScreen : IGameScreen
     {

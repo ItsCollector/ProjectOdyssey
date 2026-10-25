@@ -1,4 +1,4 @@
-﻿namespace ProjectOdyssey.Engine
+﻿namespace ProjectOdyssey.Engine.Scoring
 {
     public class JudgementResultBuffer
     {

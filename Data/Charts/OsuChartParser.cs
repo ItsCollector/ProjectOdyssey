@@ -1,7 +1,7 @@
 ﻿using ProjectOdyssey.Common;
-using ProjectOdyssey.Engine;
+using ProjectOdyssey.Engine.Chart;
 
-namespace ProjectOdyssey.IO
+namespace ProjectOdyssey.Data.Charts
 {
     public static class OsuChartParser
     {

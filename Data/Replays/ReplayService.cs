@@ -3,7 +3,7 @@ using ProjectOdyssey.Engine.Scoring;
 using ProjectOdyssey.Input;
 using System.IO;
 
-namespace ProjectOdyssey.IO
+namespace ProjectOdyssey.Data.Replays
 {
     public static class ReplayService
     {

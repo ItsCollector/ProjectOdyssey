@@ -3,7 +3,7 @@ using ProjectOdyssey.Engine.Scoring;
 using ProjectOdyssey.Engine;
 using ProjectOdyssey.Common;
 
-namespace ProjectOdyssey.IO
+namespace ProjectOdyssey.Data.Scores
 {
     class ScoreDatabase
     {

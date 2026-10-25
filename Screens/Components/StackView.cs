@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace ProjectOdyssey.Screens
+﻿namespace ProjectOdyssey.Screens.Components
 {
     /// <summary>
     /// A vertical stack of items that slide smoothly to their positions.

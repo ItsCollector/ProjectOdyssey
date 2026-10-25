@@ -1,7 +1,6 @@
-﻿using ProjectOdyssey.Input;
-using ProjectOdyssey.Engine.Scoring;
+﻿using ProjectOdyssey.Engine.Scoring;
 
-namespace ProjectOdyssey.IO
+namespace ProjectOdyssey.Data.Replays
 {
     public class ReplayData
     {

@@ -1,11 +1,11 @@
 using OpenTK.Mathematics;
 using ProjectOdyssey.Data.Charts;
-using ProjectOdyssey.IO;
-using ProjectOdyssey.Screens;
+using ProjectOdyssey.Rendering;
+using ProjectOdyssey.Screens.Components;
 using ProjectOdyssey.Skinning;
 using StbImageSharp;
 
-namespace ProjectOdyssey.Render
+namespace ProjectOdyssey.Screens.ChartBrowser
 {
     public class ChartBrowserView : IDisposable
     {

@@ -1,9 +1,11 @@
+using OpenTK.Mathematics;
 using ProjectOdyssey.Audio;
 using ProjectOdyssey.Engine.Scoring;
-using ProjectOdyssey.IO;
-using OpenTK.Mathematics;
+using ProjectOdyssey.Data.Charts;
+using ProjectOdyssey.Engine.Chart;
+using ProjectOdyssey.Screens.Components;
 
-namespace ProjectOdyssey.Screens
+namespace ProjectOdyssey.Screens.ChartBrowser
 {
     public class ChartBrowserState
     {

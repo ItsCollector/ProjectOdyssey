@@ -1,4 +1,6 @@
-﻿using ProjectOdyssey.Engine.Rulesets;
+﻿using ProjectOdyssey.Engine.Chart;
+using ProjectOdyssey.Engine.Rulesets;
+using ProjectOdyssey.Engine.Scoring;
 using System.Diagnostics;
 
 namespace ProjectOdyssey.Engine.Mechanics

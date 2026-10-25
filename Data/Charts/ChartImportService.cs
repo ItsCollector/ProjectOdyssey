@@ -1,7 +1,7 @@
-﻿using ProjectOdyssey.Engine;
+﻿using ProjectOdyssey.Engine.Chart;
 using System.Text;
 
-namespace ProjectOdyssey.IO
+namespace ProjectOdyssey.Data.Charts
 {
     public static class ChartImportService
     {

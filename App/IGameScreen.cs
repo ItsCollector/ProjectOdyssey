@@ -2,9 +2,9 @@
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using ProjectOdyssey.Audio;
 using ProjectOdyssey.Skinning;
-using ProjectOdyssey.Render;
+using ProjectOdyssey.Rendering;
 
-namespace ProjectOdyssey.Screens
+namespace ProjectOdyssey.App
 {
     public interface IGameScreen
     {

@@ -1,6 +1,6 @@
 ﻿using ProjectOdyssey.Engine;
 
-namespace ProjectOdyssey.IO
+namespace ProjectOdyssey.Engine.Chart
 {
     public class ChartData 
     {

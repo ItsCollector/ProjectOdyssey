@@ -1,4 +1,7 @@
-﻿namespace ProjectOdyssey.Engine.Mechanics
+﻿using ProjectOdyssey.Engine.Chart;
+using ProjectOdyssey.Engine.Scoring;
+
+namespace ProjectOdyssey.Engine.Mechanics
 {
     public enum ComboEffect
     {

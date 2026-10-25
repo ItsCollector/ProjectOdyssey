@@ -1,6 +1,6 @@
 ﻿using OpenTK.Mathematics;
 
-namespace ProjectOdyssey.Render
+namespace ProjectOdyssey.Rendering
 {
     public struct DrawCommand
     {

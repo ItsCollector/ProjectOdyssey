@@ -1,11 +1,13 @@
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
+using ProjectOdyssey.App;
 using ProjectOdyssey.Audio;
-using ProjectOdyssey.Render;
+using ProjectOdyssey.Rendering;
+using ProjectOdyssey.Screens.Components;
 using ProjectOdyssey.Skinning;
 
-namespace ProjectOdyssey.Screens
+namespace ProjectOdyssey.Screens.Pause
 {
     public class PauseScreen : IGameScreen
     {

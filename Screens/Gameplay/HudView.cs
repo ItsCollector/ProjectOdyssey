@@ -1,9 +1,10 @@
 using OpenTK.Mathematics;
-using ProjectOdyssey.Engine;
+using ProjectOdyssey.Engine.Scoring;
+using ProjectOdyssey.Rendering;
 using ProjectOdyssey.Skinning;
 using System.Globalization;
 
-namespace ProjectOdyssey.Render
+namespace ProjectOdyssey.Screens.Gameplay
 {
     public class HudView
     {

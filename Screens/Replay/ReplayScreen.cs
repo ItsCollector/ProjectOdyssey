@@ -1,14 +1,17 @@
 ﻿using OpenTK.Windowing.GraphicsLibraryFramework;
+using ProjectOdyssey.App;
 using ProjectOdyssey.Audio;
+using ProjectOdyssey.Data.Replays;
 using ProjectOdyssey.Diagnostic;
-using ProjectOdyssey.Engine;
-using ProjectOdyssey.Engine.Scoring;
-using ProjectOdyssey.Input;
-using ProjectOdyssey.IO;
-using ProjectOdyssey.Render;
+using ProjectOdyssey.Engine.Chart;
+using ProjectOdyssey.Engine.Sessions;
+using ProjectOdyssey.Rendering;
+using ProjectOdyssey.Screens.Gameplay;
+using ProjectOdyssey.Screens.Pause;
+using ProjectOdyssey.Screens.Results;
 using ProjectOdyssey.Skinning;
 
-namespace ProjectOdyssey.Screens
+namespace ProjectOdyssey.Screens.Replay
 {
     public class ReplayScreen : IGameScreen
     {

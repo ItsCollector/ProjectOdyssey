@@ -1,6 +1,7 @@
-﻿using ProjectOdyssey.Skinning;
+﻿using ProjectOdyssey.Rendering;
+using ProjectOdyssey.Skinning;
 
-namespace ProjectOdyssey.Render
+namespace ProjectOdyssey.Screens.Pause
 {
     public class PauseView
     {

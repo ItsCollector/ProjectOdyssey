@@ -1,4 +1,4 @@
-﻿namespace ProjectOdyssey.Engine
+﻿namespace ProjectOdyssey.Engine.Scoring
 {
     public readonly struct JudgementResult
     {

@@ -1,12 +1,13 @@
 ﻿using ProjectOdyssey.Engine.Mechanics;
 using ProjectOdyssey.Engine.Rulesets;
 using ProjectOdyssey.Engine.Scoring;
+using ProjectOdyssey.Data.Replays;
+using ProjectOdyssey.Engine.Chart;
 using ProjectOdyssey.Input;
-using ProjectOdyssey.IO;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 
-namespace ProjectOdyssey.Engine
+namespace ProjectOdyssey.Engine.Sessions
 {
     public class GameSession
     {

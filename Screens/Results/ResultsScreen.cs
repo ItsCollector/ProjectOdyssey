@@ -1,13 +1,14 @@
-﻿using ProjectOdyssey.Audio;
+﻿using OpenTK.Windowing.GraphicsLibraryFramework;
+using ProjectOdyssey.Audio;
 using ProjectOdyssey.Engine.Scoring;
-using ProjectOdyssey.Render;
+using ProjectOdyssey.Rendering;
 using ProjectOdyssey.Skinning;
-using ProjectOdyssey.Views;
-using OpenTK.Windowing.GraphicsLibraryFramework;
-using System.Runtime.CompilerServices;
-using ProjectOdyssey.IO;
+using ProjectOdyssey.App;
+using ProjectOdyssey.Engine.Chart;
+using ProjectOdyssey.Data.Replays;
+using ProjectOdyssey.Screens.Replay;
 
-namespace ProjectOdyssey.Screens
+namespace ProjectOdyssey.Screens.Results
 {
     public class ResultsScreen : IGameScreen
     {

@@ -1,7 +1,8 @@
-using ProjectOdyssey.Engine;
+using ProjectOdyssey.Engine.Chart;
+using ProjectOdyssey.Rendering;
 using ProjectOdyssey.Skinning;
 
-namespace ProjectOdyssey.Render
+namespace ProjectOdyssey.Screens.Gameplay
 {
     public class GameplayView
     {

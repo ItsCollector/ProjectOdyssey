@@ -1,7 +1,7 @@
 ﻿using OpenTK.Graphics.OpenGL4;
 using StbImageSharp;
 
-namespace ProjectOdyssey.Render
+namespace ProjectOdyssey.Rendering
 {
     public class Texture : IDisposable
     {

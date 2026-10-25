@@ -1,4 +1,4 @@
-﻿namespace ProjectOdyssey.Engine
+﻿namespace ProjectOdyssey.Engine.Chart
 {
     public class Note
     {

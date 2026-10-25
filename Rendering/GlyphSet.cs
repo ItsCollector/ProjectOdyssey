@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 using static FreeTypeSharp.FT;
 using static FreeTypeSharp.FT_LOAD;
 
-namespace ProjectOdyssey.Render
+namespace ProjectOdyssey.Rendering
 {
     // One font at one pixel size, rasterised to per-character GL textures.
     // Owns its glyph textures (disposing the set deletes them). Created by the

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ProjectOdyssey.Screens
+namespace ProjectOdyssey.App
 {
     public enum PopAction
     {

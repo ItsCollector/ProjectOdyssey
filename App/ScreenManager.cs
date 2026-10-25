@@ -2,9 +2,9 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 using OpenTK.Windowing.Common;
 using ProjectOdyssey.Audio;
 using ProjectOdyssey.Skinning;
-using ProjectOdyssey.Render;
+using ProjectOdyssey.Rendering;
 
-namespace ProjectOdyssey.Screens
+namespace ProjectOdyssey.App
 {
     // Owns the stack of active screens and drives their lifecycle. MainWindow
     // should only ever talk to this class, never to a concrete IGameScreen -

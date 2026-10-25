@@ -2,11 +2,12 @@
 using ProjectOdyssey.Engine.Rulesets;
 using ProjectOdyssey.Engine.Scoring;
 using ProjectOdyssey.Input;
-using ProjectOdyssey.IO;
+using ProjectOdyssey.Engine.Chart;
+using ProjectOdyssey.Data.Replays;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 
-namespace ProjectOdyssey.Engine
+namespace ProjectOdyssey.Engine.Sessions
 {
     public class ReplaySession
     {
