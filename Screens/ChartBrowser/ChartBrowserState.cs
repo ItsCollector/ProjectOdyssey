@@ -2,6 +2,7 @@ using OpenTK.Mathematics;
 using ProjectOdyssey.Audio;
 using ProjectOdyssey.Engine.Scoring;
 using ProjectOdyssey.Data.Charts;
+using ProjectOdyssey.Data.Scores;
 using ProjectOdyssey.Engine.Chart;
 using ProjectOdyssey.Screens.Components;
 
@@ -34,9 +35,12 @@ namespace ProjectOdyssey.Screens.ChartBrowser
         public int ChartCursor { get; private set; } // currently selected chart within the current set, as an index
         public List<ChartBrowserRow> CurrentSet => chartSets[ChartSetCursor]; // the currently selected chart set
         public List<List<ChartBrowserRow>> FilteredChartSets => chartSets; // the chart sets after filtering (currently no filtering applied)
+        public List<ScoreRecord> CurrentScores = new(100);
+        public ScoreRecord HoveredScoreRecord;
 
         // Layout
-        public IReadOnlyList<StackItem> Items => chartsStackView.Items; // the cards to draw, with their animated positions
+        public IReadOnlyList<StackItem> chartStackItems => chartsStackView.Items; // the cards to draw, with their animated positions
+        public IReadOnlyList<StackItem> scoreStackItems => scoreStackView.Items;
 
         // Hover
         public StackItem? HoveredItem { get; private set; } // the card under the mouse, or null
@@ -67,12 +71,17 @@ namespace ProjectOdyssey.Screens.ChartBrowser
         public void Update(float deltaMs)
         {
             chartsStackView.Update(deltaMs);
+            scoreStackView.Update(deltaMs);
+
             UpdateHover(lastLogicalPos);   // cards move under a still mouse, so re-test every frame
 
             if (!selectionPending) return;
 
             msSinceSelectionChanged += deltaMs;
-            if (msSinceSelectionChanged >= SettleDelayMs) SettleNow();
+            if (msSinceSelectionChanged >= SettleDelayMs)
+            {
+                SettleNow();
+            }
         }
 
         // Applies the current selection immediately (background + preview music)
@@ -83,6 +92,7 @@ namespace ProjectOdyssey.Screens.ChartBrowser
             selectionPending = false;
             SelectionChanged?.Invoke(CurrentSet[ChartCursor].BackgroundPath);
             PlaySelectedChartMusic();
+            RefreshScores();
         }
 
         // Moves the set cursor by delta (clamped to valid range), resets the chart cursor to 0, and rebuilds the layout.
@@ -124,7 +134,19 @@ namespace ProjectOdyssey.Screens.ChartBrowser
                 if (item.Kind == ChartKind) break;   // a chart card wins over a set card it overlaps
             }
 
-            ViewScoreHovered = ViewScoreRect.Contains(logicalPos.X, logicalPos.Y);
+            foreach (var item in scoreStackView.Items)
+            {
+                if (!item.Contains(logicalPos.X, logicalPos.Y)) continue;
+
+                HoveredItem = item;
+                ViewScoreHovered = true;
+                HoveredScoreRecord = CurrentScores[item.Tag];
+            }
+
+            if (HoveredItem == null)
+            {
+                ViewScoreHovered = false;
+            }
         }
 
         // Acts on whatever UpdateHover last determined is hovered. A chart card takes priority over a set card underneath it.
@@ -170,7 +192,6 @@ namespace ProjectOdyssey.Screens.ChartBrowser
         // Stack item keys must be unique within one stack: the high bit keeps a chart ID from colliding with a set ID.
         private static long SetKey(int setId) => setId;
         private static long ChartKey(int chartId) => (1L << 32) | (uint)chartId;
-
         // Describes the visible set and chart cards to the stack view, which works out their positions
         // (chart under the cursor centred) and animates them there.
         private void RebuildLayout()
@@ -223,6 +244,35 @@ namespace ProjectOdyssey.Screens.ChartBrowser
 
             selectionPending = true;
             msSinceSelectionChanged = 0f;
+        }
+
+        private void RefreshScores()
+        {
+            if (chartSets.Count == 0) return;
+
+            try
+            {
+                CurrentScores = ScoreDatabase.GetScoresByChartId(CurrentSet[ChartCursor].ChartId);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[WARN] Could not load scores: {ex.Message}");
+                CurrentScores = new List<ScoreRecord>();
+            }
+
+            scoreStackView.Begin();
+            for (int i = 0; i < CurrentScores.Count; i++)
+            {
+                scoreStackView.Add(
+                    CurrentScores[i].ScoreId, 
+                    0,
+                    ChartBrowserLayout.ScoreCardWidth,
+                    ChartBrowserLayout.ScoreCardHeight,
+                    ChartBrowserLayout.ScoreCardSpacing,
+                    tag: i); // index into CurrentScores
+            }
+
+            scoreStackView.End(0);
         }
     }
 }

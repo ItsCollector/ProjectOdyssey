@@ -1,11 +1,10 @@
 ﻿using Microsoft.Data.Sqlite;
 using ProjectOdyssey.Engine.Scoring;
-using ProjectOdyssey.Engine;
 using ProjectOdyssey.Common;
 
 namespace ProjectOdyssey.Data.Scores
 {
-    class ScoreDatabase
+    public static class ScoreDatabase
     {
         private static readonly string connectionString;
 
@@ -101,7 +100,7 @@ namespace ProjectOdyssey.Data.Scores
             }
         }
 
-        public static Result<string> GetBestReplayByChartId(int chartId)
+        public static Result<string> GetReplayByChartId(int chartId)
         {
             try
             {
@@ -136,8 +135,9 @@ namespace ProjectOdyssey.Data.Scores
             command.CommandText =
             @"
                 SELECT * FROM Scores
-                WEHERE ChartId = $chartId
-                ORDER BY Accuracy DESC;
+                WHERE ChartId = $chartId
+                ORDER BY Accuracy DESC
+                LIMIT 100;
             ";
             command.Parameters.AddWithValue("$chartId", chartId);
 
@@ -146,40 +146,24 @@ namespace ProjectOdyssey.Data.Scores
             {
                 scores.Add(new ScoreRecord
                 {
-                    SetId = reader.GetInt32(0),
-                    ChartId = reader.GetInt32(1),
-                    Accuracy = reader.GetFloat(2),
-                    MarvCount = reader.GetInt32(3),
-                    PerfCount = reader.GetInt32(4),
-                    GreatCount = reader.GetInt32(5),
-                    GoodCount = reader.GetInt32(6),
-                    BadCount = reader.GetInt32(7),
-                    MissCount = reader.GetInt32(8),
-                    HighestCombo = reader.GetInt32(9),
-                    PauseCount = reader.GetInt32(10),
-                    ReplayPath = reader.GetString(11),
-                    PlayedUtc = reader.GetInt64(12)
+                    ScoreId = reader.GetInt32(0),
+                    SetId = reader.GetInt32(1),
+                    ChartId = reader.GetInt32(2),
+                    Accuracy = reader.GetFloat(3),
+                    MarvCount = reader.GetInt32(4),
+                    PerfCount = reader.GetInt32(5),
+                    GreatCount = reader.GetInt32(6),
+                    GoodCount = reader.GetInt32(7),
+                    BadCount = reader.GetInt32(8),
+                    MissCount = reader.GetInt32(9),
+                    HighestCombo = reader.GetInt32(10),
+                    PauseCount = reader.GetInt32(11),
+                    ReplayPath = reader.GetString(12),
+                    PlayedUtc = reader.GetInt64(13)
                 });
             }
 
             return scores;
-        }
-
-        public class ScoreRecord
-        {
-            public int SetId { get; set; }
-            public int ChartId { get; set; }
-            public float Accuracy { get; set; }
-            public int MarvCount { get; set; }
-            public int PerfCount { get; set; }
-            public int GreatCount { get; set; }
-            public int GoodCount { get; set; }
-            public int BadCount { get; set; }
-            public int MissCount { get; set; }
-            public int HighestCombo { get; set; }
-            public int PauseCount { get; set; } 
-            public string ReplayPath { get; set; } = "";
-            public long PlayedUtc { get; set; }
         }
     }
 }

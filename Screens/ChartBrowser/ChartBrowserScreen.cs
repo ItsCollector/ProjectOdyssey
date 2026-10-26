@@ -71,11 +71,12 @@ namespace ProjectOdyssey.Screens.ChartBrowser
         public void Render()
         {
             browserRenderer.DrawChartBrowser(
-                session.Items, 
+                session.chartStackItems, 
                 session.FilteredChartSets,             
                 session.ChartSetCursor, 
                 session.ChartCursor, 
-                session.HoveredItem);
+                session.HoveredItem,
+                session.scoreStackItems);
         }
 
         public void Resize(int width, int height)
@@ -104,19 +105,12 @@ namespace ProjectOdyssey.Screens.ChartBrowser
 
         private void ViewScore()
         {
-            int chartId = session.CurrentSet[session.ChartCursor].ChartId;
-            Result<string> bestReplayPath = ScoreDatabase.GetBestReplayByChartId(chartId);
-
-            if (bestReplayPath.IsSuccess == false)
-            {
-                Console.WriteLine($"[ERROR] {bestReplayPath.Error}");
-                return;
-            }
+            string replayPath = session.HoveredScoreRecord.ReplayPath;
 
             ReplayData replayData;
             try 
             { 
-                replayData = ReplayService.ReadReplayBinary(bestReplayPath.Value); 
+                replayData = ReplayService.ReadReplayBinary(replayPath); 
             }
             catch (Exception ex)
             {

@@ -41,8 +41,8 @@ namespace ProjectOdyssey.Screens.Results
             renderer.DrawText(menuSkin.Glyphs, $"Max Combo: {scoreData.HighestCombo}", 30, 450, primaryTextColour);
             renderer.DrawText(menuSkin.Glyphs, $"Pause Count: {scoreData.PauseCount}", 30, 510, primaryTextColour);
 
-            renderer.DrawText(menuSkin.Glyphs, $"Continuous Accuracy: {scoreData.CurrentContinuousAccuracy}%", 30, 570, primaryTextColour);
-            renderer.DrawText(menuSkin.Glyphs, $"Discrete Accuracy: {scoreData.CurrentDiscreteAccuracy}%", 30, 630, primaryTextColour);
+            renderer.DrawText(menuSkin.Glyphs, $"Continuous Accuracy: {scoreData.CurrentContinuousAccuracy:F2}%", 30, 570, primaryTextColour);
+            renderer.DrawText(menuSkin.Glyphs, $"Discrete Accuracy: {scoreData.CurrentDiscreteAccuracy:F2}%", 30, 630, primaryTextColour);
 
             renderer.DrawText(menuSkin.Glyphs, $"Watch Replay - F2", 30, 1020, primaryTextColour);
         }

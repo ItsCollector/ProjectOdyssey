@@ -138,8 +138,8 @@ namespace ProjectOdyssey.Screens.ChartBrowser
             renderer.Draw(texture, item.X + item.Width / 2f, item.Y + item.Height / 2f, item.Width, item.Height);
         }
 
-        public void DrawChartBrowser(IReadOnlyList<StackItem> items, List<List<ChartBrowserRow>> chartSets,
-                                     int chartSetCursor, int chartCursor, StackItem? hoveredItem)
+        public void DrawChartBrowser(IReadOnlyList<StackItem> chartStackitems, List<List<ChartBrowserRow>> chartSets,
+                                     int chartSetCursor, int chartCursor, StackItem? hoveredItem, IReadOnlyList<StackItem> scoreStackItems)
         {
             UploadDecodedBackground();
             DrawTopLeftOrigin(background, backgroundRect);
@@ -155,7 +155,7 @@ namespace ProjectOdyssey.Screens.ChartBrowser
             var currentSet = chartSets[chartSetCursor];
 
             // Draw chart cards first as set cards will be drawn on top
-            foreach (var item in items)
+            foreach (var item in chartStackitems)
             {
                 if (item.Kind != ChartBrowserState.ChartKind) continue;
 
@@ -172,7 +172,7 @@ namespace ProjectOdyssey.Screens.ChartBrowser
             }
 
             // Draw set cards
-            foreach (var item in items)
+            foreach (var item in chartStackitems)
             {
                 if (item.Kind != ChartBrowserState.SetKind) continue;
 
@@ -182,6 +182,12 @@ namespace ProjectOdyssey.Screens.ChartBrowser
 
                 var set = chartSets[chartSetCursor + item.Tag];
                 DrawCardText(set[0].Title, item, item.X + CardTextPadding);
+            }
+
+            // Draw score cards
+            foreach (var item in scoreStackItems)
+            {
+                DrawTopLeftOrigin(skin.ScorePanel, item);
             }
         }
 
