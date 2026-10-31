@@ -15,8 +15,13 @@ namespace ProjectOdyssey.Screens.Results
         private const float JudgementPanelX = 60, JudgementPanelY = 190;
         private const float GradeFrameX = 780, GradeFrameY = 190;
         private const float StatsPanelX = 1220, StatsPanelY = 190;
-        private const float ReplayButtonX = 600, ReplayButtonY = 900;
-        private const float BackButtonX = 1000, BackButtonY = 900;
+        private const float StatsPanelWidth = 640, StatsPanelHeight = 430;   // results_stats_panel.png
+
+        // Buttons sit in a column under the stats panel, right-aligned to its right edge.
+        // Order top to bottom: retry, watch replay, back. X is worked out from each texture's width at draw time.
+        private const float ButtonGap = 30f;
+        private const float ButtonColumnRight = StatsPanelX + StatsPanelWidth;
+        private const float ButtonColumnTop = StatsPanelY + StatsPanelHeight + ButtonGap;
 
         private const float GlyphLineHeight = 40f;   // SkinManager.DefaultGlyphSize
 
@@ -75,8 +80,12 @@ namespace ProjectOdyssey.Screens.Results
             DrawAt(menuSkin.ResultsJudgementPanel, JudgementPanelX, JudgementPanelY);
             //DrawAt(menuSkin.ResultsGradeFrame, GradeFrameX, GradeFrameY); 
             DrawAt(menuSkin.ResultsStatsPanel, StatsPanelX, StatsPanelY);
-            DrawAt(menuSkin.ResultsReplayButton, ReplayButtonX, ReplayButtonY);
-            DrawAt(menuSkin.ResultsBackButton, BackButtonX, BackButtonY);
+
+            // Buttons: retry, watch replay, back
+            float buttonY = ButtonColumnTop;
+            buttonY = DrawColumnButton(menuSkin.ResultsRetryButton, buttonY);
+            buttonY = DrawColumnButton(menuSkin.ResultsReplayButton, buttonY);
+            DrawColumnButton(menuSkin.ResultsBackButton, buttonY);
 
             // Header: title on the left, date and time the score was set on the right
             renderer.DrawText(menuSkin.Glyphs, "Results", HeaderMargin, HeaderTextY, accentTextColour);
@@ -97,14 +106,19 @@ namespace ProjectOdyssey.Screens.Results
             DrawStat(DiscreteAccuracySlot, "Discrete Accuracy", $"{scoreData.CurrentDiscreteAccuracy:F2}%");
             DrawStat(ComboSlot, "Max Combo", scoreData.HighestCombo.ToString());
             DrawStat(PausesSlot, "Pauses", scoreData.PauseCount.ToString());
-
-            renderer.DrawText(menuSkin.Glyphs, $"Watch Replay - F2", 30, 1020, primaryTextColour);
         }
 
         // Draws a texture with its top-left corner at (x, y). renderer.Draw wants the centre, so shift by half the size.
         private void DrawAt(Texture texture, float x, float y)
         {
             renderer.Draw(texture, x + texture.Width / 2f, y + texture.Height / 2f);
+        }
+
+        // Draws a button right-aligned to the column edge with its top at y; returns the Y for the next button down.
+        private float DrawColumnButton(Texture texture, float y)
+        {
+            DrawAt(texture, ButtonColumnRight - texture.Width, y);
+            return y + texture.Height + ButtonGap;
         }
 
         private void DrawJudgementRow(int row, string name, int count, Vector4 colour)

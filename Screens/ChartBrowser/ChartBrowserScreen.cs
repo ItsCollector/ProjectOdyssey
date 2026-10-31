@@ -122,7 +122,7 @@ namespace ProjectOdyssey.Screens.ChartBrowser
             var (chartData, songPath) = session.FinaliseChartSelection();
 
             AudioManager.StopAudio();
-            ScreenManager.Push(new ResultsScreen(replayData, chartData, Renderer, ScreenManager, AudioManager, SkinManager));
+            ScreenManager.Push(new ResultsScreen(replayData, chartData, inputHistory, Renderer, ScreenManager, AudioManager, SkinManager));
         }
 
         // Called when a screen above this one (gameplay -> results, or a replay's results) is popped.

@@ -5,6 +5,7 @@ using ProjectOdyssey.Data.Replays;
 using ProjectOdyssey.Diagnostic;
 using ProjectOdyssey.Engine.Chart;
 using ProjectOdyssey.Engine.Sessions;
+using ProjectOdyssey.Input;
 using ProjectOdyssey.Rendering;
 using ProjectOdyssey.Screens.Gameplay;
 using ProjectOdyssey.Screens.Pause;
@@ -17,6 +18,7 @@ namespace ProjectOdyssey.Screens.Replay
     {
         private readonly ChartData chartData;
         private readonly ReplayData replayData;
+        private readonly InputHistory inputHistory;
         private string songPath;
         private bool audioStarted = false;
         private ReplaySession session = null!;
@@ -33,11 +35,12 @@ namespace ProjectOdyssey.Screens.Replay
         public SkinManager SkinManager { private get; set; }
         private readonly SyncProbe syncProbe = new(isEnabled: false);
 
-        public ReplayScreen(ChartData chartData, ReplayData replayData, string songPath, Renderer renderer, ScreenManager screenManager, AudioManager audioManager, SkinManager skinManager)
+        public ReplayScreen(ChartData chartData, ReplayData replayData, string songPath, InputHistory inputHistory, Renderer renderer, ScreenManager screenManager, AudioManager audioManager, SkinManager skinManager)
         {
             this.chartData = chartData;
             this.replayData = replayData;
             this.songPath = songPath;
+            this.inputHistory = inputHistory;
             Renderer = renderer;
             ScreenManager = screenManager;
             AudioManager = audioManager;
@@ -82,7 +85,7 @@ namespace ProjectOdyssey.Screens.Replay
                 if (msSinceFinished >= resultsDelayMs)
                 {
                     AudioManager.StopAudio();
-                    ScreenManager.Replace(new ResultsScreen(replayData, chartData, Renderer, ScreenManager, AudioManager, SkinManager));
+                    ScreenManager.Replace(new ResultsScreen(replayData, chartData, inputHistory, Renderer, ScreenManager, AudioManager, SkinManager));
                 }
 
                 return;

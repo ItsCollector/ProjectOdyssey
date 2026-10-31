@@ -54,6 +54,7 @@ namespace ProjectOdyssey.Skinning
                     ResultsHeader = LoadTexture(Path.Combine(DefaultMenuPath, "results_header.png")),
                     ResultsJudgementPanel = LoadTexture(Path.Combine(DefaultMenuPath, "results_judgement_panel.png")),
                     ResultsStatsPanel = LoadTexture(Path.Combine(DefaultMenuPath, "results_stats_panel.png")),
+                    ResultsRetryButton = LoadTexture(Path.Combine(DefaultMenuPath, "results_retry_button.png")),
                     ResultsReplayButton = LoadTexture(Path.Combine(DefaultMenuPath, "results_replay_button.png")),
                     ResultsBackButton = LoadTexture(Path.Combine(DefaultMenuPath, "results_back_button.png")),
                     Glyphs = glyphs

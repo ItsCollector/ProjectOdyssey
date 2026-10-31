@@ -86,7 +86,7 @@ namespace ProjectOdyssey.Screens.Gameplay
                 if (msSinceFinished >= resultsDelayMs && finishedReplayData != null)
                 {
                     AudioManager.StopAudio();
-                    ScreenManager.Replace(new ResultsScreen(finishedReplayData, chartData, Renderer, ScreenManager, AudioManager, SkinManager));
+                    ScreenManager.Replace(new ResultsScreen(finishedReplayData, chartData, inputHistory, Renderer, ScreenManager, AudioManager, SkinManager));
                 }
 
                 return;

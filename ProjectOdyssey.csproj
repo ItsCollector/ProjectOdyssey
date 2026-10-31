@@ -185,6 +185,9 @@
     <None Update="Assets\DefaultSkin\Menus\results_replay_button.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Update="Assets\DefaultSkin\Menus\results_retry_button.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="Assets\DefaultSkin\Menus\results_stats_panel.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
