@@ -58,7 +58,7 @@ namespace ProjectOdyssey.Screens.ChartBrowser
             }
         }
 
-        public void Update(float deltaMs) 
+        public void Update(float deltaMs)
         {
             session.Update(deltaMs);
 
@@ -71,12 +71,13 @@ namespace ProjectOdyssey.Screens.ChartBrowser
         public void Render()
         {
             browserRenderer.DrawChartBrowser(
-                session.chartStackItems, 
-                session.FilteredChartSets,             
-                session.ChartSetCursor, 
-                session.ChartCursor, 
+                session.chartStackItems,
+                session.FilteredChartSets,
+                session.ChartSetCursor,
+                session.ChartCursor,
                 session.HoveredItem,
-                session.scoreStackItems);
+                session.scoreStackItems,
+                session.CurrentScores);
         }
 
         public void Resize(int width, int height)
@@ -108,9 +109,9 @@ namespace ProjectOdyssey.Screens.ChartBrowser
             string replayPath = session.HoveredScoreRecord.ReplayPath;
 
             ReplayData replayData;
-            try 
-            { 
-                replayData = ReplayService.ReadReplayBinary(replayPath); 
+            try
+            {
+                replayData = ReplayService.ReadReplayBinary(replayPath);
             }
             catch (Exception ex)
             {
@@ -122,6 +123,13 @@ namespace ProjectOdyssey.Screens.ChartBrowser
 
             AudioManager.StopAudio();
             ScreenManager.Push(new ResultsScreen(replayData, chartData, Renderer, ScreenManager, AudioManager, SkinManager));
+        }
+
+        // Called when a screen above this one (gameplay -> results, or a replay's results) is popped.
+        // A play may have saved a new score in the meantime, so reload the list.
+        public void OnResume()
+        {
+            session.RefreshScores();
         }
 
         public void OnKeyDown(Keys key)
@@ -169,7 +177,15 @@ namespace ProjectOdyssey.Screens.ChartBrowser
 
         public void OnMouseWheel(MouseWheelEventArgs e)
         {
-            session.MoveSet(-(int)e.OffsetY);
+            if (session.lastLogicalPos.X <= 1920 / 2)
+            {
+                // scroll scores
+                session.MoveScores(-(int)e.OffsetY);
+            }
+            else
+            {
+                session.MoveSet(-(int)e.OffsetY);
+            }
         }
 
         private Vector2 ToLogical(Vector2 windowPos) =>

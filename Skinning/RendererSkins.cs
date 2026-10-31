@@ -23,6 +23,12 @@ namespace ProjectOdyssey.Skinning
         public required Texture ContinueButton { get; init; }
         public required Texture RetryButton { get; init; }
         public required Texture ExitButton { get; init; }
+        public required Texture ResultsBackground { get; init; }
+        public required Texture ResultsHeader { get; init; }
+        public required Texture ResultsJudgementPanel { get; init; }
+        public required Texture ResultsStatsPanel { get; init; }
+        public required Texture ResultsReplayButton { get; init; }
+        public required Texture ResultsBackButton { get; init; }
         public required GlyphSet Glyphs { get; init; }
     }
 

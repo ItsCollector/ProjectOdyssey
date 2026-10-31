@@ -20,12 +20,12 @@ namespace ProjectOdyssey.Screens.ChartBrowser
 
         private float msSinceSelectionChanged;
         private bool selectionPending;
-        private Vector2 lastLogicalPos = new(-1, -1); // last mouse position, off-screen until the mouse first moves
+        public Vector2 lastLogicalPos = new(-1, -1); // last mouse position, off-screen until the mouse first moves
 
-        public StackView chartsStackView = new StackView(1080f);
+        public StackView chartsStackView = new StackView(ChartBrowserLayout.ScreenHeight / 2);
 
         // TESTING - SCORES VIA STACK VIEW
-        public StackView scoreStackView = new StackView(600f);
+        public StackView scoreStackView = new StackView(ChartBrowserLayout.ScoreStackCenterY);
         public ScoreData scoreData;
 
         public event Action<string>? SelectionChanged; // raised with the background path once the selection has settled
@@ -72,6 +72,9 @@ namespace ProjectOdyssey.Screens.ChartBrowser
         {
             chartsStackView.Update(deltaMs);
             scoreStackView.Update(deltaMs);
+
+            // Ease the score list back inside its bounds if the player scrolled past either end
+            scoreStackView.SnapBack(deltaMs);
 
             UpdateHover(lastLogicalPos);   // cards move under a still mouse, so re-test every frame
 
@@ -208,14 +211,14 @@ namespace ProjectOdyssey.Screens.ChartBrowser
                 if (index < 0 || index >= chartSets.Count) continue;
 
                 var set = chartSets[index];
-                
+
                 StackItem setItem = chartsStackView.Add(
-                    SetKey(set[0].SetId), 
-                    setX, 
+                    SetKey(set[0].SetId),
+                    setX,
                     ChartBrowserLayout.SetCardWidth,
-                    ChartBrowserLayout.SetCardHeight, 
+                    ChartBrowserLayout.SetCardHeight,
                     ChartBrowserLayout.SetCardSpacing,
-                    tag: slot, 
+                    tag: slot,
                     kind: SetKind);
 
                 if (index != ChartSetCursor) continue;
@@ -228,12 +231,12 @@ namespace ProjectOdyssey.Screens.ChartBrowser
                     }
 
                     chartsStackView.Add(
-                        ChartKey(set[c].ChartId), 
-                        chartX, 
+                        ChartKey(set[c].ChartId),
+                        chartX,
                         ChartBrowserLayout.ChartCardWidth,
-                        ChartBrowserLayout.ChartCardHeight, 
+                        ChartBrowserLayout.ChartCardHeight,
                         ChartBrowserLayout.ChartCardSpacing,
-                        tag: c, 
+                        tag: c,
                         kind: ChartKind,
                         spawnFrom: setItem);
                 }
@@ -246,7 +249,9 @@ namespace ProjectOdyssey.Screens.ChartBrowser
             msSinceSelectionChanged = 0f;
         }
 
-        private void RefreshScores()
+        // Re-queries the scores for the selected chart and rebuilds the stack. Existing cards keep their
+        // position (same ScoreId key), so a newly added score slides into place.
+        public void RefreshScores()
         {
             if (chartSets.Count == 0) return;
 
@@ -264,7 +269,7 @@ namespace ProjectOdyssey.Screens.ChartBrowser
             for (int i = 0; i < CurrentScores.Count; i++)
             {
                 scoreStackView.Add(
-                    CurrentScores[i].ScoreId, 
+                    CurrentScores[i].ScoreId,
                     0,
                     ChartBrowserLayout.ScoreCardWidth,
                     ChartBrowserLayout.ScoreCardHeight,
@@ -273,6 +278,16 @@ namespace ProjectOdyssey.Screens.ChartBrowser
             }
 
             scoreStackView.End(0);
+        }
+
+        private const float ScoreScrollStepPx = 50f;
+
+        public void MoveScores(int delta)
+        {
+            if (CurrentScores.Count == 0) return;
+
+            // delta > 0 = wheel down = reveal lower scores, so the content moves up
+            scoreStackView.Scroll(-delta * ScoreScrollStepPx);
         }
     }
 }

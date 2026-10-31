@@ -1,5 +1,7 @@
 using OpenTK.Mathematics;
+using ProjectOdyssey.Common;
 using ProjectOdyssey.Data.Charts;
+using ProjectOdyssey.Data.Scores;
 using ProjectOdyssey.Rendering;
 using ProjectOdyssey.Screens.Components;
 using ProjectOdyssey.Skinning;
@@ -15,7 +17,6 @@ namespace ProjectOdyssey.Screens.ChartBrowser
         private const int CardTextPadding = 16;
         private const float GlyphLineHeight = 40f;   // height of one line of skin glyph text
         private readonly MenuSkin skin;   // borrowed: owned and disposed by the SkinManager
-        private Vector4 primaryTextColour = new Vector4(1f, 1f, 1f, 1f);
 
         // Either skin.MissingBackground (borrowed) or a chart's own background (owned by this renderer).
         private Texture background;
@@ -33,7 +34,17 @@ namespace ProjectOdyssey.Screens.ChartBrowser
         // Card rects
         private CardRect backgroundRect = new CardRect { X = 0, Y = 0, Width = 1920, Height = 1080 };
         private CardRect chartInfoRect = new CardRect { X = 0, Y = 0, Width = 750, Height = 350 };
-        private CardRect scorePanelRect = new CardRect { X = 0, Y = 450, Width = 650, Height = 100 };
+
+        // Main text: song titles, accuracy values, judgement counts, etc.
+        private Vector4 primaryTextColour = new Vector4(1.0000f, 1.0000f, 1.0000f, 1f);
+
+        // Lavender accent: artist name, results title, grade letter, the "Hard" / noter text.
+        // Same colour as the baked button labels (#C6B8F4 = 198, 184, 244)
+        private Vector4 accentTextColour = new Vector4(0.7765f, 0.7216f, 0.9569f, 1f);
+
+        // Muted grey: small labels such as "Continuous Acc", "Pauses", "Date", and the date line on score cards
+        // (170, 175, 190)
+        private Vector4 secondaryTextColour = new Vector4(0.6667f, 0.6863f, 0.7451f, 1f);
 
         public ChartBrowserView(MenuSkin skin, Renderer renderer)
         {
@@ -139,11 +150,10 @@ namespace ProjectOdyssey.Screens.ChartBrowser
         }
 
         public void DrawChartBrowser(IReadOnlyList<StackItem> chartStackitems, List<List<ChartBrowserRow>> chartSets,
-                                     int chartSetCursor, int chartCursor, StackItem? hoveredItem, IReadOnlyList<StackItem> scoreStackItems)
+                                     int chartSetCursor, int chartCursor, StackItem? hoveredItem, IReadOnlyList<StackItem> scoreStackItems, List<ScoreRecord> scores)
         {
             UploadDecodedBackground();
             DrawTopLeftOrigin(background, backgroundRect);
-            //DrawTopLeftOrigin(skin.ChartInfo, chartInfoRect);
 
             // Empty library (e.g. a fresh build folder with no chart_library.db contents)
             if (chartSets.Count == 0)
@@ -164,11 +174,11 @@ namespace ProjectOdyssey.Screens.ChartBrowser
                 DrawTopLeftOrigin(isSelected || isHovered ? skin.ChartCardHover : skin.ChartCard, item);
 
                 var chart = currentSet[item.Tag];
-                DrawCardText(chart.DiffName, item, item.X + CardTextPadding);
+                DrawCardText(chart.DiffName, item, item.X + CardTextPadding, primaryTextColour);
 
                 string keyText = chart.KeyCount + "K";
                 float keyTextWidth = skin.Glyphs.MeasureText(keyText);
-                DrawCardText(keyText, item, item.X + item.Width - CardTextPadding - keyTextWidth);
+                DrawCardText(keyText, item, item.X + item.Width - CardTextPadding - keyTextWidth, primaryTextColour);
             }
 
             // Draw set cards
@@ -181,21 +191,44 @@ namespace ProjectOdyssey.Screens.ChartBrowser
                 DrawTopLeftOrigin(isSelected || isHovered ? skin.SetCardHover : skin.SetCard, item);
 
                 var set = chartSets[chartSetCursor + item.Tag];
-                DrawCardText(set[0].Title, item, item.X + CardTextPadding);
+                DrawCardText(set[0].Title, item, item.X + CardTextPadding, primaryTextColour);
             }
 
             // Draw score cards
             foreach (var item in scoreStackItems)
             {
                 DrawTopLeftOrigin(skin.ScorePanel, item);
+                // Grade letter position: (50,50)
+                DrawText($"{scores[item.Tag].Accuracy:F2}%", item.X + 118, item.Y + 8, primaryTextColour);
+                DrawText(DateFormatter.FormatDate(scores[item.Tag].PlayedUtc), item.X + 118, item.Y + 50, secondaryTextColour);
+                DrawCardText($"{scores[item.Tag].HighestCombo}", item, item.X + 530, primaryTextColour);
+            }
+
+            // Chart info card
+            DrawTopLeftOrigin(skin.ChartInfo, chartInfoRect);
+
+            // Get details for it
+            foreach (var item in chartStackitems)
+            {
+                if (item.Tag == chartCursor)
+                {
+                    var chart = currentSet[item.Tag];
+                    DrawText(chart.Title, ChartBrowserLayout.chartInfoTitleX, ChartBrowserLayout.chartInfoTitleY, primaryTextColour);
+                    DrawText(chart.Artist, ChartBrowserLayout.chartInfoArtistX, ChartBrowserLayout.chartInfoArtistY, accentTextColour);
+                }
             }
         }
 
         // Draws one line of text at x, vertically centred inside the item
-        private void DrawCardText(string text, StackItem item, float x)
+        private void DrawCardText(string text, StackItem item, float x, Vector4 colour)
         {
             float y = item.Y + (item.Height - GlyphLineHeight) / 2f;
-            renderer.DrawText(skin.Glyphs, text, x, y, primaryTextColour);
+            renderer.DrawText(skin.Glyphs, text, x, y, colour);
+        }
+
+        private void DrawText(string text, float x, float y, Vector4 colour)
+        {
+            renderer.DrawText(skin.Glyphs, text, x, y, colour);
         }
     }
 }

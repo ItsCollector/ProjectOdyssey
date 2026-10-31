@@ -1,6 +1,7 @@
 ﻿using OpenTK.Mathematics;
 using ProjectOdyssey.Engine.Scoring;
 using ProjectOdyssey.Rendering;
+using ProjectOdyssey.Screens.Components;
 using ProjectOdyssey.Skinning;
 
 namespace ProjectOdyssey.Screens.Results
@@ -11,7 +12,37 @@ namespace ProjectOdyssey.Screens.Results
         private Renderer renderer;
         private readonly MenuSkin menuSkin;
 
+        private const float JudgementPanelX = 60, JudgementPanelY = 190;
+        private const float GradeFrameX = 780, GradeFrameY = 190;
+        private const float StatsPanelX = 1220, StatsPanelY = 190;
+        private const float ReplayButtonX = 600, ReplayButtonY = 900;
+        private const float BackButtonX = 1000, BackButtonY = 900;
+
+        private const float GlyphLineHeight = 40f;   // SkinManager.DefaultGlyphSize
+
+        // Judgement rows (panel coordinates): six 70px rows, first one at y=70, 78px apart
+        private const float JudgementRowsStart = 70, JudgementRowStep = 78, JudgementRowHeight = 70;
+        private const float JudgementTextLeft = 40, JudgementTextRight = 624;
+
+        // Stats slots (panel coordinates): X, Y, Width, Height
+        private readonly record struct Slot(float X, float Y, float W, float H);
+        private static readonly Slot ContinuousAccuracySlot = new(16, 70, 608, 110);
+        private static readonly Slot DiscreteAccuracySlot = new(16, 190, 608, 110);
+        private static readonly Slot ComboSlot = new(16, 310, 300, 110);
+        private static readonly Slot PausesSlot = new(324, 310, 300, 110);
+
+        // Header text: the left and right margins and the line's top Y (a 40px line centred in the 140px header)
+        private const float ScreenWidth = 1920f, HeaderMargin = 50f, HeaderTextY = 50f;
+
+        private const float SlotPadding = 12;   // gap between a slot's edge and its label
+        private const float SlotValueOffset = 56;   // value line sits this far below the label line
+
+        // Set to true to draw a translucent box over every text slot, to check text placement against the panels.
+        private const bool ShowSlotOutlines = false;
+
         private Vector4 primaryTextColour = new Vector4(1f, 1f, 1f, 1f);
+        private Vector4 accentTextColour = new Vector4(0.7765f, 0.7216f, 0.9569f, 1f);
+        private Vector4 secondaryTextColour = new Vector4(0.6667f, 0.6863f, 0.7451f, 1f);
 
         private static readonly Dictionary<JudgementType, Vector4> judgementColours = new()
         {
@@ -23,6 +54,13 @@ namespace ProjectOdyssey.Screens.Results
             { JudgementType.Miss, new Vector4(0.90f, 0.20f, 0.25f, 1f) },
         };
 
+        // Display order, top to bottom; the row index is the position in this array
+        private static readonly JudgementType[] judgementRows =
+        {
+            JudgementType.Marvellous, JudgementType.Perfect, JudgementType.Great,
+            JudgementType.Good, JudgementType.Bad, JudgementType.Miss
+        };
+
         public ResultsView(MenuSkin menuSkin, Renderer renderer)
         {
             this.menuSkin = menuSkin;
@@ -31,20 +69,78 @@ namespace ProjectOdyssey.Screens.Results
 
         public void DrawResultsScreen(ScoreData scoreData)
         {
-            renderer.DrawText(menuSkin.Glyphs, "Results", 30, 30, primaryTextColour);
-            renderer.DrawText(menuSkin.Glyphs, $"Marvellous: {scoreData.JudgementCounts[JudgementType.Marvellous]}", 30, 90, judgementColours[JudgementType.Marvellous]);
-            renderer.DrawText(menuSkin.Glyphs, $"Perfect: {scoreData.JudgementCounts[JudgementType.Perfect]}", 30, 150, judgementColours[JudgementType.Perfect]);
-            renderer.DrawText(menuSkin.Glyphs, $"Great: {scoreData.JudgementCounts[JudgementType.Great]}", 30, 210, judgementColours[JudgementType.Great]);
-            renderer.DrawText(menuSkin.Glyphs, $"Good: {scoreData.JudgementCounts[JudgementType.Good]}", 30, 270, judgementColours[JudgementType.Good]);
-            renderer.DrawText(menuSkin.Glyphs, $"Bad: {scoreData.JudgementCounts[JudgementType.Bad]}", 30, 330, judgementColours[JudgementType.Bad]);
-            renderer.DrawText(menuSkin.Glyphs, $"Miss: {scoreData.JudgementCounts[JudgementType.Miss]}", 30, 390, judgementColours[JudgementType.Miss]);
-            renderer.DrawText(menuSkin.Glyphs, $"Max Combo: {scoreData.HighestCombo}", 30, 450, primaryTextColour);
-            renderer.DrawText(menuSkin.Glyphs, $"Pause Count: {scoreData.PauseCount}", 30, 510, primaryTextColour);
+            // Backgrounds and panels
+            DrawAt(menuSkin.ResultsBackground, 0, 0);
+            DrawAt(menuSkin.ResultsHeader, 0, 0);
+            DrawAt(menuSkin.ResultsJudgementPanel, JudgementPanelX, JudgementPanelY);
+            //DrawAt(menuSkin.ResultsGradeFrame, GradeFrameX, GradeFrameY); 
+            DrawAt(menuSkin.ResultsStatsPanel, StatsPanelX, StatsPanelY);
+            DrawAt(menuSkin.ResultsReplayButton, ReplayButtonX, ReplayButtonY);
+            DrawAt(menuSkin.ResultsBackButton, BackButtonX, BackButtonY);
 
-            renderer.DrawText(menuSkin.Glyphs, $"Continuous Accuracy: {scoreData.CurrentContinuousAccuracy:F2}%", 30, 570, primaryTextColour);
-            renderer.DrawText(menuSkin.Glyphs, $"Discrete Accuracy: {scoreData.CurrentDiscreteAccuracy:F2}%", 30, 630, primaryTextColour);
+            // Header: title on the left, date and time the score was set on the right
+            renderer.DrawText(menuSkin.Glyphs, "Results", HeaderMargin, HeaderTextY, accentTextColour);
+
+            string dateText = FormatDate(scoreData.SetTimeUtc);
+            float dateWidth = menuSkin.Glyphs.MeasureText(dateText);
+            renderer.DrawText(menuSkin.Glyphs, dateText, ScreenWidth - HeaderMargin - dateWidth, HeaderTextY, secondaryTextColour);
+
+            // Judgement rows: name on the left, count right-aligned
+            for (int row = 0; row < judgementRows.Length; row++)
+            {
+                JudgementType type = judgementRows[row];
+                DrawJudgementRow(row, type.ToString(), scoreData.JudgementCounts[type], judgementColours[type]);
+            }
+
+            // Stats panel
+            DrawStat(ContinuousAccuracySlot, "Continuous Accuracy", $"{scoreData.CurrentContinuousAccuracy:F2}%");
+            DrawStat(DiscreteAccuracySlot, "Discrete Accuracy", $"{scoreData.CurrentDiscreteAccuracy:F2}%");
+            DrawStat(ComboSlot, "Max Combo", scoreData.HighestCombo.ToString());
+            DrawStat(PausesSlot, "Pauses", scoreData.PauseCount.ToString());
 
             renderer.DrawText(menuSkin.Glyphs, $"Watch Replay - F2", 30, 1020, primaryTextColour);
+        }
+
+        // Draws a texture with its top-left corner at (x, y). renderer.Draw wants the centre, so shift by half the size.
+        private void DrawAt(Texture texture, float x, float y)
+        {
+            renderer.Draw(texture, x + texture.Width / 2f, y + texture.Height / 2f);
+        }
+
+        private void DrawJudgementRow(int row, string name, int count, Vector4 colour)
+        {
+            float rowTop = JudgementPanelY + JudgementRowsStart + row * JudgementRowStep;
+            float textY = rowTop + (JudgementRowHeight - GlyphLineHeight) / 2f;   // centre one line in the row
+
+            string countText = count.ToString();
+            float countWidth = menuSkin.Glyphs.MeasureText(countText);
+
+            renderer.DrawText(menuSkin.Glyphs, name, JudgementPanelX + JudgementTextLeft, textY, colour);
+            renderer.DrawText(menuSkin.Glyphs, countText, JudgementPanelX + JudgementTextRight - countWidth, textY, colour);
+        }
+
+        // One slot in the stats panel: a small label on top, the value underneath.
+        private void DrawStat(Slot slot, string label, string value)
+        {
+            float x = StatsPanelX + slot.X + SlotPadding;
+            float y = StatsPanelY + slot.Y + SlotPadding;
+
+            renderer.DrawText(menuSkin.Glyphs, label, x, y, secondaryTextColour);
+            renderer.DrawText(menuSkin.Glyphs, value, x, y + SlotValueOffset, primaryTextColour);
+
+            if (ShowSlotOutlines)
+            {
+                // DrawQuad is centre-based too
+                renderer.DrawQuad(StatsPanelX + slot.X + slot.W / 2f, StatsPanelY + slot.Y + slot.H / 2f,
+                                  slot.W, slot.H, new Vector4(1f, 0.9f, 0f, 0.25f));
+            }
+        }
+
+        // SetTimeUtc is .NET ticks (DateTime.UtcNow.Ticks)
+        private static string FormatDate(long utcTicks)
+        {
+            if (utcTicks <= 0) return "-";
+            return new DateTime(utcTicks, DateTimeKind.Utc).ToLocalTime().ToString("dd MMM yyyy HH:mm");
         }
     }
 }
