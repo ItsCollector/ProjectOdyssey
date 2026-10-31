@@ -195,6 +195,7 @@ namespace ProjectOdyssey.Screens.ChartBrowser
         // Stack item keys must be unique within one stack: the high bit keeps a chart ID from colliding with a set ID.
         private static long SetKey(int setId) => setId;
         private static long ChartKey(int chartId) => (1L << 32) | (uint)chartId;
+
         // Describes the visible set and chart cards to the stack view, which works out their positions
         // (chart under the cursor centred) and animates them there.
         private void RebuildLayout()

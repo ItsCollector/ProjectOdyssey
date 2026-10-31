@@ -24,6 +24,11 @@ namespace ProjectOdyssey.Screens.Gameplay
         private string songPath;
         private bool audioStarted = false;
 
+        private const float resultsDelayMs = 2000f;
+        private bool finished = false;
+        private float msSinceFinished;
+        private ReplayData? finishedReplayData;
+
         public Renderer Renderer { private get; set; }
         public ScreenManager ScreenManager { private get; set; }
         public AudioManager AudioManager { private get; set; }
@@ -74,6 +79,19 @@ namespace ProjectOdyssey.Screens.Gameplay
                 syncProbe.Sample(session.CurrentSongTimeMs, AudioManager.GetPlaybackPositionMs());
             }
 
+            if (finished)
+            {
+                msSinceFinished += deltaMs;
+
+                if (msSinceFinished >= resultsDelayMs && finishedReplayData != null)
+                {
+                    AudioManager.StopAudio();
+                    ScreenManager.Replace(new ResultsScreen(finishedReplayData, chartData, Renderer, ScreenManager, AudioManager, SkinManager));
+                }
+
+                return;
+            }
+
             if (session.ResolvedNotes >= session.TotalNotes)
             {
                 var scoreData = session.Score.CompileScoreData();
@@ -99,9 +117,9 @@ namespace ProjectOdyssey.Screens.Gameplay
                     Console.WriteLine($"[WARN] Failed to save score: {ex}");
                 }
 
-                // Transition to results screen
-                AudioManager.StopAudio();
-                ScreenManager.Replace(new ResultsScreen(newReplayData, chartData, Renderer, ScreenManager, AudioManager, SkinManager));
+                finishedReplayData = newReplayData;
+                finished = true;
+                msSinceFinished = 0f;
             }
         }
 
@@ -121,7 +139,7 @@ namespace ProjectOdyssey.Screens.Gameplay
 
         public void OnKeyDown(Keys key)
         {
-            if (key == Keys.Escape)
+            if (key == Keys.Escape && !finished)
             {
                 PauseGame();
             }

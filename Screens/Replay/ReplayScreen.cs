@@ -23,6 +23,10 @@ namespace ProjectOdyssey.Screens.Replay
         private GameplayView gameplayRenderer = null!;
         private HudView hudRenderer = null!;
 
+        private const float resultsDelayMs = 2000f;
+        private bool finished = false;
+        private float msSinceFinished;
+
         public Renderer Renderer { private get; set; }
         public ScreenManager ScreenManager { private get; set; }
         public AudioManager AudioManager { private get; set; }
@@ -71,10 +75,23 @@ namespace ProjectOdyssey.Screens.Replay
                 syncProbe.Sample(session.CurrentSongTimeMs, AudioManager.GetPlaybackPositionMs());
             }
 
+            if (finished)
+            {
+                msSinceFinished += deltaMs;
+
+                if (msSinceFinished >= resultsDelayMs)
+                {
+                    AudioManager.StopAudio();
+                    ScreenManager.Replace(new ResultsScreen(replayData, chartData, Renderer, ScreenManager, AudioManager, SkinManager));
+                }
+
+                return;
+            }
+
             if (session.ResolvedNotes >= session.TotalNotes)
             {
-                AudioManager.StopAudio();
-                ScreenManager.Replace(new ResultsScreen(replayData, chartData, Renderer, ScreenManager, AudioManager, SkinManager));
+                finished = true;
+                msSinceFinished = 0;
             }
         }
 
