@@ -28,6 +28,8 @@ namespace ProjectOdyssey.Skinning
         public required Texture ResultsJudgementPanel { get; init; }
         public required Texture ResultsStatsPanel { get; init; }
         public required Texture ResultsRetryButton { get; init; }
+        public required Texture ImportButton { get; init; }
+        public required Texture ImportProgressPanel { get; init; }
         public required Texture ResultsReplayButton { get; init; }
         public required Texture ResultsBackButton { get; init; }
         public required GlyphSet Glyphs { get; init; }

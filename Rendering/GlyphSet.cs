@@ -11,7 +11,7 @@ namespace ProjectOdyssey.Rendering
     // SkinManager; renderers only borrow it.
     public sealed class GlyphSet : IDisposable
     {
-        private const string SupportedChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz 0123456789!?.,:%-+&/()";
+        private const string SupportedChars = " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~";
 
         private readonly Dictionary<char, FreeTypeGlyph> glyphs;
         private bool disposed;

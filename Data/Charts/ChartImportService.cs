@@ -1,4 +1,6 @@
-﻿using ProjectOdyssey.Engine.Chart;
+﻿using ProjectOdyssey.Common;
+using ProjectOdyssey.Engine.Chart;
+using ProjectOdyssey.Screens.Import;
 using System.Text;
 
 namespace ProjectOdyssey.Data.Charts
@@ -13,11 +15,13 @@ namespace ProjectOdyssey.Data.Charts
         {
             if (!Directory.Exists(osuSongsRoot))
             {
-                Console.WriteLine($"[Error] osu! Songs directory not found at {osuSongsRoot}");
+                string error = $"[ERROR] osu! Songs directory not found at {osuSongsRoot}";
+                Console.WriteLine(error);
+                ImportProgress.Report(error, newRow: true);
                 return;
             }
 
-            Console.WriteLine($"[Info] Starting import from osu! Songs directory: {osuSongsRoot}");
+            Console.WriteLine($"[INFO] Starting import from osu! Songs directory: {osuSongsRoot}");
             int importedCount = 0;
             var errorLog = new StringBuilder();
             var allFolders = Directory.GetDirectories(osuSongsRoot);
@@ -47,12 +51,15 @@ namespace ProjectOdyssey.Data.Charts
                         if (result.IsSuccess)
                         {
                             var (chartData, resolvedAudioPath, resolvedBackgroundPath) = result.Value;
+                            ImportProgress.Report($"[{processedFolders}/{allFolders.Length}] Importing {chartData.Title} - {chartData.DiffName}", newRow: true);
                             string binaryFilePath = WriteChartBinary(chartData, songDir, chartFile);
                             parsedChartsInSet.Add((chartData, resolvedAudioPath, binaryFilePath, resolvedBackgroundPath));
                         }
                         else if (result.Error != "Unsupported mode")
                         {
-                            errorLog.AppendLine($"[WARN] Failed to parse {chartFile}: {result.Error}");
+                            string error = $"[WARN] Failed to parse {chartFile}: {result.Error}";
+                            errorLog.AppendLine(error);
+                            ImportProgress.Report(error, newRow: false);
                         }
                     }
 
@@ -64,19 +71,32 @@ namespace ProjectOdyssey.Data.Charts
                 }
                 catch (Exception ex)
                 {
-                    errorLog.AppendLine($"[ERROR] Failed to import set '{songDir}': {ex.Message}");
+                    string error = $"[ERROR] Failed to import set '{songDir}': {ex.Message}";
+                    errorLog.AppendLine(error);
+                    ImportProgress.Report(error, newRow: true);
                 }
 
                 if (processedFolders % 100 == 0)
                 {
-                    Console.WriteLine($"[Progress] {processedFolders}/{allFolders.Length} folders scanned, {importedCount} sets imported");
+                    string progress = $"[PROGRESS] {processedFolders}/{allFolders.Length} folders scanned, {importedCount} sets imported";
+                    Console.WriteLine(progress);
+                    ImportProgress.Report(progress, newRow: true);
                 }
             }
 
-            string logPath = Path.Combine(AppContext.BaseDirectory, $"import_log_{DateTime.Now:yyyyMMdd_HHmmss}.txt");
-            File.WriteAllText(logPath, errorLog.ToString());
+            string logDir = Path.Combine(AppContext.BaseDirectory, "Logs");
+            Directory.CreateDirectory(logDir);
 
-            Console.WriteLine($"[Done] Imported {importedCount} sets. Log written to {logPath}");
+            string logPath = Path.Combine(logDir, $"import_log_{DateTime.Now:yyyyMMdd_HHmmss}.txt");
+
+            if (errorLog.Length > 0)
+            {
+                File.WriteAllText(logPath, errorLog.ToString());
+            }
+
+            string message = $"[PROGRESS] Imported {importedCount} sets. Log written to {logPath} if any errors";
+            Console.WriteLine(message);
+            ImportProgress.Report(message, newRow: true);
         }
 
         public static void InsertItem(string folderPath, List<(ChartData chartData, string resolvedAudioPath, string jsonFilePath, string backgroundPath)> parsedChartsInSet)

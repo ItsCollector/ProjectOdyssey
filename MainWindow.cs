@@ -7,6 +7,7 @@ using ProjectOdyssey.Diagnostic;
 using ProjectOdyssey.Input;
 using ProjectOdyssey.Input.Native;
 using ProjectOdyssey.Screens.ChartBrowser;
+using ProjectOdyssey.Screens.Import;
 
 namespace ProjectOdyssey
 {
@@ -46,7 +47,15 @@ namespace ProjectOdyssey
             // screen is pushed, so Resize() is used here instead of it
             // reading ClientSize on its own.
             screenManager.Resize(ClientSize.X, ClientSize.Y);
-            screenManager.Push(new ChartBrowserScreen(inputHistory, screenManager.renderer, screenManager, screenManager.audioManager, screenManager.skinManager));
+
+            if (File.Exists(Path.Combine(AppContext.BaseDirectory, "chart_library.db")))
+            {
+                screenManager.Push(new ChartBrowserScreen(inputHistory, screenManager.renderer, screenManager, screenManager.audioManager, screenManager.skinManager));
+            }
+            else
+            {
+                screenManager.Push(new ImportScreen(inputHistory, screenManager.renderer, screenManager, screenManager.audioManager, screenManager.skinManager));
+            }
 
             Console.WriteLine($"[INFO] ClientSize = {ClientSize.X} x {ClientSize.Y}");
         }
