@@ -55,15 +55,7 @@ namespace ProjectOdyssey.Screens.ChartBrowser
         {
             this.audioManager = audioManager;
 
-            if (charts.Count == 0) return;
-
-            // Loads all charts into chartSets, grouped by SetId. Each set is a list of charts.
-            chartSets = charts
-                .GroupBy(c => c.SetId)
-                .Select(g => g.ToList())
-                .ToList();
-
-            ChartSetCursor = Random.Shared.Next(chartSets.Count);
+            LoadCharts(charts);
             RebuildLayout();
         }
 
@@ -195,6 +187,57 @@ namespace ProjectOdyssey.Screens.ChartBrowser
         // Stack item keys must be unique within one stack: the high bit keeps a chart ID from colliding with a set ID.
         private static long SetKey(int setId) => setId;
         private static long ChartKey(int chartId) => (1L << 32) | (uint)chartId;
+
+        private static List<List<ChartBrowserRow>> GroupIntoSets(List<ChartBrowserRow> charts) =>
+            charts.GroupBy(c => c.SetId).Select(g => g.ToList()).ToList();
+
+        public void LoadCharts(List<ChartBrowserRow> charts)   // first load only: picks a random set
+        {
+            if (charts.Count == 0) return;
+
+            chartSets = GroupIntoSets(charts);
+            ChartSetCursor = Random.Shared.Next(chartSets.Count);
+        }
+
+        // Call when the library may have changed (returning from another screen). Keeps the current selection if it still exists.
+        public void ReloadCharts(List<ChartBrowserRow> charts)
+        {
+            int selectedSetId = -1, selectedChartId = -1;
+            if (chartSets.Count > 0)
+            {
+                selectedSetId = CurrentSet[0].SetId;
+                selectedChartId = CurrentSet[ChartCursor].ChartId;
+            }
+
+            chartSets = GroupIntoSets(charts);
+
+            if (chartSets.Count == 0)
+            {
+                ChartSetCursor = 0;
+                ChartCursor = 0;
+                RebuildLayout();                     // empties the chart stack
+                CurrentScores = new List<ScoreRecord>();
+                scoreStackView.Begin();
+                scoreStackView.End(0);
+                return;
+            }
+
+            int setIndex = chartSets.FindIndex(s => s[0].SetId == selectedSetId);
+            if (setIndex < 0)
+            {
+                // Library was empty before (first import): pick randomly. Otherwise the set vanished: stay near where we were.
+                setIndex = selectedSetId == -1
+                    ? Random.Shared.Next(chartSets.Count)
+                    : Math.Clamp(ChartSetCursor, 0, chartSets.Count - 1);
+            }
+            ChartSetCursor = setIndex;
+
+            int chartIndex = chartSets[setIndex].FindIndex(c => c.ChartId == selectedChartId);
+            ChartCursor = chartIndex >= 0 ? chartIndex : 0;
+
+            RebuildLayout();
+            RefreshScores();
+        }
 
         // Describes the visible set and chart cards to the stack view, which works out their positions
         // (chart under the cursor centred) and animates them there.

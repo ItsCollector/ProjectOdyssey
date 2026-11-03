@@ -10,6 +10,7 @@ using ProjectOdyssey.Data.Scores;
 using ProjectOdyssey.Input;
 using ProjectOdyssey.Rendering;
 using ProjectOdyssey.Screens.Gameplay;
+using ProjectOdyssey.Screens.Import;
 using ProjectOdyssey.Screens.Results;
 using ProjectOdyssey.Skinning;
 
@@ -129,6 +130,7 @@ namespace ProjectOdyssey.Screens.ChartBrowser
         // A play may have saved a new score in the meantime, so reload the list.
         public void OnResume()
         {
+            session.ReloadCharts(ChartDatabase.GetChartsForBrowsing());
             session.RefreshScores();
         }
 
@@ -145,8 +147,9 @@ namespace ProjectOdyssey.Screens.ChartBrowser
                 case Keys.Right:
                     session.MoveChart(1); break;
                 case Keys.Enter:
-                    CommitSelection();
-                    break;
+                    CommitSelection(); break;
+                case Keys.F2:
+                    ScreenManager.Push(new ImportScreen(inputHistory, Renderer, ScreenManager, AudioManager, SkinManager)); break;
             }
         }
 

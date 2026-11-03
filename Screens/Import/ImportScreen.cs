@@ -67,10 +67,7 @@ namespace ProjectOdyssey.Screens.Import
         {
             if (key == Keys.Escape)
             {
-                if (File.Exists(Path.Combine(AppContext.BaseDirectory, "chart_library.db")))
-                {
-                    ScreenManager.Replace(new ChartBrowserScreen(InputHistory, ScreenManager.renderer, ScreenManager, ScreenManager.audioManager, ScreenManager.skinManager));
-                }   
+                ScreenManager.Pop();
             }
         }
 
@@ -119,7 +116,7 @@ namespace ProjectOdyssey.Screens.Import
             {
                 try 
                 { 
-                    ChartImportService.ImportChartsFromOsu(maxSets: 10); 
+                    ChartImportService.ImportChartsFromOsu(); 
                 }
                 finally 
                 { 

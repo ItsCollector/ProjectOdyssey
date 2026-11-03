@@ -46,8 +46,15 @@ namespace ProjectOdyssey.Data.Charts
                 DiffName TEXT NOT NULL,
                 Noter TEXT NOT NULL,
                 KeyCount INTEGER NOT NULL,
+                Md5Hash TEXT NOT NULL,
                 FileLastWriteUtc INTEGER NOT NULL
-            );
+                );
+
+                CREATE TABLE IF NOT EXISTS RejectedCharts (
+                    RejectedChartId INTEGER PRIMARY KEY AUTOINCREMENT,
+                    Md5Hash TEXT NOT NULL,
+                    Reason TEXT NOT NULL
+                );
             ";
 
             command.ExecuteNonQuery();
@@ -137,7 +144,7 @@ namespace ProjectOdyssey.Data.Charts
             using var command = connection.CreateCommand();
             command.CommandText =
             @"
-                SELECT ChartId, SongId, BinaryFilePath, BackgroundPath, Title, Artist, DiffName, Noter, KeyCount, FileLastWriteUtc
+                SELECT ChartId, SongId, BinaryFilePath, BackgroundPath, Title, Artist, DiffName, Noter, KeyCount, Md5Hash, FileLastWriteUtc
                 FROM Charts;
             ";
 
@@ -155,15 +162,50 @@ namespace ProjectOdyssey.Data.Charts
                     DiffName = reader.GetString(6),
                     Noter = reader.GetString(7),
                     KeyCount = reader.GetInt32(8),
-                    FileLastWriteUtc = reader.GetInt64(9)
+                    MD5Hash = reader.GetString(9),
+                    FileLastWriteUtc = reader.GetInt64(10)
                 });
             }
 
             return charts;
         }
 
+        public static HashSet<string> GetAllMD5()
+        {
+            HashSet<string> md5 = new HashSet<string>();
+            
+            using var connection = OpenConnection();
+            using var command = connection.CreateCommand();
+            command.CommandText =
+            @"
+                SELECT Md5Hash
+                FROM Charts;
+            ";
+
+            using var reader = command.ExecuteReader();
+            while (reader.Read())
+            {
+                md5.Add(reader.GetString(0));
+            }
+
+            using var rejectedChartsCommand = connection.CreateCommand();
+            rejectedChartsCommand.CommandText =
+            @"
+                SELECT Md5Hash
+                FROM RejectedCharts;
+            ";
+
+            using var rejectedChartReader = rejectedChartsCommand.ExecuteReader();
+            while (rejectedChartReader.Read())
+            {
+                md5.Add(rejectedChartReader.GetString(0));
+            }
+
+            return md5;
+        }
+
         // Imports an entire chart set (ChartSet + Songs + Charts) atomically in one transaction
-        public static void ImportChartSet(ChartSet set, List<(ChartData chartData, string resolvedAudioPath, string binaryFilePath, string backgroundPath)> parsedChartsInSet)
+        public static void ImportChartSet(ChartSet set, List<(ChartData chartData, string resolvedAudioPath, string binaryFilePath, string backgroundPath, string md5Hash)> parsedChartsInSet)
         {
             using var connection = OpenConnection();
             using var transaction = connection.BeginTransaction();
@@ -176,9 +218,8 @@ namespace ProjectOdyssey.Data.Charts
                     insertSetCommand.Transaction = transaction;
                     insertSetCommand.CommandText =
                     @"
-                        INSERT INTO ChartSets (FolderPath, Source)
-                        VALUES ($folderPath, $source);
-                        SELECT last_insert_rowid();
+                        INSERT OR IGNORE INTO ChartSets (FolderPath, Source) VALUES ($folderPath, $source);
+                        SELECT SetId FROM ChartSets WHERE FolderPath = $folderPath;
                     ";
                     insertSetCommand.Parameters.AddWithValue("$folderPath", set.FolderPath);
                     insertSetCommand.Parameters.AddWithValue("$source", set.Source);
@@ -189,7 +230,7 @@ namespace ProjectOdyssey.Data.Charts
                 // several charts doesn't re-run the same SELECT repeatedly.
                 var songIdCache = new Dictionary<string, int>();
 
-                foreach (var (chartData, resolvedAudioPath, binaryFilePath, backgroundPath) in parsedChartsInSet)
+                foreach (var (chartData, resolvedAudioPath, binaryFilePath, backgroundPath, md5Hash) in parsedChartsInSet)
                 {
                     if (!songIdCache.TryGetValue(resolvedAudioPath, out int songId))
                     {
@@ -232,8 +273,18 @@ namespace ProjectOdyssey.Data.Charts
                     insertChartCommand.Transaction = transaction;
                     insertChartCommand.CommandText =
                     @"
-                        INSERT INTO Charts (SongId, BinaryFilePath, BackgroundPath, Title, Artist, DiffName, Noter, KeyCount, FileLastWriteUtc)
-                        VALUES ($songId, $filePath, $backgroundPath, $title, $artist, $diffName, $noter, $keyCount, $fileLastWriteUtc);
+                        INSERT INTO Charts (SongId, BinaryFilePath, BackgroundPath, Title, Artist, DiffName, Noter, KeyCount, Md5Hash, FileLastWriteUtc)
+                        VALUES ($songId, $filePath, $backgroundPath, $title, $artist, $diffName, $noter, $keyCount, $md5Hash, $fileLastWriteUtc)
+                        ON CONFLICT(BinaryFilePath) DO UPDATE SET
+                            SongId = excluded.SongId,
+                            BackgroundPath = excluded.BackgroundPath,
+                            Title = excluded.Title,
+                            Artist = excluded.Artist,
+                            DiffName = excluded.DiffName,
+                            Noter = excluded.Noter,
+                            KeyCount = excluded.KeyCount,
+                            Md5Hash = excluded.Md5Hash,
+                            FileLastWriteUtc = excluded.FileLastWriteUtc;
                     ";
                     insertChartCommand.Parameters.AddWithValue("$songId", songId);
                     insertChartCommand.Parameters.AddWithValue("$filePath", binaryFilePath);
@@ -243,6 +294,7 @@ namespace ProjectOdyssey.Data.Charts
                     insertChartCommand.Parameters.AddWithValue("$diffName", chartData.DiffName);
                     insertChartCommand.Parameters.AddWithValue("$noter", chartData.Noter);
                     insertChartCommand.Parameters.AddWithValue("$keyCount", chartData.KeyCount);
+                    insertChartCommand.Parameters.AddWithValue("$md5Hash", md5Hash);
                     insertChartCommand.Parameters.AddWithValue("$fileLastWriteUtc", DateTime.UtcNow.Ticks);
                     insertChartCommand.ExecuteNonQuery();
                 }
@@ -320,6 +372,34 @@ namespace ProjectOdyssey.Data.Charts
             command.Parameters.AddWithValue("$setId", setId);
             command.ExecuteNonQuery();
         }
+
+        public static void AddRejectedCharts(IReadOnlyCollection<(string md5Hash, string reason)> rejected)
+        {
+            if (rejected.Count == 0) return;
+
+            using var connection = OpenConnection();
+            using var transaction = connection.BeginTransaction();
+            using var command = connection.CreateCommand();
+            command.Transaction = transaction;
+            command.CommandText = "INSERT OR IGNORE INTO RejectedCharts (Md5Hash, Reason) VALUES ($md5Hash, $reason);";
+
+            var md5Param = command.Parameters.Add("$md5Hash", SqliteType.Text);
+            var reasonParam = command.Parameters.Add("$reason", SqliteType.Text);
+
+            foreach (var (md5Hash, reason) in rejected)
+            {
+                md5Param.Value = md5Hash;
+                reasonParam.Value = reason;
+                command.ExecuteNonQuery();
+            }
+
+            transaction.Commit();
+        }
+
+        public static void AddRejectedChart(string md5Hash, string reason)
+        {
+            AddRejectedCharts(new[] { (md5Hash, reason) });
+        }
     }
 
     public class ChartSet
@@ -347,6 +427,7 @@ namespace ProjectOdyssey.Data.Charts
         public string DiffName { get; set; } = "";
         public string Noter { get; set; } = "";
         public int KeyCount { get; set; }
+        public string MD5Hash { get; set; } = "";
         public long FileLastWriteUtc { get; set; }
     }
 

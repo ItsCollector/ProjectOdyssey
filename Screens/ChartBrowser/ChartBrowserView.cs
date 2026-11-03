@@ -173,6 +173,7 @@ namespace ProjectOdyssey.Screens.ChartBrowser
                 bool isHovered = item == hoveredItem;
                 DrawTopLeftOrigin(isSelected || isHovered ? skin.ChartCardHover : skin.ChartCard, item);
 
+                if (item.Tag >= currentSet.Count) continue;
                 var chart = currentSet[item.Tag];
                 DrawCardText(chart.DiffName, item, item.X + CardTextPadding, primaryTextColour);
 
@@ -190,7 +191,9 @@ namespace ProjectOdyssey.Screens.ChartBrowser
                 bool isHovered = item == hoveredItem;
                 DrawTopLeftOrigin(isSelected || isHovered ? skin.SetCardHover : skin.SetCard, item);
 
-                var set = chartSets[chartSetCursor + item.Tag];
+                int setIndex = chartSetCursor + item.Tag;
+                if (setIndex < 0 || setIndex >= chartSets.Count) continue;
+                var set = chartSets[setIndex];
                 DrawCardText(set[0].Title, item, item.X + CardTextPadding, primaryTextColour);
             }
 

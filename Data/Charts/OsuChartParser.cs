@@ -5,6 +5,8 @@ namespace ProjectOdyssey.Data.Charts
 {
     public static class OsuChartParser
     {
+        public const string UnsupportedModeError = "Unsupported mode";
+
         // Generic entry point: parse a .osu file at an already-known absolute
         // path. Used directly for test charts / non-osu-library imports, and
         // internally by ImportFromOsuLibrary once the path is resolved.
@@ -94,7 +96,7 @@ namespace ProjectOdyssey.Data.Charts
                     int mode = int.Parse(ExtractValue(line));
                     if (mode != 3)
                     {
-                        return Result<(ChartData chartData, string resolvedAudioPath, string resolvedBackgroundPath)>.Err("Unsupported mode");
+                        return Result<(ChartData chartData, string resolvedAudioPath, string resolvedBackgroundPath)>.Err(UnsupportedModeError);
                     }
                 }
                 else if (line.StartsWith("Title:"))
@@ -213,6 +215,29 @@ namespace ProjectOdyssey.Data.Charts
         {
             int colonIndex = line.IndexOf(':');
             return colonIndex < 0 ? string.Empty : line[(colonIndex + 1)..].Trim();
+        }
+
+        // True only when a Mode line exists and isn't 3 (mania). Files with no Mode line are left to the full parser.
+        public static bool IsUnsupportedMode(string filePath)
+        {
+            bool inGeneral = false;
+
+            foreach (string line in File.ReadLines(filePath))
+            {
+                if (line.StartsWith("["))
+                {
+                    if (inGeneral) return false; // left [General] without seeing a Mode line
+                    inGeneral = line.StartsWith("[General]");
+                    continue;
+                }
+
+                if (inGeneral && line.StartsWith("Mode:"))
+                {
+                    return !(int.TryParse(ExtractValue(line), out int mode) && mode == 3);
+                }
+            }
+
+            return false;
         }
     }
 }

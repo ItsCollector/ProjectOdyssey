@@ -48,14 +48,16 @@ namespace ProjectOdyssey
             // reading ClientSize on its own.
             screenManager.Resize(ClientSize.X, ClientSize.Y);
 
-            if (File.Exists(Path.Combine(AppContext.BaseDirectory, "chart_library.db")))
+            screenManager.Push(new ChartBrowserScreen(inputHistory, screenManager.renderer, screenManager, screenManager.audioManager, screenManager.skinManager));
+
+            /*if (File.Exists(Path.Combine(AppContext.BaseDirectory, "chart_library.db")))
             {
                 screenManager.Push(new ChartBrowserScreen(inputHistory, screenManager.renderer, screenManager, screenManager.audioManager, screenManager.skinManager));
             }
             else
             {
                 screenManager.Push(new ImportScreen(inputHistory, screenManager.renderer, screenManager, screenManager.audioManager, screenManager.skinManager));
-            }
+            }*/
 
             Console.WriteLine($"[INFO] ClientSize = {ClientSize.X} x {ClientSize.Y}");
         }
