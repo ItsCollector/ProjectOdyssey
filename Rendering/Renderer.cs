@@ -20,7 +20,7 @@ namespace ProjectOdyssey.Rendering
         private int vao;
         private int vbo;
         private int ebo;
-        private int baseTexture;    // 1x1 white, so flat quads are just "white * colour"
+        private int baseTexture; // 1x1 white, so flat quads are just "white * colour"
         private readonly Shader shader;
         private static readonly Vector4 FullUv = new(0f, 0f, 1f, 1f);
         private readonly List<DrawCommand> queue = new(4096);
