@@ -12,7 +12,7 @@ namespace ProjectOdyssey.Skinning
 
     public sealed class MenuSkin
     {
-        public required Texture MissingBackground { get; init; }
+        public required Texture Background { get; init; }
         public required Texture SetCard { get; init; }
         public required Texture SetCardHover { get; init; }
         public required Texture ChartCard { get; init; }
@@ -23,7 +23,6 @@ namespace ProjectOdyssey.Skinning
         public required Texture ContinueButton { get; init; }
         public required Texture RetryButton { get; init; }
         public required Texture ExitButton { get; init; }
-        public required Texture ResultsBackground { get; init; }
         public required Texture ResultsHeader { get; init; }
         public required Texture ResultsJudgementPanel { get; init; }
         public required Texture ResultsStatsPanel { get; init; }

@@ -155,7 +155,7 @@
     <None Update="Assets\DefaultSkin\Menus\import_progress_panel.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Assets\DefaultSkin\Menus\missing_background_image.png">
+    <None Update="Assets\DefaultSkin\Menus\background_image.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="Assets\DefaultSkin\Menus\modifiers_button.png">
@@ -171,9 +171,6 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="Assets\DefaultSkin\Menus\paused_background.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Assets\DefaultSkin\Menus\results_background.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="Assets\DefaultSkin\Menus\results_back_button.png">

@@ -50,7 +50,7 @@ namespace ProjectOdyssey.Screens.ChartBrowser
         {
             this.skin = skin;
             this.renderer = renderer;
-            background = skin.MissingBackground;
+            background = skin.Background;
         }
 
         // Call from the main thread whenever the selected chart changes. Cheap: the decoding happens on a worker.
@@ -114,7 +114,7 @@ namespace ProjectOdyssey.Screens.ChartBrowser
             }
             else
             {
-                background = skin.MissingBackground;
+                background = skin.Background;
             }
 
             loadedBgPath = ready.Path;   // also set on failure, so a broken image isn't retried every time
@@ -134,7 +134,7 @@ namespace ProjectOdyssey.Screens.ChartBrowser
             Interlocked.Exchange(ref decoded, null);
 
             ReleaseBackground();
-            background = skin.MissingBackground;
+            background = skin.Background;
         }
 
         // Converts from top-left origin coordinates to the renderer's centre-based coordinates and draws the texture

@@ -75,7 +75,7 @@ namespace ProjectOdyssey.Screens.Results
         public void DrawResultsScreen(ScoreData scoreData)
         {
             // Backgrounds and panels
-            DrawAt(menuSkin.ResultsBackground, 0, 0);
+            DrawAt(menuSkin.Background, 0, 0);
             DrawAt(menuSkin.ResultsHeader, 0, 0);
             DrawAt(menuSkin.ResultsJudgementPanel, JudgementPanelX, JudgementPanelY);
             //DrawAt(menuSkin.ResultsGradeFrame, GradeFrameX, GradeFrameY); 

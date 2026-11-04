@@ -54,7 +54,7 @@ namespace ProjectOdyssey.Screens.Import
         public void DrawImportScreen(IReadOnlyList<string> progressRows, bool importing)
         {
             // Background, header
-            DrawAt(menuSkin.ResultsBackground, 0, 0);
+            DrawAt(menuSkin.Background, 0, 0);
             DrawAt(menuSkin.ResultsHeader, 0, 0);
             renderer.DrawText(menuSkin.Glyphs, "Import", HeaderMargin, HeaderTextY, accentTextColour);
 
