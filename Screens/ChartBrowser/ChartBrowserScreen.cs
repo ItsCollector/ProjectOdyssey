@@ -128,7 +128,9 @@ namespace ProjectOdyssey.Screens.ChartBrowser
 
         // Called when a screen above this one (gameplay -> results, or a replay's results) is popped.
         // A play may have saved a new score in the meantime, so reload the list.
-        public void OnResume()
+        public void OnResume() => RefreshLibrary();
+
+        public void RefreshLibrary()
         {
             session.ReloadCharts(ChartDatabase.GetChartsForBrowsing());
             session.RefreshScores();
@@ -150,6 +152,8 @@ namespace ProjectOdyssey.Screens.ChartBrowser
                     CommitSelection(); break;
                 case Keys.F2:
                     ScreenManager.Push(new ImportScreen(inputHistory, Renderer, ScreenManager, AudioManager, SkinManager)); break;
+                case Keys.F5:
+                    RefreshLibrary(); break;
             }
         }
 
