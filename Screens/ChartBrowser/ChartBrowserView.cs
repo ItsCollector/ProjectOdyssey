@@ -167,7 +167,7 @@ namespace ProjectOdyssey.Screens.ChartBrowser
             // Draw chart cards first as set cards will be drawn on top
             foreach (var item in chartStackitems)
             {
-                if (item.Kind != ChartBrowserState.ChartKind) continue;
+                if (item.Kind != ChartBrowserSession.ChartKind) continue;
 
                 bool isSelected = item.Tag == chartCursor;   // a chart row's tag is its index within the set
                 bool isHovered = item == hoveredItem;
@@ -185,7 +185,7 @@ namespace ProjectOdyssey.Screens.ChartBrowser
             // Draw set cards
             foreach (var item in chartStackitems)
             {
-                if (item.Kind != ChartBrowserState.SetKind) continue;
+                if (item.Kind != ChartBrowserSession.SetKind) continue;
 
                 bool isSelected = item.Tag == 0; // a set row's tag is its slot; slot 0 = the selected set
                 bool isHovered = item == hoveredItem;

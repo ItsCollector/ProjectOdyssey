@@ -50,7 +50,7 @@ namespace ProjectOdyssey.Screens.ChartBrowser
                 Console.WriteLine("[WARN] No charts found to browse.");
             }
 
-            session = new ChartBrowserState(charts, AudioManager);
+            session = new ChartBrowserSession(charts, AudioManager);
             session.SelectionChanged += browserRenderer.RequestBackgroundTexture;
 
             if (charts.Count > 0)

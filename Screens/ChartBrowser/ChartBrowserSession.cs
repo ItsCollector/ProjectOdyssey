@@ -8,7 +8,7 @@ using ProjectOdyssey.Screens.Components;
 
 namespace ProjectOdyssey.Screens.ChartBrowser
 {
-    public class ChartBrowserState
+    public class ChartBrowserSession
     {
         public const int SetKind = 0;
         public const int ChartKind = 1;   // what a StackItem represents (stored in StackItem.Kind)
@@ -51,7 +51,7 @@ namespace ProjectOdyssey.Screens.ChartBrowser
         // hovering a different chart, which should just move the cursor rather than commit anything.
         public bool IsHoveredChartAlreadySelected => HoveredItem is { Kind: ChartKind } hovered && hovered.Tag == ChartCursor;
 
-        public ChartBrowserState(List<ChartBrowserRow> charts, AudioManager audioManager)
+        public ChartBrowserSession(List<ChartBrowserRow> charts, AudioManager audioManager)
         {
             this.audioManager = audioManager;
 
