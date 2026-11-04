@@ -25,12 +25,12 @@ namespace ProjectOdyssey.Screens.Import
         private int windowWidth = 1920;
         private int windowHeight = 1080;
 
-        private Vector2 lastMousePos;
-        private int HoveredButton = -1;
-
-        private Rect importButton = Rect.FromCenter(960, 215, 320, 90);
-
         private readonly List<string> rowsSnapshot = new();
+
+        private readonly List<Button> buttons = new List<Button>
+        {
+            new Button(960, 215, 320, 90, ImportOsuContent)
+        };
 
         public ImportScreen(InputHistory inputHistory, Renderer renderer, ScreenManager screenManager, AudioManager audioManager, SkinManager skinManager)
         {
@@ -42,25 +42,10 @@ namespace ProjectOdyssey.Screens.Import
             importView = new ImportScreenView(skinManager.MenuSkin, Renderer);
         }
 
-        public void Load()
-        {
-            
-        }
-
         public void Render()
         {
             bool importing = ImportProgress.Snapshot(rowsSnapshot);
             importView.DrawImportScreen(rowsSnapshot, importing);
-        }
-
-        public void Unload()
-        {
-            
-        }
-
-        public void Update(float deltaMs)
-        {
-            
         }
 
         public void OnKeyDown(Keys key)
@@ -73,33 +58,21 @@ namespace ProjectOdyssey.Screens.Import
 
         public void OnMouseDown(MouseButtonEventArgs e)
         {
-            if (e.Button != MouseButton.Left || HoveredButton == -1) return;
+            if (e.Button != MouseButton.Left) return;
 
-            if (HoveredButton == 0)
+            foreach (Button button in buttons)
             {
-                ImportOsuContent();
-                return;
+                if (button.TryClick()) return; 
             }
         }
 
         public void OnMouseMove(MouseMoveEventArgs e)
         {
-            lastMousePos = e.Position;
-            UpdateHover(ToLogical(lastMousePos));
-        }
+            Vector2 logicalPos = ToLogical(e.Position);
 
-        public void UpdateHover(Vector2 logicalPos)
-        {
-            int hovered = -1;
-
-            if (importButton.Contains(logicalPos.X, logicalPos.Y))
+            foreach (Button button in buttons)
             {
-                hovered = 0;    
-            }
-
-            if (hovered != HoveredButton)
-            {
-                HoveredButton = hovered;
+                button.UpdateHoverState(logicalPos.X, logicalPos.Y);
             }
         }
 
@@ -108,7 +81,7 @@ namespace ProjectOdyssey.Screens.Import
             return new Vector2(windowPos.X * 1920f / windowWidth, windowPos.Y * 1080f / windowHeight);
         }
 
-        public void ImportOsuContent()
+        private static void ImportOsuContent()
         {
             if (!ImportProgress.TryBeginImport()) return;
 
@@ -130,5 +103,11 @@ namespace ProjectOdyssey.Screens.Import
             windowWidth = width;
             windowHeight = height;
         }
+
+        public void Load() {}
+
+        public void Unload() {}
+
+        public void Update(float deltaMs) {}
     }
 }

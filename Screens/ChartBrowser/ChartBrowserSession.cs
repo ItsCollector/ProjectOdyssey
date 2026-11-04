@@ -45,7 +45,6 @@ namespace ProjectOdyssey.Screens.ChartBrowser
         // Hover
         public StackItem? HoveredItem { get; private set; } // the card under the mouse, or null
         public bool ViewScoreHovered { get; private set; } = false;
-        public Rect ViewScoreRect { get; } = new Rect { X = 0, Y = 450, Width = 650, Height = 100 };
 
         // True when the mouse is hovering the chart that's already the active selection, as opposed to
         // hovering a different chart, which should just move the cursor rather than commit anything.

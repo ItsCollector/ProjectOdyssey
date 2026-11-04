@@ -12,6 +12,7 @@ using ProjectOdyssey.Screens.Components;
 using ProjectOdyssey.Screens.Gameplay;
 using ProjectOdyssey.Screens.Replay;
 using ProjectOdyssey.Skinning;
+using System.Collections.Generic;
 
 namespace ProjectOdyssey.Screens.Results
 {
@@ -33,12 +34,14 @@ namespace ProjectOdyssey.Screens.Results
         private int windowWidth = 1920;
         private int windowHeight = 1080;
 
-        public List<(int Slot, CardRect Rect)> ButtonRects { get; } = new()
+        public List<(int Slot, Rect Rect)> ButtonRects { get; } = new()
         {
-            (0, CardRect.FromCenter(1700, 695, 320, 90)), // Retry button
-            (1, CardRect.FromCenter(1700, 815, 320, 90)), // Watch Replay button
-            (2, CardRect.FromCenter(1700, 935, 320, 90))  // Back button
+            (0, Rect.FromCenter(1700, 695, 320, 90)), // Retry button
+            (1, Rect.FromCenter(1700, 815, 320, 90)), // Watch Replay button
+            (2, Rect.FromCenter(1700, 935, 320, 90))  // Back button
         };
+
+        private readonly List<Button> buttons;
 
         public ResultsScreen(ReplayData replayData, ChartData chartData, InputHistory inputHistory, Renderer renderer, ScreenManager screenManager, AudioManager audioManager, SkinManager skinManager)
         {
@@ -51,6 +54,13 @@ namespace ProjectOdyssey.Screens.Results
             AudioManager = audioManager;
             SkinManager = skinManager;
             resultsView = new ResultsView(SkinManager.MenuSkin, Renderer);
+
+            buttons = new List<Button>
+            {
+                new Button(1700, 695, 320, 90, RetryChart), // Retry button
+                new Button(1700, 815, 320, 90, WatchReplay), // Watch Replay button
+                new Button(1700, 935, 320, 90, ExitToChartBrowser) // Back button
+            };
         }
 
         public void Render()
@@ -60,48 +70,21 @@ namespace ProjectOdyssey.Screens.Results
 
         public void OnMouseDown(MouseButtonEventArgs e)
         {
-            if (e.Button != MouseButton.Left || HoveredButton == -1) return;
+            if (e.Button != MouseButton.Left) return;
 
-            if (HoveredButton == 0) // Retry chart
+            foreach (Button button in buttons)
             {
-                ScreenManager.Replace(new GameplayScreen(chartData, chartData.SongFilePath, inputHistory, Renderer, ScreenManager, AudioManager, SkinManager));
-                return;
-            }
-            else if (HoveredButton == 1) // Watch replay
-            {
-                ScreenManager.Replace(new ReplayScreen(chartData, replayData, chartData.SongFilePath, inputHistory, Renderer, ScreenManager, AudioManager, SkinManager));
-                return;
-            }
-            else if (HoveredButton == 2) // Exit to chart browser
-            {
-                ScreenManager.Pop();
-                return;
+                if (button.TryClick()) return;
             }
         }
 
         public void OnMouseMove(MouseMoveEventArgs e)
         {
-            lastMousePos = e.Position;
-            UpdateHover(ToLogical(lastMousePos));
-        }
+            Vector2 logicalPos = ToLogical(e.Position);
 
-        // LogicalPos must already be in the fixed 1920x1080 space.
-        public void UpdateHover(Vector2 logicalPos)
-        {
-            int hovered = -1;
-
-            for (int i = 0; i < ButtonRects.Count; i++)
+            foreach (Button button in buttons)
             {
-                if (ButtonRects[i].Rect.Contains(logicalPos.X, logicalPos.Y))
-                {
-                    hovered = ButtonRects[i].Slot;
-                    break;
-                }
-            }
-
-            if (hovered != HoveredButton)
-            {
-                HoveredButton = hovered;
+                button.UpdateHoverState(logicalPos.X, logicalPos.Y);
             }
         }
 
@@ -122,6 +105,21 @@ namespace ProjectOdyssey.Screens.Results
         {
             windowWidth = width;
             windowHeight = height;
+        }
+        
+        public void RetryChart()
+        {
+            ScreenManager.Replace(new GameplayScreen(chartData, chartData.SongFilePath, inputHistory, Renderer, ScreenManager, AudioManager, SkinManager));
+        }
+
+        public void WatchReplay()
+        {
+            ScreenManager.Replace(new ReplayScreen(chartData, replayData, chartData.SongFilePath, inputHistory, Renderer, ScreenManager, AudioManager, SkinManager));
+        }
+
+        public void ExitToChartBrowser()
+        {
+            ScreenManager.Pop();
         }
 
         public void Load() { }

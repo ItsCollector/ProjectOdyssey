@@ -18,16 +18,7 @@ namespace ProjectOdyssey.Screens.Pause
         public ScreenManager ScreenManager { private get; set; }
         public AudioManager AudioManager { private get; set; }
         public SkinManager SkinManager { private get; set; }
-
-        private Vector2 lastMousePos;
-        private int HoveredButton = -1;
-
-        public List<(int Slot, CardRect Rect)> ButtonRects { get; } = new()
-        {
-            (0, CardRect.FromCenter(960, 340, 300, 150)), // Continue button
-            (1, CardRect.FromCenter(960, 540, 300, 150)), // Retry button
-            (2, CardRect.FromCenter(960, 740, 300, 150))  // Exit button
-        };
+        private readonly List<Button> buttons;
 
         public bool DrawsScreenBeneath => true;
 
@@ -38,6 +29,13 @@ namespace ProjectOdyssey.Screens.Pause
             AudioManager = audioManager;
             SkinManager = skinManager;
             pauseScreenView = new PauseView(SkinManager.MenuSkin, Renderer);
+
+            buttons = new List<Button>
+            {
+                new Button(960, 340, 300, 150, Unpause), // Continue button
+                new Button(960, 540, 300, 150, Retry),   // Retry button
+                new Button(960, 740, 300, 150, Exit)     // Exit button
+            };
         }
 
         public void Render()
@@ -61,54 +59,42 @@ namespace ProjectOdyssey.Screens.Pause
 
         public void OnMouseDown(MouseButtonEventArgs e)
         {
-            if (e.Button != MouseButton.Left || HoveredButton == -1) return;
+            if (e.Button != MouseButton.Left) return;
 
-            if (HoveredButton == 0) // Continue chart by unpausing
+            foreach (Button button in buttons)
             {
-                ScreenManager.Pop(popAction: PopAction.Resume);
-                return;
-            }
-            else if (HoveredButton == 1) // Retry chart
-            {
-                ScreenManager.Pop(popAction: PopAction.Restart);
-                return;
-            }
-            else if (HoveredButton == 2) // Exit to chart browser
-            {
-                ScreenManager.Pop(2);
-                return;
+                if (button.TryClick()) return;
             }
         }
 
         public void OnMouseMove(MouseMoveEventArgs e)
         {
-            lastMousePos = e.Position;
-            UpdateHover(ToLogical(lastMousePos));
-        }
+            Vector2 logicalPos = ToLogical(e.Position);
 
-        // LogicalPos must already be in the fixed 1920x1080 space.
-        public void UpdateHover(Vector2 logicalPos)
-        {
-            int hovered = -1;
-
-            for (int i = 0; i < ButtonRects.Count; i++)
+            foreach (Button button in buttons)
             {
-                if (ButtonRects[i].Rect.Contains(logicalPos.X, logicalPos.Y))
-                {
-                    hovered = ButtonRects[i].Slot;
-                    break;
-                }
-            }
-
-            if (hovered != HoveredButton)
-            {
-                HoveredButton = hovered;
+                button.UpdateHoverState(logicalPos.X, logicalPos.Y);
             }
         }
 
         private Vector2 ToLogical(Vector2 windowPos)
         {
             return new Vector2(windowPos.X * 1920f / windowWidth, windowPos.Y * 1080f / windowHeight);
+        }
+
+        private void Unpause()
+        {
+            ScreenManager.Pop(popAction: PopAction.Resume);
+        }
+
+        private void Retry()
+        {
+            ScreenManager.Pop(popAction: PopAction.Restart);
+        }
+
+        private void Exit()
+        {
+            ScreenManager.Pop(2);
         }
 
         public void Load() { }
