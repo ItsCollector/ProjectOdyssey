@@ -3,6 +3,7 @@ using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using ProjectOdyssey.App;
 using ProjectOdyssey.Audio;
+using ProjectOdyssey.Common;
 using ProjectOdyssey.Data.Replays;
 using ProjectOdyssey.Engine.Chart;
 using ProjectOdyssey.Engine.Scoring;
@@ -12,7 +13,6 @@ using ProjectOdyssey.Screens.Components;
 using ProjectOdyssey.Screens.Gameplay;
 using ProjectOdyssey.Screens.Replay;
 using ProjectOdyssey.Skinning;
-using System.Collections.Generic;
 
 namespace ProjectOdyssey.Screens.Results
 {
@@ -28,11 +28,7 @@ namespace ProjectOdyssey.Screens.Results
         private ReplayData replayData;
         private ScoreData scoreData;
 
-        private Vector2 lastMousePos;
-        private int HoveredButton = -1;
-
-        private int windowWidth = 1920;
-        private int windowHeight = 1080;
+        private Vector2 viewportDimensions;
 
         public List<(int Slot, Rect Rect)> ButtonRects { get; } = new()
         {
@@ -80,17 +76,12 @@ namespace ProjectOdyssey.Screens.Results
 
         public void OnMouseMove(MouseMoveEventArgs e)
         {
-            Vector2 logicalPos = ToLogical(e.Position);
+            Vector2 logicalPos = ToLogical.ViewportToLogical(e.Position, viewportDimensions);
 
             foreach (Button button in buttons)
             {
                 button.UpdateHoverState(logicalPos.X, logicalPos.Y);
             }
-        }
-
-        private Vector2 ToLogical(Vector2 windowPos)
-        {
-            return new Vector2(windowPos.X * 1920f / windowWidth, windowPos.Y * 1080f / windowHeight);
         }
 
         public void OnKeyDown(Keys key)
@@ -101,10 +92,9 @@ namespace ProjectOdyssey.Screens.Results
             }
         }
 
-        public void Resize(int width, int height)
+        public void Resize(Vector2 viewportDimensions)
         {
-            windowWidth = width;
-            windowHeight = height;
+            this.viewportDimensions = viewportDimensions;
         }
         
         public void RetryChart()

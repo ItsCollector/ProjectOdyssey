@@ -21,7 +21,6 @@ namespace ProjectOdyssey.Screens.ChartBrowser
         private ChartBrowserView browserRenderer = null!;
         private ChartBrowserSession session = null!;
 
-        private int windowWidth = 1920, windowHeight = 1080;
         private Vector2 lastMousePos;
         private InputHistory inputHistory;
 
@@ -29,6 +28,8 @@ namespace ProjectOdyssey.Screens.ChartBrowser
         public ScreenManager ScreenManager { private get; set; }
         public AudioManager AudioManager { private get; set; }
         public SkinManager SkinManager { private get; set; }
+
+        private Vector2 viewportDimensions;
 
         public ChartBrowserScreen(InputHistory inputHistory, Renderer renderer, ScreenManager screenManager, AudioManager audioManager, SkinManager skinManager)
         {
@@ -81,10 +82,9 @@ namespace ProjectOdyssey.Screens.ChartBrowser
                 session.CurrentScores);
         }
 
-        public void Resize(int width, int height)
+        public void Resize(Vector2 viewportDimensions)
         {
-            windowWidth = width;
-            windowHeight = height;
+            this.viewportDimensions = viewportDimensions;
         }
 
         public void Unload()
@@ -179,7 +179,7 @@ namespace ProjectOdyssey.Screens.ChartBrowser
         public void OnMouseMove(MouseMoveEventArgs e)
         {
             lastMousePos = e.Position;
-            session.UpdateHover(ToLogical(lastMousePos));
+            session.UpdateHover(ToLogical.ViewportToLogical(lastMousePos, viewportDimensions));
         }
 
         public void OnMouseWheel(MouseWheelEventArgs e)
@@ -194,8 +194,5 @@ namespace ProjectOdyssey.Screens.ChartBrowser
                 session.MoveSet(-(int)e.OffsetY);
             }
         }
-
-        private Vector2 ToLogical(Vector2 windowPos) =>
-            new Vector2(windowPos.X * 1920f / windowWidth, windowPos.Y * 1080f / windowHeight);
     }
 }

@@ -9,8 +9,7 @@ namespace ProjectOdyssey.Screens.Import
         private readonly Renderer renderer;
         private readonly MenuSkin menuSkin;
 
-        private const float ScreenWidth = 1920f, HeaderMargin = 50f, HeaderTextY = 50f;
-        private const float GlyphLineHeight = 40f;   // SkinManager.DefaultGlyphSize
+        private const float HeaderMargin = 50f, HeaderTextY = 50f;
 
         // Import button (320x90): hit rect is CardRect.FromCenter(ImportButtonCentreX, ImportButtonCentreY, 320, 90)
         public const float ImportButtonCentreX = 960, ImportButtonCentreY = 215;
@@ -32,7 +31,7 @@ namespace ProjectOdyssey.Screens.Import
 
         private static readonly string[] warningLines =
         {
-            "Do not close the game while importing.",
+            "Importing will continue if you return to chart browser",
             "Playing while importing is not recommended,",
             "frame rate may fluctuate."
         };

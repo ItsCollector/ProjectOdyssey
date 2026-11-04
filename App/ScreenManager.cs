@@ -1,7 +1,9 @@
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using OpenTK.Windowing.Common;
+using OpenTK.Mathematics;
 using ProjectOdyssey.Audio;
 using ProjectOdyssey.Skinning;
+using ProjectOdyssey.Rendering;
 using ProjectOdyssey.Rendering;
 
 namespace ProjectOdyssey.App
@@ -18,8 +20,7 @@ namespace ProjectOdyssey.App
 
         private readonly Stack<IGameScreen> screens = new();
         private readonly List<IGameScreen> renderScratch = new(); 
-        private int viewportWidth;
-        private int viewportHeight;
+        private Vector2 viewportDimensions;
 
         public bool HasScreen => screens.Count > 0;
         public IGameScreen? CurrentScreen => screens.Count > 0 ? screens.Peek() : null;
@@ -59,7 +60,7 @@ namespace ProjectOdyssey.App
                 throw new InvalidOperationException("Call Initialise() before pushing screens.");
 
             screen.Load();
-            screen.Resize(viewportWidth, viewportHeight);
+            screen.Resize(viewportDimensions);
             screens.Push(screen);
         }
 
@@ -131,11 +132,12 @@ namespace ProjectOdyssey.App
         // it becomes visible again.
         public void Resize(int width, int height)
         {
-            viewportWidth = width;
-            viewportHeight = height;
+            viewportDimensions = new Vector2(width, height);
 
             foreach (var screen in screens)
-                screen.Resize(width, height);
+            {
+                screen.Resize(viewportDimensions);
+            }
         }
 
         public void UnloadAll()

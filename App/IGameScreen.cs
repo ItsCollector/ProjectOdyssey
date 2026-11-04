@@ -3,6 +3,7 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 using ProjectOdyssey.Audio;
 using ProjectOdyssey.Skinning;
 using ProjectOdyssey.Rendering;
+using OpenTK.Mathematics;
 
 namespace ProjectOdyssey.App
 {
@@ -29,7 +30,7 @@ namespace ProjectOdyssey.App
         // after Load() so the screen starts with a correct viewport.
         // Default no-op; screens that care about the window size (e.g. mouse -> logical
         // coordinates) override it. The ScreenManager forwards it to every screen.
-        void Resize(int width, int height) { }
+        void Resize(Vector2 viewportDimensions) { }
 
         // Called once when the ScreenManager pops this screen. Release any
         // resources acquired in Load() here.
