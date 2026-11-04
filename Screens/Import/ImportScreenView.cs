@@ -69,7 +69,7 @@ namespace ProjectOdyssey.Screens.Import
         {
             if (rows.Count == 0)
             {
-                renderer.DrawText(menuSkin.Glyphs, "Press Import to begin.", RowTextLeft, RowsTop, secondaryTextColour);
+                renderer.DrawText(menuSkin.Glyphs, "Press Import to begin.", RowTextLeft, RowsTop, secondaryTextColour, size: 32);
                 return;
             }
 
@@ -80,7 +80,7 @@ namespace ProjectOdyssey.Screens.Import
                 Vector4 colour = (isNewest && importing) ? accentTextColour : secondaryTextColour;
                 float y = RowsTop + (i - first) * RowStep;
 
-                renderer.DrawText(menuSkin.Glyphs, FitToWidth(rows[i], RowTextMaxWidth), RowTextLeft, y, colour);
+                renderer.DrawText(menuSkin.Glyphs, FitToWidth(rows[i], RowTextMaxWidth), RowTextLeft, y, colour, size: 32);
             }
         }
 

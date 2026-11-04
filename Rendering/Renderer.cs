@@ -116,29 +116,28 @@ namespace ProjectOdyssey.Rendering
         }
 
         // Queues one command per glyph. (x, y) is the top-left of the text line.
-        public void DrawText(GlyphSet glyphs, string text, float x, float y, Vector4 colour)
+        public void DrawText(GlyphSet glyphs, string text, float x, float y, Vector4 colour, float size = 0)
         {
+            if (size <= 0) size = glyphs.FontSize;
+            float s = glyphs.ScaleFor(size);
+
             foreach (char c in text)
             {
-                if (!glyphs.TryGetGlyph(c, out FreeTypeGlyph glyph))
+                if (!glyphs.TryGetGlyph(c, out var glyph)) continue;
+
+                float w = glyph.Width * s;
+                float h = glyph.Height * s;
+
+                if (w > 0f && h > 0f)   // the space glyph has an empty bitmap: advance only
                 {
-                    continue;
+                    float gx = MathF.Round(x + glyph.BearingX * s);
+                    float gy = MathF.Round(y + (glyphs.Baseline - glyph.BearingY) * s);
+
+                    // Queue wants the centre of the quad
+                    Queue(glyph.TextureHandle, gx + w / 2f, gy + h / 2f, w, h, colour);
                 }
 
-                if (glyph.Width > 0 && glyph.Height > 0) // spaces have no bitmap, only an advance
-                {
-                    float left = x + glyph.BearingX;
-                    float top = y + (glyphs.Baseline - glyph.BearingY);
-
-                    Queue(glyph.TextureHandle,
-                          left + glyph.Width / 2f,    // quads are centre-based
-                          top + glyph.Height / 2f,
-                          glyph.Width,
-                          glyph.Height,
-                          colour);
-                }
-
-                x += glyph.Advance;
+                x += glyph.Advance * s;
             }
         }
 

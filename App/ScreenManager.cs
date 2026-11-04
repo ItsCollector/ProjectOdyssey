@@ -4,7 +4,6 @@ using OpenTK.Mathematics;
 using ProjectOdyssey.Audio;
 using ProjectOdyssey.Skinning;
 using ProjectOdyssey.Rendering;
-using ProjectOdyssey.Rendering;
 
 namespace ProjectOdyssey.App
 {

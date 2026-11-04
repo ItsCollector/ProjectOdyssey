@@ -13,6 +13,7 @@ namespace ProjectOdyssey.Skinning
     public sealed class SkinManager : IDisposable
     {
         public const int DefaultGlyphSize = 40;
+        public const int GlyphRasterSize = 64;
         private const byte MinKeyCount = 4;
         private const byte MaxKeyCount = 10;
 
@@ -232,7 +233,7 @@ namespace ProjectOdyssey.Skinning
         {
             if (ownedGlyphSets.TryGetValue(size, out GlyphSet? cached)) return cached;
 
-            var set = GlyphSet.Load(DefaultFontPath, size);
+            var set = GlyphSet.Load(DefaultFontPath, size, Math.Max(size, GlyphRasterSize));
             ownedGlyphSets[size] = set;
 
             return set;

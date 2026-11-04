@@ -6,7 +6,8 @@ using static FreeTypeSharp.FT_LOAD;
 
 namespace ProjectOdyssey.Rendering
 {
-    // One font at one pixel size, rasterised to per-character GL textures.
+    // One font, rasterised once at RasterSize to per-character GL textures. Text can then be drawn at any
+    // size by scaling the quads, so no extra sets are needed per size.
     // Owns its glyph textures (disposing the set deletes them). Created by the
     // SkinManager; renderers only borrow it.
     public sealed class GlyphSet : IDisposable
@@ -16,15 +17,21 @@ namespace ProjectOdyssey.Rendering
         private readonly Dictionary<char, FreeTypeGlyph> glyphs;
         private bool disposed;
 
+        // The size text is drawn at when no size is given
         public int FontSize { get; }
 
-        // Tallest bearing in the set; aligns every glyph to a shared baseline.
-        // Lives here (not on FontRenderer) so sets of different sizes don't clobber each other.
+        // The pixel size the glyph bitmaps were rendered at. Every glyph metric (Width, Height, BearingX/Y,
+        // Advance, Baseline) is in these pixels; multiply by ScaleFor(size) to get them at a draw size.
+        // Keep it >= the largest size you draw: text above it is a stretched bitmap and looks soft.
+        public int RasterSize { get; }
+
+        // Tallest bearing in the set (in RasterSize pixels); aligns every glyph to a shared baseline.
         public int Baseline { get; }
 
-        private GlyphSet(int fontSize, Dictionary<char, FreeTypeGlyph> glyphs)
+        private GlyphSet(int fontSize, int rasterSize, Dictionary<char, FreeTypeGlyph> glyphs)
         {
             FontSize = fontSize;
+            RasterSize = rasterSize;
             this.glyphs = glyphs;
 
             int baseline = 0;
@@ -35,10 +42,15 @@ namespace ProjectOdyssey.Rendering
             Baseline = baseline;
         }
 
+        public float ScaleFor(float size) => size / RasterSize;
+
         public bool TryGetGlyph(char c, out FreeTypeGlyph glyph) => glyphs.TryGetValue(c, out glyph!);
 
-        // Sums glyph advances to get a string's rendered width (for centring / right-aligning).
-        public float MeasureText(string text)
+        // Width at the default size
+        public float MeasureText(string text) => MeasureText(text, FontSize);
+
+        // Sums glyph advances to get a string's rendered width at the given draw size (for centring / right-aligning).
+        public float MeasureText(string text, float size)
         {
             float width = 0f;
             foreach (char c in text)
@@ -48,15 +60,18 @@ namespace ProjectOdyssey.Rendering
                     width += glyph.Advance;
                 }
             }
-            return width;
+            return width * ScaleFor(size);
         }
 
         // Throws if the font can't be opened. FreeType handles are always released,
         // and any glyph textures already created are deleted if loading fails partway.
-        public static unsafe GlyphSet Load(string fontPath, int fontSize)
+        // rasterSize <= 0 means "rasterise at fontSize" (the old behaviour).
+        public static unsafe GlyphSet Load(string fontPath, int fontSize, int rasterSize = 0)
         {
             if (!File.Exists(fontPath))
                 throw new FileNotFoundException("Font file not found.", fontPath);
+
+            if (rasterSize <= 0) rasterSize = fontSize;
 
             var glyphs = new Dictionary<char, FreeTypeGlyph>();
             FT_LibraryRec_* lib = null;
@@ -82,8 +97,8 @@ namespace ProjectOdyssey.Rendering
                 if (faceError != 0)
                     throw new InvalidOperationException($"FreeType could not open '{fontPath}' (error {faceError}).");
 
-                if ((int)FT_Set_Pixel_Sizes(face, 0, (uint)fontSize) != 0)
-                    throw new InvalidOperationException($"FreeType could not set pixel size {fontSize}.");
+                if ((int)FT_Set_Pixel_Sizes(face, 0, (uint)rasterSize) != 0)
+                    throw new InvalidOperationException($"FreeType could not set pixel size {rasterSize}.");
 
                 GL.PixelStore(PixelStoreParameter.UnpackAlignment, 1);
 
@@ -91,21 +106,26 @@ namespace ProjectOdyssey.Rendering
                 {
                     if ((int)FT_Load_Char(face, c, FT_LOAD_RENDER) != 0) continue; // skip glyphs the font can't render
 
+                    int bitmapWidth = (int)face->glyph->bitmap.width;
+                    int bitmapRows = (int)face->glyph->bitmap.rows;
+                    bool hasPixels = bitmapWidth > 0 && bitmapRows > 0;   // the space glyph has an empty bitmap
+
                     int texHandle = GL.GenTexture();
                     GL.BindTexture(TextureTarget.Texture2D, texHandle);
                     GL.TexImage2D(
                         TextureTarget.Texture2D,
                         0,
                         PixelInternalFormat.R8,
-                        (int)face->glyph->bitmap.width,
-                        (int)face->glyph->bitmap.rows,
+                        bitmapWidth,
+                        bitmapRows,
                         0,
                         PixelFormat.Red,
                         PixelType.UnsignedByte,
                         (nint)face->glyph->bitmap.buffer
                     );
 
-                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
+                    // Mipmaps keep text clean when it's drawn smaller than RasterSize
+                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)(hasPixels ? TextureMinFilter.LinearMipmapLinear : TextureMinFilter.Linear));
                     GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
                     GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
                     GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
@@ -113,11 +133,16 @@ namespace ProjectOdyssey.Rendering
                     int[] swizzle = { (int)All.Red, (int)All.Red, (int)All.Red, (int)All.Red };
                     GL.TexParameterI(TextureTarget.Texture2D, TextureParameterName.TextureSwizzleRgba, swizzle);
 
+                    if (hasPixels)
+                    {
+                        GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
+                    }
+
                     glyphs[c] = new FreeTypeGlyph
                     {
                         TextureHandle = texHandle,
-                        Width = (int)face->glyph->bitmap.width,
-                        Height = (int)face->glyph->bitmap.rows,
+                        Width = bitmapWidth,
+                        Height = bitmapRows,
                         BearingX = face->glyph->bitmap_left,
                         BearingY = face->glyph->bitmap_top,
                         Advance = (int)(face->glyph->advance.x >> 6)
@@ -125,7 +150,7 @@ namespace ProjectOdyssey.Rendering
                 }
 
                 success = true;
-                return new GlyphSet(fontSize, glyphs);
+                return new GlyphSet(fontSize, rasterSize, glyphs);
             }
             finally
             {
