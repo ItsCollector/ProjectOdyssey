@@ -28,7 +28,7 @@ namespace ProjectOdyssey.Screens.Import
         private Vector2 lastMousePos;
         private int HoveredButton = -1;
 
-        private CardRect importButton = CardRect.FromCenter(960, 215, 320, 90);
+        private Rect importButton = Rect.FromCenter(960, 215, 320, 90);
 
         private readonly List<string> rowsSnapshot = new();
 

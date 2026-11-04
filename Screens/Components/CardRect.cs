@@ -1,6 +1,6 @@
 ﻿namespace ProjectOdyssey.Screens.Components
 {
-    public struct CardRect
+    public struct Rect
     {
         public float X;
         public float Y;
@@ -16,7 +16,7 @@
             return insideHorizontally && insideVertically;
         }
 
-        public static CardRect FromCenter(float centerX, float centerY, float width, float height) => new()
+        public static Rect FromCenter(float centerX, float centerY, float width, float height) => new()
         {
             X = centerX - width / 2f,
             Y = centerY - height / 2f,

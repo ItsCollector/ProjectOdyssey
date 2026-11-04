@@ -32,8 +32,8 @@ namespace ProjectOdyssey.Screens.ChartBrowser
         private int latestRequestId;          // a result is only used if it belongs to the most recent request
 
         // Card rects
-        private CardRect backgroundRect = new CardRect { X = 0, Y = 0, Width = 1920, Height = 1080 };
-        private CardRect chartInfoRect = new CardRect { X = 0, Y = 0, Width = 750, Height = 350 };
+        private Rect backgroundRect = new Rect { X = 0, Y = 0, Width = 1920, Height = 1080 };
+        private Rect chartInfoRect = new Rect { X = 0, Y = 0, Width = 750, Height = 350 };
 
         // Main text: song titles, accuracy values, judgement counts, etc.
         private Vector4 primaryTextColour = new Vector4(1.0000f, 1.0000f, 1.0000f, 1f);
@@ -138,7 +138,7 @@ namespace ProjectOdyssey.Screens.ChartBrowser
         }
 
         // Converts from top-left origin coordinates to the renderer's centre-based coordinates and draws the texture
-        private void DrawTopLeftOrigin(Texture texture, CardRect rect)
+        private void DrawTopLeftOrigin(Texture texture, Rect rect)
         {
             renderer.Draw(texture, rect.X + rect.Width / 2f, rect.Y + rect.Height / 2f, rect.Width, rect.Height);
         }
