@@ -19,7 +19,7 @@ namespace ProjectOdyssey.Screens.ChartBrowser
     class ChartBrowserScreen : IGameScreen
     {
         private ChartBrowserView browserRenderer = null!;
-        private ChartBrowserState session = null!;
+        private ChartBrowserSession session = null!;
 
         private int windowWidth = 1920, windowHeight = 1080;
         private Vector2 lastMousePos;
