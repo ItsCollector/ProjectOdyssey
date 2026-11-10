@@ -1,9 +1,10 @@
-using OpenTK.Windowing.GraphicsLibraryFramework;
-using OpenTK.Windowing.Common;
 using OpenTK.Mathematics;
+using OpenTK.Windowing.Common;
+using OpenTK.Windowing.GraphicsLibraryFramework;
 using ProjectOdyssey.Audio;
-using ProjectOdyssey.Skinning;
+using ProjectOdyssey.Diagnostics;
 using ProjectOdyssey.Rendering;
+using ProjectOdyssey.Skinning;
 
 namespace ProjectOdyssey.App
 {
@@ -23,10 +24,12 @@ namespace ProjectOdyssey.App
 
         public bool HasScreen => screens.Count > 0;
         public IGameScreen? CurrentScreen => screens.Count > 0 ? screens.Peek() : null;
+        private readonly FpsCounter fpsCounter;
 
-        public ScreenManager(string? skinDirectory)
+        public ScreenManager(string? skinDirectory, FpsCounter fpsCounter)
         {
             this.audioManager = new AudioManager();
+            this.fpsCounter = fpsCounter;
 
             // Loads the skin (textures + glyphs). Call once from MainWindow.OnLoad, after the
             // GL context exists and before the first Push. Constructing this earlier (e.g. in a
@@ -121,6 +124,8 @@ namespace ProjectOdyssey.App
                 renderScratch[i].Render();
             }
 
+            renderer.DrawText(skinManager.MenuSkin.Glyphs, $"{fpsCounter.Fps:0} FPS", 1760, 10, new Vector4(1, 1, 1, 0.8f));
+
             // Every screen has only queued its draw commands so far; this is the one place
             // they actually get drawn. Exactly once per frame, after all screens have queued.
             renderer.Flush();
@@ -155,10 +160,10 @@ namespace ProjectOdyssey.App
             renderer.Dispose();
         }
 
-        public void OnKeyDown(Keys key)
+        public void OnKeyDown(Keys key, KeyModifiers modifiers)
         {
             if (screens.Count > 0)
-                screens.Peek().OnKeyDown(key);
+                screens.Peek().OnKeyDown(key, modifiers);
         }
 
         public void OnMouseDown(MouseButtonEventArgs e)
@@ -177,6 +182,11 @@ namespace ProjectOdyssey.App
         {
             if (screens.Count > 0)
                 screens.Peek().OnMouseWheel(e);
+        }
+
+        public void OnTextInput(TextInputEventArgs e)
+        {
+            if (screens.Count > 0) screens.Peek().OnTextInput(e);
         }
     }
 }

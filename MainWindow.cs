@@ -4,10 +4,10 @@ using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
 using ProjectOdyssey.App;
 using ProjectOdyssey.Diagnostic;
+using ProjectOdyssey.Diagnostics;
 using ProjectOdyssey.Input;
 using ProjectOdyssey.Input.Native;
 using ProjectOdyssey.Screens.ChartBrowser;
-using ProjectOdyssey.Screens.Import;
 
 namespace ProjectOdyssey
 {
@@ -17,21 +17,22 @@ namespace ProjectOdyssey
         private Win32KeyInputListener inputListener = new Win32KeyInputListener();
         private InputHistory inputHistory = new InputHistory();
         private readonly FrameProfiler profiler = new(isEnabled: false);
+        private readonly FpsCounter fpsCounter = new FpsCounter();
+        private readonly FrameLimiter frameLimiter = new();
 
-        // Game window settings
-        private bool vsyncOn = false;
-
-        public MainWindow(int width, int height, string title, bool vsyncOn = true): base(CreateGameWindowSettings(vsyncOn), CreateNativeWindowSettings(width, height, title))
+        public MainWindow(int width, int height, string title)
+            : base(CreateGameWindowSettings(), CreateNativeWindowSettings(width, height, title))
         {
-            screenManager = new ScreenManager(Path.Combine(AppContext.BaseDirectory, "Skins", "Skin 1"));
+            screenManager = new ScreenManager(Path.Combine(AppContext.BaseDirectory, "Skins", "Skin 1"), fpsCounter);
 
             WindowState = WindowState.Maximized;
-            Context.SwapInterval = vsyncOn ? 1 : 0;
+            GameSettings.Current.Changed += ApplySettings;
         }
 
         protected unsafe override void OnLoad()
         {
             base.OnLoad();
+            ApplySettings(); 
             GL.ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
             GL.Viewport(0, 0, ClientSize.X, ClientSize.Y);
             GL.Enable(EnableCap.Blend);
@@ -41,23 +42,11 @@ namespace ProjectOdyssey
             inputListener.OnInputEvent += inputHistory.RecordInputEvent;
             inputListener.OnInputEvent += _ => profiler.CountInputEvent();
 
-           // Task.Run(() => ChartImportService.ImportChartsFromOsu(maxSets: 10)); // imports all charts from the osu! Songs directory into the Odyssey's own database
-
             // ScreenManager needs to know the viewport before the first
             // screen is pushed, so Resize() is used here instead of it
             // reading ClientSize on its own.
             screenManager.Resize(ClientSize.X, ClientSize.Y);
-
             screenManager.Push(new ChartBrowserScreen(inputHistory, screenManager.renderer, screenManager, screenManager.audioManager, screenManager.skinManager));
-
-            /*if (File.Exists(Path.Combine(AppContext.BaseDirectory, "chart_library.db")))
-            {
-                screenManager.Push(new ChartBrowserScreen(inputHistory, screenManager.renderer, screenManager, screenManager.audioManager, screenManager.skinManager));
-            }
-            else
-            {
-                screenManager.Push(new ImportScreen(inputHistory, screenManager.renderer, screenManager, screenManager.audioManager, screenManager.skinManager));
-            }*/
 
             Console.WriteLine($"[INFO] ClientSize = {ClientSize.X} x {ClientSize.Y}");
         }
@@ -75,6 +64,7 @@ namespace ProjectOdyssey
         protected override void OnRenderFrame(FrameEventArgs args)
         {
             long renderStart = FrameProfiler.Timestamp();
+            fpsCounter.Tick(args.Time);
 
             base.OnRenderFrame(args);
             GL.Clear(ClearBufferMask.ColorBufferBit);
@@ -85,6 +75,7 @@ namespace ProjectOdyssey
             long afterSwap = FrameProfiler.Timestamp();
 
             profiler.RecordFrame(args.Time * 1000.0, screenManager.CurrentScreen, renderStart, beforeSwap, afterSwap);
+            frameLimiter.Wait();
         }
 
         protected unsafe override void OnUnload()
@@ -108,7 +99,7 @@ namespace ProjectOdyssey
         {
             base.OnKeyDown(e);
             if (e.IsRepeat) return; // ignore OS key-repeat while held
-            screenManager.OnKeyDown(e.Key);
+            screenManager.OnKeyDown(e.Key, e.Modifiers);
         }
 
         protected override void OnMouseDown(MouseButtonEventArgs e)
@@ -129,6 +120,12 @@ namespace ProjectOdyssey
             screenManager.OnMouseWheel(e);
         }
 
+        protected override void OnTextInput(TextInputEventArgs e)
+        {
+            base.OnTextInput(e);
+            screenManager.OnTextInput(e);
+        }
+
         private IntPtr WndProcHook(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam)
         {
             if (msg == 0x00FF) // WM_INPUT
@@ -139,20 +136,18 @@ namespace ProjectOdyssey
             return inputListener.CallNextWindowProc(hWnd, msg, wParam, lParam);
         }
 
-        private void ToggleVsync()
+        private void ApplySettings()
         {
-            vsyncOn = !vsyncOn;
-
-            VSync = vsyncOn
-                ? VSyncMode.On
-                : VSyncMode.Off;
+            var s = GameSettings.Current;
+            VSync = s.VSync ? VSyncMode.On : VSyncMode.Off;
+            frameLimiter.TargetFps = s.VSync ? 0 : s.MaxFps;
         }
 
-        private static GameWindowSettings CreateGameWindowSettings(bool vsyncOn)
+        private static GameWindowSettings CreateGameWindowSettings()
         {
             return new GameWindowSettings
             {
-                UpdateFrequency = vsyncOn ? 0 : 240
+                UpdateFrequency = 0
             };
         }
 

@@ -137,7 +137,7 @@ namespace ProjectOdyssey.Screens.Gameplay
             AudioManager.StopAudio();
         }
 
-        public void OnKeyDown(Keys key)
+        public void OnKeyDown(Keys key, KeyModifiers modifiers)
         {
             if (key == Keys.Escape && !finished)
             {

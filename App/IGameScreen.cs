@@ -37,7 +37,7 @@ namespace ProjectOdyssey.App
         void Unload();
 
         // Default no-op; only screens that care override it
-        void OnKeyDown(Keys key) { }
+        void OnKeyDown(Keys key, KeyModifiers modifiers) { }
 
         void OnMouseDown(MouseButtonEventArgs e) { }
 
@@ -48,5 +48,7 @@ namespace ProjectOdyssey.App
         void OnResume() { }
 
         void OnRestart() { }
+
+        void OnTextInput(TextInputEventArgs e) { }
     }
 }

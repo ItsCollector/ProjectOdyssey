@@ -1,5 +1,3 @@
-
-
 using ProjectOdyssey.Engine.Scoring;
 using ProjectOdyssey.Rendering;
 
@@ -31,6 +29,8 @@ namespace ProjectOdyssey.Skinning
         public required Texture ImportProgressPanel { get; init; }
         public required Texture ResultsReplayButton { get; init; }
         public required Texture ResultsBackButton { get; init; }
+        public required Texture CheckBoxUntoggled { get; init; }
+        public required Texture CheckBoxToggled { get; init; }
         public required GlyphSet Glyphs { get; init; }
     }
 

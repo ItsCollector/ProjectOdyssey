@@ -59,6 +59,8 @@ namespace ProjectOdyssey.Skinning
                     ImportProgressPanel = LoadTexture(Path.Combine(DefaultMenuPath, "import_progress_panel.png")),
                     ResultsReplayButton = LoadTexture(Path.Combine(DefaultMenuPath, "results_replay_button.png")),
                     ResultsBackButton = LoadTexture(Path.Combine(DefaultMenuPath, "results_back_button.png")),
+                    CheckBoxUntoggled = LoadTexture(Path.Combine(DefaultMenuPath, "checkbox_untoggled.png")),
+                    CheckBoxToggled = LoadTexture(Path.Combine(DefaultMenuPath, "checkbox_toggled.png")),
                     Glyphs = glyphs
                 };
 

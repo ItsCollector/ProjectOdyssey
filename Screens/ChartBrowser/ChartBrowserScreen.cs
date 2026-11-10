@@ -12,6 +12,7 @@ using ProjectOdyssey.Rendering;
 using ProjectOdyssey.Screens.Gameplay;
 using ProjectOdyssey.Screens.Import;
 using ProjectOdyssey.Screens.Results;
+using ProjectOdyssey.Screens.Settings;
 using ProjectOdyssey.Skinning;
 
 namespace ProjectOdyssey.Screens.ChartBrowser
@@ -136,7 +137,7 @@ namespace ProjectOdyssey.Screens.ChartBrowser
             session.RefreshScores();
         }
 
-        public void OnKeyDown(Keys key)
+        public void OnKeyDown(Keys key, KeyModifiers modifiers)
         {
             switch (key)
             {
@@ -154,6 +155,8 @@ namespace ProjectOdyssey.Screens.ChartBrowser
                     ScreenManager.Push(new ImportScreen(inputHistory, Renderer, ScreenManager, AudioManager, SkinManager)); break;
                 case Keys.F5:
                     RefreshLibrary(); break;
+                case Keys.O when modifiers.HasFlag(KeyModifiers.Control):
+                    ScreenManager.Push(new SettingsScreen(Renderer, ScreenManager, AudioManager, SkinManager)); break;
             }
         }
 
