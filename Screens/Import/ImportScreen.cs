@@ -47,7 +47,7 @@ namespace ProjectOdyssey.Screens.Import
             importView.DrawImportScreen(rowsSnapshot, importing);
         }
 
-        public void OnKeyDown(Keys key)
+        public void OnKeyDown(Keys key, KeyModifiers modifiers)
         {
             if (key == Keys.Escape)
             {
