@@ -25,18 +25,21 @@ namespace ProjectOdyssey
         {
             screenManager = new ScreenManager(Path.Combine(AppContext.BaseDirectory, "Skins", "Skin 1"), fpsCounter);
 
-            WindowState = WindowState.Maximized;
+            WindowState = WindowState.Normal;
             GameSettings.Current.Changed += ApplySettings;
         }
 
         protected unsafe override void OnLoad()
         {
             base.OnLoad();
-            ApplySettings(); 
+            ApplySettings();
             GL.ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
             GL.Viewport(0, 0, ClientSize.X, ClientSize.Y);
             GL.Enable(EnableCap.Blend);
             GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+
+            GameSettings.Current.ActualWidth = FramebufferSize.X;
+            GameSettings.Current.ActualHeight = FramebufferSize.Y;
 
             inputListener.Initialise((IntPtr)WindowPtr, WndProcHook);
             inputListener.OnInputEvent += inputHistory.RecordInputEvent;
@@ -93,6 +96,9 @@ namespace ProjectOdyssey
             base.OnFramebufferResize(args);
             GL.Viewport(0, 0, args.Width, args.Height);
             screenManager.Resize(args.Width, args.Height);
+
+            GameSettings.Current.ActualWidth = args.Width;   
+            GameSettings.Current.ActualHeight = args.Height;
         }
 
         protected override void OnKeyDown(KeyboardKeyEventArgs e)
@@ -136,11 +142,56 @@ namespace ProjectOdyssey
             return inputListener.CallNextWindowProc(hWnd, msg, wParam, lParam);
         }
 
+        private DisplayMode? lastDisplayMode;
+        private int lastResolutionIndex = -1;
+
         private void ApplySettings()
         {
             var s = GameSettings.Current;
-            VSync = s.VSync ? VSyncMode.On : VSyncMode.Off;
-            frameLimiter.TargetFps = s.VSync ? 0 : s.MaxFps;
+
+            // Apply VSync and frame limiter settings
+            if (s.VSync == true)
+            {
+                VSync = VSyncMode.On;
+                frameLimiter.TargetFps = 0;
+            }
+            else
+            {
+                VSync = VSyncMode.Off;
+                frameLimiter.TargetFps = s.MaxFps;
+            }
+
+            // Changed fires for every setting (volume, offset...), so only touch the window when the display settings changed
+            if (s.DisplayMode == lastDisplayMode && s.ResolutionIndex == lastResolutionIndex) return;
+            lastDisplayMode = s.DisplayMode;
+            lastResolutionIndex = s.ResolutionIndex;
+
+            var (w, h) = GameSettings.Resolutions[s.ResolutionIndex];
+            var clientRect = Monitors.GetMonitorFromWindow(this).ClientArea;
+
+            // Apply display mode settings
+            switch (s.DisplayMode)
+            {
+                case DisplayMode.Windowed:
+                    if (w > clientRect.Size.X || h > clientRect.Size.Y) return;
+
+                    WindowState = WindowState.Normal;
+                    WindowBorder = WindowBorder.Fixed;
+                    ClientSize = new Vector2i(w, h);
+                    Location = (Vector2i)(Monitors.GetMonitorFromWindow(this).ClientArea.Center - new Vector2i(w / 2, h / 2));
+                    break;
+
+                case DisplayMode.Borderless:
+                    WindowState = WindowState.Normal;
+                    WindowBorder = WindowBorder.Hidden;
+                    ClientRectangle = Monitors.GetMonitorFromWindow(this).ClientArea;
+                    break;
+
+                case DisplayMode.Fullscreen:
+                    WindowBorder = WindowBorder.Resizable;
+                    WindowState = WindowState.Fullscreen;
+                    break;
+            }
         }
 
         private static GameWindowSettings CreateGameWindowSettings()

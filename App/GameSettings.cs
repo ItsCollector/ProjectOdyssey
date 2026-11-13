@@ -1,4 +1,5 @@
 ﻿using System.Text.Json;
+using System.Text.Json.Serialization;
 using ProjectOdyssey.Screens.Settings;
 
 namespace ProjectOdyssey.App
@@ -24,6 +25,8 @@ namespace ProjectOdyssey.App
         public int MaxFps { get; set; } = 240;
         public int Volume { get; set; } = 80;
         public int AudioOffsetMs { get; set; } = 0;
+        [JsonIgnore] public int ActualWidth { get; set; }
+        [JsonIgnore] public int ActualHeight { get; set; }
 
         // MainWindow subscribes to this to apply window, FPS and volume changes.
         public event Action? Changed;
@@ -39,7 +42,9 @@ namespace ProjectOdyssey.App
         public string GetText(string id) => id switch
         {
             SettingIds.DisplayMode => DisplayMode.ToString(),
-            SettingIds.Resolution => $"{Resolutions[ResolutionIndex].W}x{Resolutions[ResolutionIndex].H}",
+            SettingIds.Resolution => DisplayMode == DisplayMode.Windowed || ActualWidth <= 0
+            ? $"{Resolutions[ResolutionIndex].W}x{Resolutions[ResolutionIndex].H}"
+            : $"{ActualWidth}x{ActualHeight}",
             SettingIds.MaxFps => MaxFps.ToString(),
             SettingIds.Volume => Volume.ToString(),
             SettingIds.AudioOffset => AudioOffsetMs.ToString(),

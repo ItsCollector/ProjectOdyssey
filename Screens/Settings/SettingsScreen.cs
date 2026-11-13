@@ -34,7 +34,8 @@ namespace ProjectOdyssey.Screens.Settings
         // ISettingsValues: the view reads values through these
         public bool GetBool(string id) => settings.GetBool(id);
         public string GetText(string id) => settings.GetText(id);
-        public bool IsDisabled(SettingDefinition s) => s.DisabledWhenOn != null && settings.GetBool(s.DisabledWhenOn);
+        public bool IsDisabled(SettingDefinition s) =>  (s.DisabledWhenOn != null && settings.GetBool(s.DisabledWhenOn)) ||
+                                                        (s.Id == SettingIds.Resolution && settings.DisplayMode != DisplayMode.Windowed);
 
         public SettingsScreen(Renderer renderer, ScreenManager screenManager, AudioManager audioManager, SkinManager skinManager)
         {
